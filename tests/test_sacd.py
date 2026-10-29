@@ -280,7 +280,7 @@ class TestPauses(Base):
 
     def test_older_pysacd_is_refused_before_converting(self, monkeypatch):
         monkeypatch.setattr("beetsplug.sacd.pysacd_has_pauses", lambda: False)
-        with pytest.raises(UserError, match=r"pauses needs pysacd 0\.3"):
+        with pytest.raises(UserError, match=r"pauses needs pysacd 0\.2\.1"):
             self.run_command("sacd-import", "--pauses", str(self.iso))
         assert self.albums() == [] and self.staging_left() == []
 

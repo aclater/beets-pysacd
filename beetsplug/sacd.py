@@ -80,7 +80,7 @@ def fingerprint(img, disc) -> str:
 
 
 def pysacd_has_pauses() -> bool:
-    """Whether the installed pysacd's convert can include pauses (pysacd 0.3)."""
+    """Whether the installed pysacd's convert can include pauses (pysacd 0.2.1)."""
     from dataclasses import fields
 
     from pysacd.convert import Options
@@ -313,7 +313,7 @@ class SacdPlugin(BeetsPlugin):
         if fmt not in FORMATS:
             raise ui.UserError(f"sacd: format must be dsf or flac, not {fmt!r}")
         if self.config["pauses"].get(bool) and not pysacd_has_pauses():
-            raise ui.UserError("sacd: pauses needs pysacd 0.3 or later (convert --pauses)")
+            raise ui.UserError("sacd: pauses needs pysacd 0.2.1 or later (convert --pauses)")
         paths = []
         for iso in isos:
             job = self.convert(lib, iso, fmt, release)

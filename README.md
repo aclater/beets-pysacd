@@ -72,7 +72,7 @@ sacd:
     areas: stereo        # stereo | multichannel | both
     format: dsf          # dsf | flac (24-bit PCM)
     pcm_rate: 88200      # flac: 88200 | 176400
-    pauses: no           # include the pauses between tracks (pysacd 0.3 or later)
+    pauses: no           # include the pauses between tracks (pysacd 0.2.1 or later)
     auto: yes            # convert ISOs found by plain `beet import`
     remove_iso: no       # delete an ISO once its import is verified
     staging: ''          # where to convert; default: a hidden directory in the library directory
@@ -88,7 +88,7 @@ Tracks are cut at their timecodes, without the pauses between them, like
 `pysacd convert`. With `pauses: yes` (or `--pauses`) each pause goes with the
 track before it, exactly as `pysacd-extract -b` and `sacd_extract -b` cut them:
 use it when your library already holds extracts made that way, so the same
-disc gives the same tracks. It needs pysacd 0.3 or later.
+disc gives the same tracks. It needs pysacd 0.2.1 or later.
 
 ### Keeping or removing ISO images
 
