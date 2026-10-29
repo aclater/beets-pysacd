@@ -171,10 +171,21 @@ class TestOtherEditions(Base):
         self.accept_weak_matches()
         with caplog.at_level(logging.INFO, logger="beets"):
             self.run_command("sacd-import", str(self.iso))
-        assert "has no SACD medium matching it (Hybrid SACD (CD layer)); medium not pinned" in caplog.text
+        assert f"matched the CD layer of release {mbfixture.RID}" in caplog.text
         [album] = self.albums()
         assert album.mb_albumid == mbfixture.RID
         assert album.sacd_area == "stereo"
+
+    def test_cd_layer_match_still_lands_on_the_sacd_layer(self, monkeypatch, caplog):
+        """MusicBrainz's CD-layer lengths can fit the disc better than the SACD layer's, so pysacd
+        picks the CD layer: the release is kept and the area goes to its SACD layer anyway."""
+        from pysacd.musicbrainz import Match
+        rel = mbfixture.release()
+        monkeypatch.setattr("pysacd.musicbrainz.find_release",
+                            lambda *a, **k: Match(rel, rel["media"][0], 0.0, 0, "catno"))
+        self.config["sacd"]["areas"] = "both"
+        self.run_command("sacd-import", str(self.iso))
+        assert sorted((a.sacd_area, a.media) for a in self.albums()) == [("multichannel", MULTI), ("stereo", STEREO)]
 
 
 class TestVetMatch:
@@ -193,16 +204,10 @@ class TestVetMatch:
         for fmt in ('12" Vinyl', "CD", "Digital Media", ""):
             assert vet_match(self.match(fmt, STEREO)) == (False, False)
 
-    def test_cd_layer(self):
+    def test_cd_layer_keeps_the_release_without_its_medium(self):
         from beetsplug.sacd import vet_match
         assert vet_match(self.match("Hybrid SACD (CD layer)")) == (True, False)          # all MB lists
-        assert vet_match(self.match("Hybrid SACD (CD layer)", STEREO)) == (False, False)  # SACD layer exists
-
-    def test_malformed_media_list(self):
-        from beetsplug.sacd import vet_match
-        cd = {"format": "Hybrid SACD (CD layer)"}
-        for media in (None, [None, "x", cd]):
-            assert vet_match(SimpleNamespace(medium=cd, release={"media": media})) == (True, False)
+        assert vet_match(self.match("Hybrid SACD (CD layer)", STEREO)) == (True, False)
 
 
 class TestMediumBug(Base):

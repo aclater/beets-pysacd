@@ -109,15 +109,15 @@ def vet_match(match) -> tuple[bool, bool]:
 
     A catalogue number or barcode can lead to an edition in another format: a vinyl, CD or
     digital medium is a different release, so neither is used and beets matches the area the
-    normal way. Some releases list only the CD layer of a hybrid disc; that release is right,
-    but the medium isn't the area's, so the release is kept without the medium pin.
+    normal way. A hybrid disc's CD layer is the right release but not the area's medium: some
+    releases list only the CD layer, and on others MusicBrainz's CD-layer track lengths fit the
+    disc better than the SACD layer's. The release is kept and the medium is left to
+    choose_medium, which takes the SACD layer with the area's track count and channels.
     """
     fmt = match.medium.get("format") or ""
     if is_sacd_layer(fmt):
         return True, True
-    # MusicBrainz data is untrusted: tolerate a null or malformed media list
-    others = [m.get("format") or "" for m in match.release.get("media") or [] if isinstance(m, dict)]
-    if "(CD layer" in fmt and not any(is_sacd_layer(f) for f in others):
+    if "(CD layer" in fmt:
         return True, False
     return False, False
 
@@ -316,8 +316,8 @@ class SacdPlugin(BeetsPlugin):
                                    shown, kind, match.release_id, fmt_shown)
                     match = None
                 elif not use_medium:
-                    self._log.info("{}: {} area: release {} has no SACD medium matching it ({}); medium not pinned",
-                                   shown, kind, match.release_id, fmt_shown)
+                    self._log.info("{}: {} area: matched the CD layer of release {}; its SACD layer is "
+                                   "chosen by track count and channels", shown, kind, match.release_id)
             root = root or self._staging_root(lib)
             out = root / f"{len(self._pins):03d}-{kind}"
             opts = Options(format=fmt, output_dir=str(out), dir_template="album", areas=kind,
