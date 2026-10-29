@@ -29,6 +29,7 @@ if _PLUGIN_DIR not in list(beetsplug.__path__):
     beetsplug.__path__ = [*beetsplug.__path__, _PLUGIN_DIR]
 
 sys.path.insert(0, os.path.dirname(__file__))
+import discgen  # noqa: E402
 import mbfixture  # noqa: E402
 
 PYSACD_TESTS = Path(os.environ.get("PYSACD_TESTS", Path(__file__).resolve().parents[2] / "pysacd" / "tests"))
@@ -238,6 +239,19 @@ class TestAutoDetect(Base):
         assert len(self.albums()) == 1
         assert dvd.exists()
 
+    def test_dvd_and_bluray_images_are_catalogued_not_converted(self, caplog):
+        dvda = discgen.build(self.isodir / "dvda.iso", discgen.DVD_AUDIO, "SURROUND_MIX")
+        bd = discgen.build(self.isodir / "bd.iso", discgen.BLURAY, "BD_LIVE", udf="2.50", iso9660=False)
+        before = sha(dvda), sha(bd)
+        with caplog.at_level(logging.INFO, logger="beets"):
+            self.run_command("import", str(self.isodir))
+        assert len(self.albums()) == 1                 # the SACD only
+        log = caplog.text
+        assert "DVD-Audio + DVD-Video image, volume 'SURROUND_MIX', 2 title sets: catalogued, not converted" in log
+        assert "Blu-ray image, volume 'BD_LIVE', 2 playlists: catalogued, not converted" in log
+        assert (sha(dvda), sha(bd)) == before
+        assert self.staging_left() == []
+
 
 class TestInfo(Base):
     def test_prints_the_toc_read_only(self, capsys):
@@ -250,6 +264,20 @@ class TestInfo(Base):
         assert "\x1b" not in out and "\x9b" not in out
         assert "\\x9b" in out              # C1 CSI shown as an escape (the reader already turns ESC into a space)
         assert sha(hostile) == before
+
+    def test_catalogues_a_directory_of_mixed_images(self, capsys):
+        discgen.build(self.isodir / "dvda.iso", discgen.DVD_AUDIO, "SURROUND_MIX")
+        discgen.build(self.isodir / "dvdv.iso", discgen.DVD_VIDEO, "CONCERT")
+        discgen.build(self.isodir / "bd.iso", discgen.BLURAY, "BD\x1b]0;pwned\x07", udf="2.50", iso9660=False)
+        (self.isodir / "junk.iso").write_bytes(bytes(2048 * 600))
+        self.run_command("sacd-info", str(self.isodir))
+        out = capsys.readouterr().out
+        assert "Area TWOCHTOC" in out                  # the SACD's TOC, as before
+        assert "DVD-Audio + DVD-Video image, volume 'SURROUND_MIX', 2 title sets" in out
+        assert "DVD-Video image, volume 'CONCERT', 3 title sets" in out
+        assert "Blu-ray image" in out and "2 playlists" in out
+        assert "not an SACD, DVD or Blu-ray image" in out
+        assert "\x1b" not in out and "\x07" not in out    # the label went through safetext
 
 
 class TestChooseMedium:
