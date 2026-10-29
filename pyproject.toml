@@ -15,7 +15,7 @@ dependencies = ["beets>=2.12,<3", "pysacd>=0.2"]
 
 [project.optional-dependencies]
 # pinned, like pysacd's: an unpinned upgrade can change the rule set on unchanged code
-dev = ["pytest==9.1.1", "ruff==0.17.0", "mypy==2.4.0"]
+dev = ["pytest==9.1.1", "ruff==0.17.0", "mypy==2.4.0", "coverage==7.16.2"]
 
 [project.urls]
 Homepage = "https://github.com/aclater/beets-pysacd"
@@ -39,3 +39,12 @@ explicit_package_bases = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+# CI's coverage leg (ci.yml). "beetsplug" is this checkout's directory, not the namespace
+# package, so beets' own plugins aren't measured.
+[tool.coverage.run]
+source = ["beetsplug"]
+branch = true
+
+[tool.coverage.report]
+skip_empty = true

@@ -1,0 +1,39 @@
+# The test suite mocks MusicBrainz. Once a week, tests/test_live_musicbrainz.py
+# runs the plugin's matching against one real release: one request through
+# pysacd's client and one through beets' MusicBrainz plugin, each throttled to
+# MusicBrainz's 1 request/second, with the repository URL as the User-Agent
+# contact. Never on pull requests.
+
+name: live-musicbrainz
+
+on:
+  schedule:
+    - cron: "53 6 * * 3"  # weekly
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lookup:
+    name: live MusicBrainz matching
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Install the plugin, beets and pysacd
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+
+      - name: Live matching
+        env:
+          PYSACD_LIVE_MB: "1"
+        run: python -m pytest -v tests/test_live_musicbrainz.py
