@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "beets-pysacd"
-version = "0.1.0"
+version = "0.1.1"
 description = "beets plugin: import SACD ISO images through pysacd"
 readme = "README.md"
 requires-python = ">=3.11"
