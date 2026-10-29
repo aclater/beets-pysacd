@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
@@ -52,6 +54,8 @@ jobs:
           - {os: windows-latest, python: "3.13", beets: latest, pysacd: release}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
@@ -76,16 +80,20 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.pysacd }}" = master ]; then
-            echo "ref=master" >> "$GITHUB_OUTPUT"
+            ref=master
           else
-            echo "ref=v$(python -c 'import importlib.metadata as m; print(m.version("pysacd"))')" >> "$GITHUB_OUTPUT"
+            ref="v$(python -c 'import importlib.metadata as m; print(m.version("pysacd"))')"
           fi
+          # Only master or a release tag of the owner's own pysacd repository
+          [[ "$ref" =~ ^(master|v[0-9]+\.[0-9]+\.[0-9]+)$ ]] || { echo "::error::unexpected pysacd ref $ref"; exit 1; }
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           repository: aclater/pysacd
           ref: ${{ steps.pysacd.outputs.ref }}
           path: pysacd-src
+          persist-credentials: false
 
       - name: Install pysacd from master
         if: matrix.pysacd == 'master'
