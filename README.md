@@ -108,6 +108,11 @@ For each ISO image, and each selected area of it:
    An area whose fingerprint and area are already in the library is skipped.
 2. pysacd matches the MusicBrainz release and medium, and converts the area
    into the staging directory, writing the release's IDs into the files.
+   A match on a medium that isn't an SACD layer (a vinyl, CD or digital
+   edition sharing the catalogue number or barcode) isn't used: the area is
+   converted without IDs and beets matches it the normal way. A match on the
+   CD layer of a hybrid release keeps the release; the area goes to that
+   release's SACD layer with its track count and channels.
 3. beets imports the staging directory. Because the files agree on the
    release ID, beets looks that release up directly. For this one import task
    only, the plugin then:
