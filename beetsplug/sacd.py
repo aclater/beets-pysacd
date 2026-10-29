@@ -12,10 +12,13 @@ candidate. It then maps the SACD files to the CD layer (medium 1), and sets albu
 down to the medium before matching, and a guard fixes a chosen match that still points
 elsewhere. See README.md, "Hybrid SACDs".
 
-Commands: `beet sacd-import <iso|dir>...` and `beet sacd-info <iso>...`. Plain `beet import`
+Commands: `beet sacd-import <iso|dir>...` and `beet sacd-info <iso|dir>...`. Plain `beet import`
 converts the ISOs it finds first (config `auto`). Imported albums carry the flexible attributes
 `sacd_iso_sha` (a fingerprint of the disc's TOCs) and `sacd_area`, so an ISO already imported
 is skipped.
+
+DVD-Audio, DVD-Video and Blu-ray images are identified by _sacd_discimage and catalogued (in
+`sacd-info` and in the import log), never converted.
 """
 
 from __future__ import annotations
@@ -33,6 +36,8 @@ from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.ui.commands.import_ import import_files
 from beets.util import MoveOperation, bytestring_path, displayable_path, syspath
+
+from beetsplug._sacd_discimage import identify
 
 AREAS = ("stereo", "multichannel")
 FORMATS = ("dsf", "flac")
@@ -85,6 +90,25 @@ def find_isos(path: str | os.PathLike) -> list[Path]:
     if p.is_dir():
         return sorted(q for q in p.rglob("*") if is_iso(q))
     return []
+
+
+def describe_other(path: str | os.PathLike) -> str:
+    """A catalogue line for an image that isn't an SACD: DVD-Audio, DVD-Video or Blu-ray, with
+    its volume label (untrusted: callers print it through safetext). These are identified only,
+    never converted."""
+    try:
+        d = identify(path)
+    except OSError as e:
+        return f"  not an SACD image, and not readable ({e})"
+    if d.kind == "unknown":
+        return "  not an SACD, DVD or Blu-ray image"
+    parts = [f"  {d.name} image"]
+    if d.label:
+        parts.append(f"volume {d.label!r}")
+    if d.titles:
+        unit = "playlist" if d.kind == "bluray" else "title set"
+        parts.append(f"{d.titles} {unit}{'' if d.titles == 1 else 's'}")
+    return ", ".join(parts) + ": catalogued, not converted"
 
 
 # ---------------------------------------------------------------- choosing the medium
@@ -194,11 +218,11 @@ class SacdPlugin(BeetsPlugin):
         imp.parser.add_option("--release", metavar="MBID", help="MusicBrainz release to use (one ISO)")
         imp.parser.add_option("--remove-iso", action="store_true", default=None,
                               help="delete each ISO once its import is verified")
-        imp.parser.usage = "%prog [options] ISO|DIR..."
+        imp.parser.usage = "%prog [options] ISO|DIRECTORY..."
         imp.func = self.sacd_import
 
-        info = ui.Subcommand("sacd-info", help="print the TOC of SACD ISO images")
-        info.parser.usage = "%prog [options] ISO..."
+        info = ui.Subcommand("sacd-info", help="print the TOC of SACD ISO images; catalogue DVD and Blu-ray images")
+        info.parser.usage = "%prog [options] ISO|DIRECTORY..."
         info.func = self.sacd_info
         return [imp, info]
 
@@ -206,13 +230,22 @@ class SacdPlugin(BeetsPlugin):
         from pysacd import safetext
         from pysacd.toc import SACDError, read_toc
         if not args:
-            raise ui.UserError("give one or more ISO images")
-        for path in args:
+            raise ui.UserError("give one or more ISO images or directories")
+        isos = [iso for a in args for iso in find_isos(a)]
+        if not isos:
+            raise ui.UserError("no ISO images found")
+        failed = 0
+        for path in isos:
+            ui.print_(safetext.for_terminal(f"== {displayable_path(str(path))}"))
             try:
-                disc = read_toc(path)                  # read-only
-            except (OSError, SACDError) as e:
-                raise ui.UserError(f"{safetext.for_terminal(path)}: {safetext.for_terminal(e)}") from None
-            ui.print_(safetext.for_terminal(f"== {path}"))
+                disc = read_toc(str(path))             # read-only
+            except SACDError:
+                ui.print_(safetext.for_terminal(describe_other(path)))
+                continue
+            except OSError as e:
+                ui.print_(safetext.for_terminal(f"  error: {e}"))
+                failed += 1
+                continue
             ui.print_(safetext.for_terminal(f"Disc:  {disc.artist or '?'} - {disc.title or '?'}"))
             catalog = disc.disc_catalog_number or disc.album_catalog_number or "-"
             ui.print_(safetext.for_terminal(f"  catalogue {catalog}  disc {disc.album_sequence_number}/"
@@ -225,6 +258,8 @@ class SacdPlugin(BeetsPlugin):
                     ui.print_(safetext.for_terminal(f"  {t.number:2d}. {t.duration}  {t.title or ''}{who}"))
             for w in disc.warnings + [w for a in disc.areas for w in a.warnings]:
                 ui.print_(safetext.for_terminal(f"  warning: {w}"))
+        if failed:
+            raise ui.UserError(f"{failed} image(s) could not be read")
 
     def sacd_import(self, lib, opts, args) -> None:
         if not args:
@@ -285,8 +320,11 @@ class SacdPlugin(BeetsPlugin):
             with SACDImage(str(iso)) as img:       # read-only
                 disc = img.read_toc()
                 fp = fingerprint(img, disc)
-        except (OSError, SACDError) as e:
-            self._log.warning("{}: not a readable SACD image ({})", shown, safetext.for_terminal(e))
+        except SACDError:
+            self._log.info("{}: {}", shown, safetext.for_terminal(describe_other(iso)))
+            return None
+        except OSError as e:
+            self._log.warning("{}: not readable ({})", shown, safetext.for_terminal(e))
             return None
         job = Job(iso)
         root = None

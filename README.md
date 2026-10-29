@@ -32,6 +32,7 @@ beet sacd-import ~/rips/                # every .iso under a directory
 beet sacd-import -a both -f flac Album.iso
 beet sacd-import --release 1d1f0a6e-... Album.iso   # use this MusicBrainz release
 beet sacd-info Album.iso                # print the TOC; changes nothing
+beet sacd-info ~/rips/                  # ...of every image under a directory
 ```
 
 Plain `beet import` also converts the ISO images it finds (an `.iso` given on
@@ -43,6 +44,26 @@ An area that is already in the library is skipped. Imported albums carry two
 flexible attributes, `sacd_iso_sha` (a fingerprint of the disc's TOCs) and
 `sacd_area` (`stereo` or `multichannel`), so `beet ls sacd_area:multichannel`
 lists the multichannel albums.
+
+### DVD-Audio, DVD-Video and Blu-ray images
+
+Disc-image folders often hold DVD and Blu-ray images next to SACDs. The plugin
+identifies them and lists them, but doesn't convert them: `beet sacd-info`
+prints one line for each, and imports log why each was left alone.
+
+```text
+== .../Bluray/LIVE_CONCERT.iso
+  Blu-ray image, volume 'LIVE_CONCERT', 4 playlists: catalogued, not converted
+== .../DVDA/SURROUND_MIX.iso
+  DVD-Audio + DVD-Video image, volume 'SURROUND_MIX', 5 title sets: catalogued, not converted
+```
+
+It reads the image's file system (UDF, including the UDF 2.50 metadata
+partition that Blu-ray uses, or ISO 9660) and looks for the standard folders:
+`AUDIO_TS` with `AUDIO_TS.IFO` for DVD-Audio, `VIDEO_TS` for DVD-Video and
+`BDMV` for Blu-ray. The count is of DVD title sets or Blu-ray playlists.
+This lives in the plugin (`beetsplug/_sacd_discimage.py`), not in pysacd, and
+reads only directory structures, never the audio.
 
 ## Configuration
 
@@ -147,7 +168,9 @@ The tests build synthetic SACD images with pysacd's test generator
 (`tests/sacdgen.py` in the pysacd source tree, found through `PYSACD_TESTS`,
 default `../pysacd/tests`) and import them into a throwaway beets library.
 MusicBrainz is mocked with a hybrid release whose media share recordings, so
-the tests need no network.
+the tests need no network. DVD and Blu-ray images for the cataloguing tests
+come from `tests/discgen.py`, which writes minimal UDF and ISO 9660 file
+systems.
 
 ## Licence
 

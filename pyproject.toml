@@ -34,6 +34,8 @@ select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
 [tool.mypy]
 python_version = "3.11"
 ignore_missing_imports = true
+# beetsplug is a namespace package: map its files to beetsplug.<module>, not top-level modules
+explicit_package_bases = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

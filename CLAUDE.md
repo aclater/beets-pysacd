@@ -14,6 +14,10 @@ SACD ISO images. beets can't tag an `.iso`, so for each ISO the plugin:
 3. extracts each selected area to DSF or FLAC in a staging directory;
 4. runs beets' normal import on it, pinned to that release and medium.
 
+DVD-Audio, DVD-Video and Blu-ray images are identified by
+`beetsplug/_sacd_discimage.py` (UDF and ISO 9660, read-only, bounded) and
+catalogued, never converted. That handler is the plugin's own, not pysacd's.
+
 ## Standing constraints
 
 - **Never lose or damage user data.**
@@ -32,7 +36,10 @@ SACD ISO images. beets can't tag an `.iso`, so for each ISO the plugin:
 - **beets compatibility.** Support every beets release from the floor in
   `pyproject.toml` to the latest 2.x. CI tests both ends; don't use APIs newer
   than the floor without raising it deliberately.
-- **Untrusted text.** Disc text and MusicBrainz data are attacker-controlled.
+- **Hostile images.** Disc images may be malformed. `_sacd_discimage` bounds
+  every read and answers "unknown" for anything it can't parse; keep it so,
+  and extend `tests/test_discimage.py` (it mutates images) with any change.
+- **Untrusted text.** Disc text, volume labels and MusicBrainz data are attacker-controlled.
   Pass them only through pysacd's `safetext` and beets' own path handling;
   never to a shell, `subprocess` or `eval`.
 - **Licence.** GPL-2.0-or-later (the plugin imports pysacd). Add no dependency
@@ -55,7 +62,8 @@ PYSACD_TESTS=/path/to/pysacd/tests pytest -q
 
 The tests build synthetic SACD images with pysacd's test generator
 (`tests/sacdgen.py` in the pysacd source), found through `PYSACD_TESTS`
-(default `../pysacd/tests`). MusicBrainz is mocked; tests need no network.
+(default `../pysacd/tests`). DVD and Blu-ray test images come from
+`tests/discgen.py`. MusicBrainz is mocked; tests need no network.
 
 CI also runs the tests on Python 3.11 to 3.14, on the oldest and newest beets,
 on Linux, macOS and Windows, and against pysacd's master branch, plus CodeQL,
