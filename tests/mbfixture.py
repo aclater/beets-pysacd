@@ -10,6 +10,9 @@ ARTIST = {"id": "aaaaaaaa-0000-0000-0000-000000000001", "name": "Test Artist", "
 CREDIT = [{"name": "Test Artist", "joinphrase": "", "artist": ARTIST}]
 TITLES = ["One", "Two", "Three"]
 LEN_MS = 1000                   # tracks of 75 frames
+# The release's media: tests replace this to play other editions (vinyl only, CD layer only)
+MEDIA = [(1, "Hybrid SACD (CD layer)"), (2, "Hybrid SACD (SACD layer, 2 channels)"),
+         (3, "Hybrid SACD (SACD layer, multichannel)")]
 
 
 def _rec(i):
@@ -38,8 +41,7 @@ def release():
         "label-info": [{"catalog-number": "PYSACD-TEST", "label": {"id": "eeeeeeee-0000-0000-0000-000000000001",
                                                                    "name": "Test Label", "aliases": []}}],
         "release-events": [{"date": "2026-10-28", "area": None}],
-        "media": [_medium(1, "Hybrid SACD (CD layer)"), _medium(2, "Hybrid SACD (SACD layer, 2 channels)"),
-                  _medium(3, "Hybrid SACD (SACD layer, multichannel)")],
+        "media": [_medium(pos, fmt) for pos, fmt in MEDIA],
         "relations": [], "aliases": [], "genres": [], "tags": [],
         "cover-art-archive": {"artwork": False, "front": False, "back": False, "count": 0, "darkened": False},
     }

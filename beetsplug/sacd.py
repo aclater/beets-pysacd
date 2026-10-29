@@ -104,6 +104,23 @@ def is_sacd_layer(fmt: str) -> bool:
     return "SACD" in fmt and "(CD layer" not in fmt
 
 
+def vet_match(match) -> tuple[bool, bool]:
+    """Whether to use pysacd's MusicBrainz match: (its release, its medium).
+
+    A catalogue number or barcode can lead to an edition in another format: a vinyl, CD or
+    digital medium is a different release, so neither is used and beets matches the area the
+    normal way. Some releases list only the CD layer of a hybrid disc; that release is right,
+    but the medium isn't the area's, so the release is kept without the medium pin.
+    """
+    fmt = match.medium.get("format") or ""
+    if is_sacd_layer(fmt):
+        return True, True
+    others = [m.get("format") or "" for m in match.release.get("media", [])]
+    if "(CD layer" in fmt and not any(is_sacd_layer(f) for f in others):
+        return True, False
+    return False, False
+
+
 def choose_medium(info, pin: Pin) -> int | None:
     """The medium of `info` that holds this area, or None to leave the candidate alone.
 
@@ -288,6 +305,18 @@ class SacdPlugin(BeetsPlugin):
                     match = musicbrainz.find_release(disc, area, contact, release)
                 except musicbrainz.MBError as e:
                     self._log.warning("{}: MusicBrainz lookup failed: {}", shown, safetext.for_terminal(e))
+            use_medium = False
+            if match is not None:
+                use_release, use_medium = vet_match(match)
+                use_release = use_release or release is not None     # --release: the user's choice
+                fmt_shown = safetext.for_terminal(match.medium.get("format") or "unknown format")
+                if not use_release:
+                    self._log.info("{}: {} area: MusicBrainz match {} is a {} medium, not SACD; not used",
+                                   shown, kind, match.release_id, fmt_shown)
+                    match = None
+                elif not use_medium:
+                    self._log.info("{}: {} area: release {} has no SACD medium matching it ({}); medium not pinned",
+                                   shown, kind, match.release_id, fmt_shown)
             root = root or self._staging_root(lib)
             out = root / f"{len(self._pins):03d}-{kind}"
             opts = Options(format=fmt, output_dir=str(out), dir_template="album", areas=kind,
@@ -300,10 +329,12 @@ class SacdPlugin(BeetsPlugin):
                 continue
             pin = Pin(iso, fp, kind, len(area.tracks), out / "album")
             if match is not None:
-                pin.release_id, pin.medium = match.release_id, match.medium.get("position")
-                pin.media = match.medium.get("format")
-                self._log.info("{}: {} area is medium {} ({}) of release {}", shown, kind, pin.medium,
-                               pin.media, pin.release_id)
+                pin.release_id = match.release_id
+                if use_medium:
+                    pin.medium, pin.media = match.medium.get("position"), match.medium.get("format")
+                if use_medium:
+                    self._log.info("{}: {} area is medium {} ({}) of release {}", shown, kind, pin.medium,
+                                   safetext.for_terminal(pin.media or ""), pin.release_id)
             self._pins[bytestring_path(str(pin.staging))] = pin
             job.pins.append(pin)
         return job
