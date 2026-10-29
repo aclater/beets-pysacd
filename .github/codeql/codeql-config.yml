@@ -1,0 +1,12 @@
+# CodeQL configuration (see .github/workflows/codeql.yml).
+query-filters:
+  # ci.yml checks out a second repository, the owner's own aclater/pysacd, at
+  # master or at the release tag matching the installed pysacd (the ref is
+  # validated against ^(master|vX.Y.Z)$ before use), only to read its test
+  # generator. The jobs that do this have `contents: read`, no secrets and no
+  # caches, and the checkout keeps no credentials, so there is no privileged
+  # context or cache for that code to poison.
+  - exclude:
+      id: actions/untrusted-checkout/medium
+  - exclude:
+      id: actions/cache-poisoning/poisonable-step
