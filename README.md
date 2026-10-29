@@ -100,8 +100,35 @@ This plugin keeps each area on its own medium:
 - A final check after you choose a match maps the files to the medium if
   they still point elsewhere, and logs it.
 
-Two areas of one release are different albums (different media), so beets
-doesn't treat the second as a duplicate of the first.
+## How it works
+
+For each ISO image, and each selected area of it:
+
+1. pysacd reads the TOC (read-only) and fingerprints the disc from its TOCs.
+   An area whose fingerprint and area are already in the library is skipped.
+2. pysacd matches the MusicBrainz release and medium, and converts the area
+   into the staging directory, writing the release's IDs into the files.
+3. beets imports the staging directory. Because the files agree on the
+   release ID, beets looks that release up directly. For this one import task
+   only, the plugin then:
+   - **hides the physical-disc tags from matching.** pysacd tags the physical
+     disc ("disc 1 of 1", media "Hybrid SACD"), but MusicBrainz counts each
+     layer as a medium ("disc 2 of 3", "Hybrid SACD (SACD layer, 2
+     channels)"). beets would count those tags against the right candidate,
+     enough to keep a correct match from being applied automatically. beets
+     writes the medium's own values when it applies the match;
+   - **cuts the release's candidates down to the area's medium** (see
+     [Hybrid SACDs](#hybrid-sacds));
+   - **counts only an album on the same medium as a duplicate.** beets' default
+     duplicate keys are album artist and album, which both areas of a disc
+     (and a CD rip of the same release) share: without this, importing the
+     multichannel area after the stereo one would be skipped as a duplicate.
+     Another copy of the same layer is still a duplicate;
+   - **moves the files** into the library (see [Files and staging](#files-and-staging)).
+4. The album gets `sacd_iso_sha` and `sacd_area`; with `remove_iso`, the ISO is
+   deleted once every area is verified. The staging directory is removed.
+
+Nothing here changes how beets treats your other files in the same import.
 
 ## Development
 
