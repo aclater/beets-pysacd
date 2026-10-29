@@ -176,9 +176,11 @@ class SacdPlugin(BeetsPlugin):
         imp.parser.add_option("--release", metavar="MBID", help="MusicBrainz release to use (one ISO)")
         imp.parser.add_option("--remove-iso", action="store_true", default=None,
                               help="delete each ISO once its import is verified")
+        imp.parser.usage = "%prog [options] ISO|DIR..."
         imp.func = self.sacd_import
 
         info = ui.Subcommand("sacd-info", help="print the TOC of SACD ISO images")
+        info.parser.usage = "%prog [options] ISO..."
         info.func = self.sacd_info
         return [imp, info]
 
