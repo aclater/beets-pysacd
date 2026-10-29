@@ -115,7 +115,8 @@ def vet_match(match) -> tuple[bool, bool]:
     fmt = match.medium.get("format") or ""
     if is_sacd_layer(fmt):
         return True, True
-    others = [m.get("format") or "" for m in match.release.get("media", [])]
+    # MusicBrainz data is untrusted: tolerate a null or malformed media list
+    others = [m.get("format") or "" for m in match.release.get("media") or [] if isinstance(m, dict)]
     if "(CD layer" in fmt and not any(is_sacd_layer(f) for f in others):
         return True, False
     return False, False

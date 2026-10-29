@@ -198,6 +198,12 @@ class TestVetMatch:
         assert vet_match(self.match("Hybrid SACD (CD layer)")) == (True, False)          # all MB lists
         assert vet_match(self.match("Hybrid SACD (CD layer)", STEREO)) == (False, False)  # SACD layer exists
 
+    def test_malformed_media_list(self):
+        from beetsplug.sacd import vet_match
+        cd = {"format": "Hybrid SACD (CD layer)"}
+        for media in (None, [None, "x", cd]):
+            assert vet_match(SimpleNamespace(medium=cd, release={"media": media})) == (True, False)
+
 
 class TestMediumBug(Base):
     def test_beets_maps_to_the_cd_layer_without_the_pin(self, monkeypatch):
