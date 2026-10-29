@@ -79,6 +79,14 @@ def fingerprint(img, disc) -> str:
     return h.hexdigest()
 
 
+def pysacd_has_pauses() -> bool:
+    """Whether the installed pysacd's convert can include pauses (pysacd 0.2.1)."""
+    from dataclasses import fields
+
+    from pysacd.convert import Options
+    return any(f.name == "pauses" for f in fields(Options))
+
+
 def is_iso(path: str | os.PathLike) -> bool:
     return str(path).lower().endswith(".iso") and os.path.isfile(path)
 
@@ -188,6 +196,7 @@ class SacdPlugin(BeetsPlugin):
             "areas": "stereo",          # stereo | multichannel | both
             "format": "dsf",            # dsf | flac
             "pcm_rate": 88200,          # flac: 88200 | 176400
+            "pauses": False,            # include the pauses between tracks (pysacd-extract -b)
             "auto": True,               # convert ISOs found by plain `beet import`
             "remove_iso": False,        # delete an ISO once every area's import is verified
             "staging": "",              # default: a hidden directory in the library directory
@@ -215,6 +224,8 @@ class SacdPlugin(BeetsPlugin):
                               help="areas to import (default: config `areas`)")
         imp.parser.add_option("-f", "--format", choices=FORMATS, help="dsf or flac (default: config `format`)")
         imp.parser.add_option("--pcm-rate", type="int", help="FLAC sample rate: 88200 or 176400")
+        imp.parser.add_option("--pauses", action="store_true", default=None,
+                              help="include the pauses between tracks, as pysacd-extract -b")
         imp.parser.add_option("--release", metavar="MBID", help="MusicBrainz release to use (one ISO)")
         imp.parser.add_option("--remove-iso", action="store_true", default=None,
                               help="delete each ISO once its import is verified")
@@ -269,7 +280,7 @@ class SacdPlugin(BeetsPlugin):
             raise ui.UserError("no ISO images found")
         if opts.release and len(isos) > 1:
             raise ui.UserError("--release needs exactly one ISO")
-        for key in ("areas", "format", "pcm_rate", "remove_iso"):
+        for key in ("areas", "format", "pcm_rate", "pauses", "remove_iso"):
             if getattr(opts, key, None) is not None:
                 self.config[key] = getattr(opts, key)
         try:
@@ -301,6 +312,8 @@ class SacdPlugin(BeetsPlugin):
         fmt = self.config["format"].as_str()
         if fmt not in FORMATS:
             raise ui.UserError(f"sacd: format must be dsf or flac, not {fmt!r}")
+        if self.config["pauses"].get(bool) and not pysacd_has_pauses():
+            raise ui.UserError("sacd: pauses needs pysacd 0.2.1 or later (convert --pauses)")
         paths = []
         for iso in isos:
             job = self.convert(lib, iso, fmt, release)
@@ -362,6 +375,8 @@ class SacdPlugin(BeetsPlugin):
                            pcm_rate=self.config["pcm_rate"].get(int), jobs=self.config["threads"].get(int),
                            musicbrainz=match is not None, mb_release=match.release_id if match else None,
                            mb_contact=contact, cover=False, cover_file="")
+            if self.config["pauses"].get(bool):
+                opts.pauses = True
             self._log.info("{}: converting the {} area ({} tracks) to {}", shown, kind, len(area.tracks), fmt)
             if pysacd_convert(str(iso), opts) != 0:
                 self._log.error("{}: converting the {} area failed; it is not imported", shown, kind)

@@ -8,6 +8,7 @@ when it isn't at ../pysacd/tests).
 
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import importlib.util
 import logging
@@ -23,6 +24,7 @@ import pytest
 # hides this plugin when it runs from a source checkout. Note where it is, and put it back.
 _PLUGIN_DIR = os.path.dirname(importlib.util.find_spec("beetsplug.sacd").origin)  # type: ignore[union-attr,arg-type]
 from beets.test.helper import PluginTestHelper  # noqa: E402
+from beets.ui import UserError  # noqa: E402
 
 import beetsplug  # noqa: E402
 
@@ -238,6 +240,49 @@ class TestMediumBug(Base):
         with caplog.at_level(logging.INFO, logger="beets"):
             self.run_command("sacd-import", str(self.iso))
         assert not any("remapped" in r.getMessage() for r in caplog.records)
+
+
+class TestPauses(Base):
+    """`pauses: yes` cuts tracks like pysacd-extract -b: each pause goes with the track before it."""
+
+    def build_paused_iso(self) -> Path:
+        if "pauses" not in {f.name for f in dataclasses.fields(sacdgen.AreaSpec)}:
+            pytest.skip("this pysacd's sacdgen can't write pauses")
+        frames = [bytes([0x69]) * (4704 * 2)] * (FRAMES * 3)
+        path = self.isodir / "paused.iso"
+        sacdgen.build_iso(path, [sacdgen.AreaSpec(2, frames, [FRAMES] * 3, dst=False, titles=mbfixture.TITLES,
+                                                  pauses=[0, 15, 15])],
+                          info=sacdgen.DiscInfo(title=mbfixture.ALBUM, artist="Test Artist",
+                                                album_catalog="PYSACD-TEST"))
+        return path
+
+    def lengths(self) -> list[float]:
+        """The files' own lengths (beets stores MusicBrainz's track lengths in the library)."""
+        from mediafile import MediaFile
+        items = sorted(self.lib.items(), key=lambda i: i.track)
+        return [round(MediaFile(i.path).length, 2) for i in items]
+
+    def test_pauses_go_with_the_track_before(self):
+        from beetsplug.sacd import pysacd_has_pauses
+        if not pysacd_has_pauses():
+            pytest.skip("this pysacd's convert can't include pauses")
+        iso = self.build_paused_iso()
+        self.accept_weak_matches()
+        self.config["sacd"]["pauses"] = True
+        self.run_command("sacd-import", str(iso))
+        assert self.lengths() == [1.2, 1.0, 0.8]          # frames 0-90, 90-165, 165-225
+
+    def test_default_trims_the_pauses(self):
+        iso = self.build_paused_iso()
+        self.accept_weak_matches()
+        self.run_command("sacd-import", str(iso))
+        assert self.lengths() == [1.0, 0.8, 0.8]
+
+    def test_older_pysacd_is_refused_before_converting(self, monkeypatch):
+        monkeypatch.setattr("beetsplug.sacd.pysacd_has_pauses", lambda: False)
+        with pytest.raises(UserError, match=r"pauses needs pysacd 0\.2\.1"):
+            self.run_command("sacd-import", "--pauses", str(self.iso))
+        assert self.albums() == [] and self.staging_left() == []
 
 
 class TestRemoveIso(Base):
