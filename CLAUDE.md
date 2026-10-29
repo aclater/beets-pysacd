@@ -66,8 +66,12 @@ The tests build synthetic SACD images with pysacd's test generator
 `tests/discgen.py`. MusicBrainz is mocked; tests need no network.
 
 CI also runs the tests on Python 3.11 to 3.14, on the oldest and newest beets,
-on Linux, macOS and Windows, and against pysacd's master branch, plus CodeQL,
-semgrep, the privacy check and an AI review.
+on Linux, macOS and Windows, and against pysacd's master branch (one leg
+under coverage), plus CodeQL, semgrep, the privacy check, dependency review,
+zizmor on workflow changes, a README link check and an AI review. Weekly:
+OpenSSF Scorecard and a live MusicBrainz test (README, "CI"). Workflow changes
+must keep zizmor clean: `persist-credentials: false` on every checkout, and no
+`${{ }}` expansions of step outputs or event data inside `run:` scripts.
 
 ## Workflow
 

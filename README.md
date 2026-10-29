@@ -1,5 +1,7 @@
 # beets-pysacd
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/aclater/beets-pysacd/badge)](https://scorecard.dev/viewer/?uri=github.com/aclater/beets-pysacd)
+
 A [beets](https://beets.io) plugin that imports SACD ISO images, using
 [pysacd](https://github.com/aclater/pysacd).
 
@@ -194,6 +196,29 @@ MusicBrainz is mocked with a hybrid release whose media share recordings, so
 the tests need no network. DVD and Blu-ray images for the cataloguing tests
 come from `tests/discgen.py`, which writes minimal UDF and ISO 9660 file
 systems.
+
+`tests/test_live_musicbrainz.py` is the exception: it runs the plugin's matching
+against a real hybrid SACD release on musicbrainz.org (two requests). It skips
+unless `PYSACD_LIVE_MB=1`:
+
+```sh
+PYSACD_LIVE_MB=1 pytest tests/test_live_musicbrainz.py
+```
+
+### CI
+
+Every pull request runs ruff, mypy and the tests (Python 3.11 to 3.14, the oldest
+and newest beets, Linux, macOS and Windows, pysacd's release and master branch),
+CodeQL, semgrep, a privacy check, dependency review (fails on high or critical
+vulnerabilities) and an AI review. One test leg runs under coverage.py and shows
+the report in its job summary, with HTML and XML reports as the `coverage`
+artifact; nothing goes to an external service. Changes to workflows are linted with
+[zizmor](https://docs.zizmor.sh) (`pipx run zizmor==1.30.1 --no-online-audits
+.github/workflows`), and changes to this README get a link check (lychee).
+
+Weekly: OpenSSF Scorecard (also on every push to `main`; results published for
+the badge and shown under code scanning), the live MusicBrainz test, the link
+check, and the test matrix, to catch new beets and pysacd releases.
 
 ## Licence
 
