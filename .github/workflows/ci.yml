@@ -47,7 +47,8 @@ jobs:
           - {os: ubuntu-latest, python: "3.11", beets: oldest, pysacd: release}
           - {os: ubuntu-latest, python: "3.11", beets: latest, pysacd: release}
           - {os: ubuntu-latest, python: "3.12", beets: latest, pysacd: release}
-          - {os: ubuntu-latest, python: "3.13", beets: latest, pysacd: release}
+          # this leg also measures coverage (job summary and the `coverage` artifact)
+          - {os: ubuntu-latest, python: "3.13", beets: latest, pysacd: release, coverage: true}
           - {os: ubuntu-latest, python: "3.14", beets: latest, pysacd: release}
           - {os: ubuntu-latest, python: "3.13", beets: latest, pysacd: master}
           - {os: macos-latest, python: "3.13", beets: latest, pysacd: release}
@@ -107,9 +108,29 @@ jobs:
         env:
           PYSACD_TESTS: ${{ github.workspace }}/pysacd-src/tests
           PYTHONUTF8: "1"
+          COVERAGE: ${{ matrix.coverage && 'true' || 'false' }}
         run: |
           python -c "import pysacd, pysacd._native as n; print('pysacd', pysacd.__version__, n.build_info())"
-          pytest -q
+          if [ "$COVERAGE" = true ]; then
+            # coverage.py, pinned in the dev extra; settings in pyproject.toml
+            coverage run -m pytest -q
+            coverage report
+            { echo "## Coverage"; coverage report --format=markdown; } >> "$GITHUB_STEP_SUMMARY"
+            coverage html -d coverage-html
+            coverage xml -o coverage.xml
+          else
+            pytest -q
+          fi
+
+      - name: Upload the coverage report
+        if: matrix.coverage
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: coverage
+          path: |
+            coverage-html/
+            coverage.xml
+          retention-days: 14
 
   privacy:
     # No hostnames, private IPs or local paths in files or commit identities.
