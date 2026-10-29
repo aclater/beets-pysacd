@@ -9,6 +9,7 @@ when it isn't at ../pysacd/tests).
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import logging
 import os
 import sys
@@ -16,10 +17,19 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from beets.test.helper import PluginTestHelper
+
+# beets 2.12's test helpers pin beetsplug.__path__ to beets' own plugin directory on import, which
+# hides this plugin when it runs from a source checkout. Note where it is, and put it back.
+_PLUGIN_DIR = os.path.dirname(importlib.util.find_spec("beetsplug.sacd").origin)  # type: ignore[union-attr,arg-type]
+from beets.test.helper import PluginTestHelper  # noqa: E402
+
+import beetsplug  # noqa: E402
+
+if _PLUGIN_DIR not in list(beetsplug.__path__):
+    beetsplug.__path__ = [*beetsplug.__path__, _PLUGIN_DIR]
 
 sys.path.insert(0, os.path.dirname(__file__))
-import mbfixture
+import mbfixture  # noqa: E402
 
 PYSACD_TESTS = Path(os.environ.get("PYSACD_TESTS", Path(__file__).resolve().parents[2] / "pysacd" / "tests"))
 sys.path.insert(0, str(PYSACD_TESTS))
@@ -57,9 +67,15 @@ class Base(PluginTestHelper):
         self.config["import"].set({"quiet": True, "write": True, "copy": True, "move": False})
         self.config["sacd"].set({"threads": 2})
         self.load_plugins("musicbrainz", "sacd")
-        self.isodir = self.temp_path / "isos"
+        self.isodir = self.tmp_root / "isos"
         self.isodir.mkdir()
         self.iso = build_iso(self.isodir / "disc.iso")
+
+    @property
+    def tmp_root(self) -> Path:
+        """The helper's temporary directory: `temp_dir_path` in beets 2.12, `temp_path` later."""
+        root = getattr(self, "temp_path", None) or self.temp_dir_path
+        return Path(root)
 
     def accept_weak_matches(self) -> None:
         """Let quiet mode apply the penalised match beets proposes on its own (missing tracks
