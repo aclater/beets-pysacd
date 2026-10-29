@@ -14,6 +14,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -153,6 +154,61 @@ class TestImport(Base):
         [album] = self.albums()
         assert album.media == STEREO
         assert {i.disc for i in album.items()} == {2}
+
+
+class TestOtherEditions(Base):
+    """pysacd's match can be another format's edition (a catalogue number shared with the vinyl,
+    say): it is not used to pin or tag an SACD area (#7)."""
+
+    def test_vinyl_match_is_not_used(self, monkeypatch, caplog):
+        monkeypatch.setattr(mbfixture, "MEDIA", [(1, '12" Vinyl')])
+        with caplog.at_level(logging.INFO, logger="beets"):
+            self.run_command("sacd-import", str(self.iso))
+        assert f'MusicBrainz match {mbfixture.RID} is a 12" Vinyl medium, not SACD; not used' in caplog.text
+        assert "area is medium" not in caplog.text
+
+    def test_release_listing_only_the_cd_layer_is_kept_unpinned(self, monkeypatch, caplog):
+        monkeypatch.setattr(mbfixture, "MEDIA", [(1, "Hybrid SACD (CD layer)")])
+        self.accept_weak_matches()
+        with caplog.at_level(logging.INFO, logger="beets"):
+            self.run_command("sacd-import", str(self.iso))
+        assert f"matched the CD layer of release {mbfixture.RID}" in caplog.text
+        [album] = self.albums()
+        assert album.mb_albumid == mbfixture.RID
+        assert album.sacd_area == "stereo"
+
+    def test_cd_layer_match_still_lands_on_the_sacd_layer(self, monkeypatch, caplog):
+        """MusicBrainz's CD-layer lengths can fit the disc better than the SACD layer's, so pysacd
+        picks the CD layer: the release is kept and the area goes to its SACD layer anyway."""
+        from pysacd.musicbrainz import Match
+        rel = mbfixture.release()
+        monkeypatch.setattr("pysacd.musicbrainz.find_release",
+                            lambda *a, **k: Match(rel, rel["media"][0], 0.0, 0, "catno"))
+        self.config["sacd"]["areas"] = "both"
+        self.run_command("sacd-import", str(self.iso))
+        assert sorted((a.sacd_area, a.media) for a in self.albums()) == [("multichannel", MULTI), ("stereo", STEREO)]
+
+
+class TestVetMatch:
+    @staticmethod
+    def match(fmt, *others):
+        media = [{"format": f} for f in (fmt, *others)]
+        return SimpleNamespace(medium=media[0], release={"media": media})
+
+    def test_sacd_layers_are_used(self):
+        from beetsplug.sacd import vet_match
+        assert vet_match(self.match(STEREO, "Hybrid SACD (CD layer)")) == (True, True)
+        assert vet_match(self.match("SACD")) == (True, True)
+
+    def test_other_formats_are_not(self):
+        from beetsplug.sacd import vet_match
+        for fmt in ('12" Vinyl', "CD", "Digital Media", ""):
+            assert vet_match(self.match(fmt, STEREO)) == (False, False)
+
+    def test_cd_layer_keeps_the_release_without_its_medium(self):
+        from beetsplug.sacd import vet_match
+        assert vet_match(self.match("Hybrid SACD (CD layer)")) == (True, False)          # all MB lists
+        assert vet_match(self.match("Hybrid SACD (CD layer)", STEREO)) == (True, False)
 
 
 class TestMediumBug(Base):
