@@ -69,7 +69,9 @@ CI also runs the tests on Python 3.11 to 3.14, on the oldest and newest beets,
 on Linux, macOS and Windows, and against pysacd's master branch (one leg
 under coverage), plus CodeQL, semgrep, the privacy check, dependency review,
 zizmor on workflow changes, a README link check and an AI review. Weekly:
-OpenSSF Scorecard and a live MusicBrainz test (README, "CI"). Workflow changes
+OpenSSF Scorecard and a live MusicBrainz test (README, "CI"). CI installs its
+dependencies only from the hash locks in `locks/` (`scripts/lock.py`; rerun it after
+changing dependencies in `pyproject.toml`). Workflow changes
 must keep zizmor clean: `persist-credentials: false` on every checkout, and no
 `${{ }}` expansions of step outputs or event data inside `run:` scripts.
 
