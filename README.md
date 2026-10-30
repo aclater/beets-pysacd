@@ -156,7 +156,8 @@ For each ISO image, and each selected area of it:
    into the staging directory, writing the release's IDs into the files.
    A match on a medium that isn't an SACD layer (a vinyl, CD or digital
    edition sharing the catalogue number or barcode) isn't used: the area is
-   converted without IDs and beets matches it the normal way. A match on the
+   converted without IDs and beets matches it the normal way, preferring
+   an SACD edition (see below). A match on the
    CD layer of a hybrid release keeps the release; the area goes to that
    release's SACD layer with its track count and channels.
 3. beets imports the staging directory. Because the files agree on the
@@ -170,6 +171,10 @@ For each ISO image, and each selected area of it:
      writes the medium's own values when it applies the match;
    - **cuts the release's candidates down to the area's medium** (see
      [Hybrid SACDs](#hybrid-sacds));
+   - **prefers SACD editions.** Without pysacd's release, beets would take
+     whichever edition of the album scores best, often the CD. For this task
+     only, an SACD medium goes first in `match.preferred.media`; your own
+     preferred media follow it, and other imports don't see the change;
    - **counts only an album on the same medium as a duplicate.** beets' default
      duplicate keys are album artist and album, which both areas of a disc
      (and a CD rip of the same release) share: without this, importing the

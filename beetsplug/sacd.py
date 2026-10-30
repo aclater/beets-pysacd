@@ -32,7 +32,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from beets import ui
+from beets import config, ui
 from beets.plugins import BeetsPlugin
 from beets.ui.commands.import_ import import_files
 from beets.util import MoveOperation, bytestring_path, displayable_path, syspath
@@ -41,6 +41,9 @@ from beetsplug._sacd_discimage import identify
 
 AREAS = ("stereo", "multichannel")
 FORMATS = ("dsf", "flac")
+# match.preferred.media pattern for the plugin's own lookups: any SACD medium ("SACD",
+# "SHM-SACD", "Hybrid SACD (...)"); beets anchors each pattern at the start of the format
+SACD_MEDIA = ".*SACD"
 
 # The task whose candidates are being looked up, if it is one of ours (set around
 # task.lookup_candidates; albuminfo_received is sent in the same thread)
@@ -432,14 +435,22 @@ class SacdPlugin(BeetsPlugin):
             item.disc = item.disctotal = 0
             item.media = ""
 
-        # Candidates for this task are cut to its medium while they are looked up
+        # Candidates for this task are cut to its medium while they are looked up, and an SACD
+        # edition is preferred over the same release in another format (#9): without pysacd's
+        # release, beets would otherwise take whichever edition scores best. The user's own
+        # preferred media still apply, after SACD, and only this task's lookup sees the change
+        # (beets looks up one task at a time).
         lookup = task.lookup_candidates
 
         def lookup_pinned(*args, **kwargs):
             token = _current.set(pin)
+            preferred = config["match"]["preferred"]["media"]
+            saved = preferred.as_str_seq()
+            preferred.set([SACD_MEDIA, *saved])
             try:
                 return lookup(*args, **kwargs)
             finally:
+                preferred.set(saved)
                 _current.reset(token)
         task.lookup_candidates = lookup_pinned
 
