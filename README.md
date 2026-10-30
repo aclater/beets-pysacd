@@ -230,7 +230,8 @@ from two lock files written by `python3 -I scripts/lock.py` (needs
 [uv](https://docs.astral.sh/uv/)): `locks/latest/requirements.txt` with the newest
 beets and `locks/oldest/requirements.txt` with beets held at the floor in
 `pyproject.toml`. Both cover Python 3.11 to 3.14 on Linux, macOS and Windows, and
-leave out releases younger than two weeks, except pysacd's. The plugin, and pysacd's
+leave out releases younger than two weeks, except pysacd's and security fixes listed
+in the script. The plugin, and pysacd's
 master branch on that leg, are installed on top with `--no-deps`, so nothing
 unhashed is downloaded. Dependabot keeps both locks current (beets stays on the
 floor in the oldest); when a new release brings a new dependency, the locked install
