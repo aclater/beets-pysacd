@@ -81,7 +81,8 @@ must keep zizmor clean: `persist-credentials: false` on every checkout, and no
 - Work on a branch and open a PR against `main`; never push to `main`
   directly. Write "Closes #N" only when the PR fully resolves the issue,
   otherwise "Part of #N". Never close an issue that isn't resolved.
-- **Docs always ship with the change** (README, this file, usage text).
+- **Docs always ship with the change** (README, this file, usage text), and
+  anything a user would notice gets a `CHANGELOG.md` entry.
 - **AI review.** The `ai-review` workflow posts a review from a second model
   on each PR. It sends the PR's title, description and diff to Google's Gemini
   API. Answer every finding (fix it, or reply with why not) before merging. A
@@ -93,8 +94,11 @@ must keep zizmor clean: `persist-credentials: false` on every checkout, and no
 
 ## Releases
 
-1. Bump `version` in `pyproject.toml`, and merge.
+1. Bump `version` in `pyproject.toml`, date the release in `CHANGELOG.md`, and
+   merge.
 2. Tag `vX.Y.Z` on `main` and push the tag. `.github/workflows/workflow.yml`
    builds, tests the wheel in a clean environment, attests, attaches to a
    GitHub release and publishes to PyPI through trusted publishing (the `pypi`
    environment accepts `v*` tags only; publishing needs `PYPI_PUBLISH=true`).
+3. Copy the release's changelog section into the GitHub release notes
+   (`gh release edit vX.Y.Z --notes-file ...`).
