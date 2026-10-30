@@ -12,9 +12,9 @@ to 3.14 on Linux, macOS and Windows (a universal resolution, with every file's s
 - locks/oldest/requirements.txt: the same, but beets held at the floor in pyproject.toml.
 
 Releases younger than two weeks are left out (CLAUDE.md), except the owner's own pysacd, so
-the "pysacd release" legs test what users get. Dependabot keeps both files current between
-runs (beets held at the floor in the oldest one); rerun this when a new release brings a new
-dependency, or after changing pyproject.toml.
+the "pysacd release" legs test what users get, and security fixes listed in NOT_HELD_BACK.
+Dependabot keeps both files current between runs (beets held at the floor in the oldest one);
+rerun this when a new release brings a new dependency, or after changing pyproject.toml.
 """
 
 from __future__ import annotations
@@ -32,7 +32,12 @@ ROOT = Path(__file__).resolve().parent.parent
 # setuptools: the build backend, since CI installs the plugin and pysacd's master branch with
 # --no-build-isolation; build and pyproject-hooks: the release workflow's build
 BUILD_TOOLS = ["setuptools>=77", "build", "pyproject-hooks"]
-OWN = ["pysacd"]
+# Not held back two weeks: the owner's own pysacd, and security fixes (with the minimum fixed
+# version they need, as a constraint). Drop an entry once its fix is older than two weeks.
+NOT_HELD_BACK = {
+    "pysacd": "",
+    "certifi": "==2026.10.18",   # GHSA-6q48-6c7w-9gw2 (critical): the first fixed release
+}
 MIN_AGE = datetime.timedelta(days=14)
 
 
@@ -51,7 +56,8 @@ def main() -> int:
         sys.exit("needs uv: https://docs.astral.sh/uv/")
     now = datetime.datetime.now(datetime.UTC).replace(microsecond=0)
     cutoff = (now - MIN_AGE).isoformat().replace("+00:00", "Z")
-    locks = {"latest": [], "oldest": [f"beets=={beets_floor()}.*"]}
+    fixes = [name + spec for name, spec in NOT_HELD_BACK.items() if spec]
+    locks = {"latest": fixes, "oldest": [f"beets=={beets_floor()}.*", *fixes]}
     with tempfile.TemporaryDirectory() as tmp:
         tools = Path(tmp, "build-tools.in")
         tools.write_text("\n".join(BUILD_TOOLS) + "\n")
@@ -60,7 +66,7 @@ def main() -> int:
             cmd = [uv, "pip", "compile", "--no-config", "--quiet", "--universal",
                    "--python-version", "3.11", "--generate-hashes",
                    "--exclude-newer", cutoff,
-                   *[f"--exclude-newer-package={p}={now.isoformat().replace('+00:00', 'Z')}" for p in OWN],
+                   *[f"--exclude-newer-package={p}={now.isoformat().replace('+00:00', 'Z')}" for p in NOT_HELD_BACK],
                    "--custom-compile-command", "python3 -I scripts/lock.py",
                    "--extra", "dev", "pyproject.toml", str(tools), "-o", str(out)]
             if constraints:
