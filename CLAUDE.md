@@ -97,7 +97,8 @@ must keep zizmor clean: `persist-credentials: false` on every checkout, and no
 1. Bump `version` in `pyproject.toml`, date the release in `CHANGELOG.md`, and
    merge.
 2. Tag `vX.Y.Z` on `main` and push the tag. `.github/workflows/workflow.yml`
-   builds, tests the wheel in a clean environment, attests, attaches to a
+   builds, tests the wheel in a clean environment, attests, attaches the files
+   and their provenance bundles (`<file>.intoto.jsonl`, verified first) to a
    GitHub release and publishes to PyPI through trusted publishing (the `pypi`
    environment accepts `v*` tags only; publishing needs `PYPI_PUBLISH=true`).
 3. Copy the release's changelog section into the GitHub release notes
