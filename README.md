@@ -1,5 +1,11 @@
 # beets-pysacd
 
+[![CI](https://github.com/aclater/beets-pysacd/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aclater/beets-pysacd/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/beets-pysacd)](https://pypi.org/project/beets-pysacd/)
+[![Python](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Faclater%2Fbeets-pysacd%2Fmain%2Fpyproject.toml)](pyproject.toml)
+[![Downloads](https://static.pepy.tech/badge/beets-pysacd/month)](https://pepy.tech/projects/beets-pysacd)
+[![License](https://img.shields.io/pypi/l/beets-pysacd)](LICENSE)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/aclater/beets-pysacd/badge)](https://scorecard.dev/viewer/?uri=github.com/aclater/beets-pysacd)
 
 A [beets](https://beets.io) plugin that imports SACD ISO images, using
