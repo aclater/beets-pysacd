@@ -191,6 +191,33 @@ class TestOtherEditions(Base):
         assert sorted((a.sacd_area, a.media) for a in self.albums()) == [("multichannel", MULTI), ("stereo", STEREO)]
 
 
+class TestSacdEditionPreferred(Base):
+    """Without pysacd's release, beets matches the area itself; the SACD edition is preferred
+    over the same album's CD edition, for the plugin's own tasks only (#9)."""
+
+    def import_without_pysacd_match(self, monkeypatch):
+        monkeypatch.setattr(mbfixture, "EDITIONS", True)
+        self.config["sacd"]["musicbrainz"] = False
+        self.accept_weak_matches()
+        self.run_command("sacd-import", str(self.iso))
+        [album] = self.albums()
+        return album
+
+    def test_sacd_edition_beats_the_cd_edition(self, monkeypatch):
+        album = self.import_without_pysacd_match(monkeypatch)
+        assert (album.mb_albumid, album.media) == (mbfixture.RID, STEREO)
+
+    def test_without_the_preference_beets_takes_the_cd_edition(self, monkeypatch):
+        monkeypatch.setattr("beetsplug.sacd.SACD_MEDIA", "no such format")
+        album = self.import_without_pysacd_match(monkeypatch)
+        assert album.mb_albumid == mbfixture.CD_RID
+
+    def test_the_users_preferred_media_are_kept(self, monkeypatch):
+        self.config["match"]["preferred"]["media"] = ["Vinyl"]
+        self.import_without_pysacd_match(monkeypatch)
+        assert self.config["match"]["preferred"]["media"].as_str_seq() == ["Vinyl"]
+
+
 class TestVetMatch:
     @staticmethod
     def match(fmt, *others):

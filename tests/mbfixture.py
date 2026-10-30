@@ -5,6 +5,8 @@ and the SACD multichannel layer as three media with the same recordings. That is
 beets 2.14 map SACD files to the CD layer (README, "Hybrid SACDs")."""
 ALBUM = "pysacd sacd plugin test"
 RID = "11111111-2222-3333-4444-555555555555"
+CD_RID = "11111111-2222-3333-4444-666666666666"     # the same album's CD edition (#9)
+EDITIONS = False                                      # tests set it: search finds the CD edition too
 ARTIST = {"id": "aaaaaaaa-0000-0000-0000-000000000001", "name": "Test Artist", "sort-name": "Artist, Test",
           "disambiguation": "", "type": "Person", "aliases": [], "genres": [], "tags": []}
 CREDIT = [{"name": "Test Artist", "joinphrase": "", "artist": ARTIST}]
@@ -47,6 +49,13 @@ def release():
     }
 
 
+def cd_release():
+    """The CD edition: the same tracks on one CD medium, with its own barcode."""
+    rel = release()
+    rel.update(id=CD_RID, barcode="0000000000024", media=[_medium(1, "CD")])
+    return rel
+
+
 def pysacd_json(path: str, contact, **params) -> dict:
     """Stands in for pysacd.musicbrainz._json: every search finds the fixture release."""
     if path.startswith("release/"):
@@ -59,6 +68,9 @@ def beets_get_json(self, url, *args, **kwargs):
     url = str(url)
     if f"/release/{RID}" in url:
         return release()
+    if f"/release/{CD_RID}" in url:
+        return cd_release()
     if "/release" in url and "query" in str(kwargs) + url:
-        return {"releases": [release()], "count": 1, "release-count": 1}
+        found = [cd_release(), release()] if EDITIONS else [release()]     # the CD edition first
+        return {"releases": found, "count": len(found), "release-count": len(found)}
     return {"releases": [], "count": 0, "release-count": 0}
