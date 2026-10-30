@@ -1,12 +1,19 @@
 # beets-pysacd
 
-[![CI](https://github.com/aclater/beets-pysacd/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aclater/beets-pysacd/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/beets-pysacd)](https://pypi.org/project/beets-pysacd/)
 [![Python](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Faclater%2Fbeets-pysacd%2Fmain%2Fpyproject.toml)](pyproject.toml)
+[![Wheel](https://img.shields.io/pypi/wheel/beets-pysacd)](https://pypi.org/project/beets-pysacd/#files)
+[![Implementation](https://img.shields.io/pypi/implementation/beets-pysacd)](https://pypi.org/project/beets-pysacd/)
 [![Downloads](https://static.pepy.tech/badge/beets-pysacd/month)](https://pepy.tech/projects/beets-pysacd)
 [![License](https://img.shields.io/pypi/l/beets-pysacd)](LICENSE)
+
+[![CI](https://github.com/aclater/beets-pysacd/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aclater/beets-pysacd/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/aclater/beets-pysacd/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/aclater/beets-pysacd/actions/workflows/codeql.yml)
+[![Fuzzing](https://github.com/aclater/beets-pysacd/actions/workflows/fuzz.yml/badge.svg)](https://github.com/aclater/beets-pysacd/actions/workflows/fuzz.yml)
+[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/aclater/beets-pysacd/badge)](https://scorecard.dev/viewer/?uri=github.com/aclater/beets-pysacd)
+[![SLSA Build L2](https://slsa.dev/images/gh-badge-level2.svg)](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations)
 
 A [beets](https://beets.io) plugin that imports SACD ISO images, using
 [pysacd](https://github.com/aclater/pysacd).
