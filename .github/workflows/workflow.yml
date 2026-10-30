@@ -1,5 +1,6 @@
 # Release: build the sdist and wheel, test them in a clean environment, attest
-# them, attach them to a GitHub release, then publish to PyPI through trusted
+# them, attach them and their provenance bundles (<file>.intoto.jsonl) to a GitHub
+# release, then publish to PyPI through trusted
 # publishing. Runs on v* tags (the `pypi` environment accepts nothing else), and
 # builds without publishing on pull requests that touch packaging.
 
@@ -67,9 +68,26 @@ jobs:
           path: dist
 
       - name: Build provenance attestations
+        id: attest
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
         with:
           subject-path: dist/*
+
+      # The attestation also goes on the release as <artifact>.intoto.jsonl, for the wheel and
+      # the sdist (the same bundle covers both), so it can be checked offline and OpenSSF
+      # Scorecard sees signed releases (#20). Each copy is verified first.
+      - name: Provenance bundles
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          mkdir provenance
+          for f in dist/*; do
+            b="provenance/$(basename "$f").intoto.jsonl"
+            cp "$BUNDLE" "$b"
+            gh attestation verify "$f" --bundle "$b" --repo "$GITHUB_REPOSITORY" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/workflow.yml"
+          done
 
       - name: Attach to the GitHub release
         env:
@@ -78,7 +96,7 @@ jobs:
         run: |
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --notes "beets-pysacd $TAG"
-          gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+          gh release upload "$TAG" dist/* provenance/* --repo "$GITHUB_REPOSITORY" --clobber
 
   pypi:
     if: startsWith(github.ref, 'refs/tags/v') && vars.PYPI_PUBLISH == 'true'

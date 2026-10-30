@@ -6,6 +6,12 @@ behaviour, and a patch version only adds or fixes. Releases are on
 [GitHub](https://github.com/aclater/beets-pysacd/releases) and
 [PyPI](https://pypi.org/project/beets-pysacd/), with signed build provenance.
 
+## Unreleased
+
+- Releases carry their build provenance as `<file>.intoto.jsonl` assets, so a download
+  can be verified offline (`gh attestation verify <file> --repo aclater/beets-pysacd
+  --bundle <file>.intoto.jsonl`); 0.1.0 to 0.1.2 have them too (#20).
+
 ## 0.1.2 (2026-10-30)
 
 - When pysacd's MusicBrainz match isn't used, or there is none, beets now prefers an
