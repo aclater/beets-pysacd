@@ -69,7 +69,7 @@ The tests build synthetic SACD images with pysacd's test generator
 
 CI also runs the tests on Python 3.11 to 3.14, on the oldest and newest beets,
 on Linux, macOS and Windows, and against pysacd's master branch (one leg
-under coverage), plus CodeQL, semgrep, the privacy check, dependency review,
+under coverage, uploaded to Codecov by OIDC), plus CodeQL, semgrep, the privacy check, dependency review,
 zizmor on workflow changes, a README link check and an AI review. Weekly:
 OpenSSF Scorecard, a live MusicBrainz test and 20 minutes of fuzzing (README, "CI"). CI installs its
 dependencies only from the hash locks in `locks/` (`scripts/lock.py`; rerun it after

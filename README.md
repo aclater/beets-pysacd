@@ -8,6 +8,7 @@
 [![License](https://img.shields.io/pypi/l/beets-pysacd)](LICENSE)
 
 [![CI](https://github.com/aclater/beets-pysacd/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aclater/beets-pysacd/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/aclater/beets-pysacd/branch/main/graph/badge.svg)](https://codecov.io/gh/aclater/beets-pysacd)
 [![CodeQL](https://github.com/aclater/beets-pysacd/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/aclater/beets-pysacd/actions/workflows/codeql.yml)
 [![Fuzzing](https://github.com/aclater/beets-pysacd/actions/workflows/fuzz.yml/badge.svg)](https://github.com/aclater/beets-pysacd/actions/workflows/fuzz.yml)
 [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
@@ -236,7 +237,9 @@ and newest beets, Linux, macOS and Windows, pysacd's release and master branch),
 CodeQL, semgrep, a privacy check, dependency review (fails on high or critical
 vulnerabilities) and an AI review. One test leg runs under coverage.py and shows
 the report in its job summary, with HTML and XML reports as the `coverage`
-artifact; nothing goes to an external service. Changes to workflows are linted with
+artifact; the XML report also goes to [Codecov](https://codecov.io/gh/aclater/beets-pysacd)
+for the badge, authenticated with the job's GitHub OIDC token (no stored secret;
+pull requests from forks skip the upload). Changes to workflows are linted with
 [zizmor](https://docs.zizmor.sh) (`pipx run zizmor==1.30.1 --no-online-audits
 .github/workflows`), and changes to this README get a link check (lychee).
 

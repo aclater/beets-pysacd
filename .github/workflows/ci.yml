@@ -41,6 +41,9 @@ jobs:
   test:
     name: tests (${{ matrix.os }}, Python ${{ matrix.python }}, beets ${{ matrix.beets }}, pysacd ${{ matrix.pysacd }})
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      id-token: write   # Codecov upload with GitHub's OIDC token: no stored secret
     strategy:
       fail-fast: false
       matrix:
@@ -137,6 +140,18 @@ jobs:
           else
             pytest -q
           fi
+
+      # Coverage also goes to Codecov for the README badge and PR comparisons, authenticated
+      # with the job's OIDC token. Pull requests from forks get no token, so they skip it, and
+      # an upload failure only fails CI on main, so a Codecov outage can't block PRs.
+      - name: Upload coverage to Codecov
+        if: matrix.coverage && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5  # v7.1.1
+        with:
+          use_oidc: true
+          files: coverage.xml
+          disable_search: true
+          fail_ci_if_error: ${{ github.event_name == 'push' }}
 
       - name: Upload the coverage report
         if: matrix.coverage
