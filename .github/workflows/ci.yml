@@ -26,10 +26,11 @@ jobs:
         with:
           python-version: "3.13"
 
+      # hash-locked dependencies (scripts/lock.py, #19), then the plugin itself
       - name: Install
         run: |
-          python -m pip install --upgrade pip
-          pip install -e '.[dev]'
+          pip install --require-hashes --only-binary :all: -r locks/latest/requirements.txt
+          pip install --no-deps --no-build-isolation -e .
 
       - name: ruff
         run: ruff check .
@@ -62,17 +63,27 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
+      # Every dependency from a hash-locked file (scripts/lock.py, #19): locks/oldest has beets at
+      # the floor in pyproject.toml, locks/latest the newest beets; Dependabot keeps both current.
+      # Then the plugin itself, with nothing else fetched.
       - name: Install the plugin and beets
         shell: bash
+        env:
+          BEETS: ${{ matrix.beets }}
         run: |
-          python -m pip install --upgrade pip
-          pip install -e '.[dev]'
-          if [ "${{ matrix.beets }}" = oldest ]; then
-            # the floor declared in pyproject.toml, so the two can't drift apart
-            floor=$(python -c "import tomllib,re; d=tomllib.load(open('pyproject.toml','rb'))['project']['dependencies']; print(next(re.search(r'>=\s*([0-9.]+)', x).group(1) for x in d if x.startswith('beets')))")
-            pip install "beets==$floor.*"
-          fi
+          pip install --require-hashes --only-binary :all: -r "locks/$BEETS/requirements.txt"
+          pip install --no-deps --no-build-isolation -e .
+          pip check
           python -c "import beets; print('beets', beets.__version__)"
+          if [ "$BEETS" = oldest ]; then
+            # the floor declared in pyproject.toml, so the lock and it can't drift apart
+            python - <<'PY'
+          import re, tomllib, beets
+          deps = tomllib.load(open("pyproject.toml", "rb"))["project"]["dependencies"]
+          floor = next(re.search(r">=\s*([0-9.]+)", d).group(1) for d in deps if d.startswith("beets"))
+          assert beets.__version__.startswith(floor + "."), f"beets {beets.__version__} is not the floor {floor}"
+          PY
+          fi
 
       # The tests build synthetic SACD images with pysacd's test generator, which
       # isn't part of the pysacd package: check out the matching pysacd source.
@@ -96,12 +107,16 @@ jobs:
           path: pysacd-src
           persist-credentials: false
 
+      # Built with the locked setuptools and installed over the released pysacd without
+      # fetching anything; pip check fails if master needs a dependency the lock lacks.
       - name: Install pysacd from master
         if: matrix.pysacd == 'master'
         run: |
           sudo apt-get update -q
           sudo apt-get install -y -q --no-install-recommends libflac-dev
-          pip install ./pysacd-src
+          pip wheel --no-deps --no-build-isolation -w "$RUNNER_TEMP/pysacd-wheel" ./pysacd-src
+          pip install --no-deps --force-reinstall "$RUNNER_TEMP"/pysacd-wheel/*.whl
+          pip check
 
       - name: Tests
         shell: bash
@@ -112,7 +127,7 @@ jobs:
         run: |
           python -c "import pysacd, pysacd._native as n; print('pysacd', pysacd.__version__, n.build_info())"
           if [ "$COVERAGE" = true ]; then
-            # coverage.py, pinned in the dev extra; settings in pyproject.toml
+            # coverage.py, pinned in the dev extra and the lock; settings in pyproject.toml
             coverage run -m pytest -q
             coverage report
             { echo "## Coverage"; coverage report --format=markdown; } >> "$GITHUB_STEP_SUMMARY"

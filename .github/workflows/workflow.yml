@@ -7,7 +7,7 @@ name: release
 
 on:
   pull_request:
-    paths: ["pyproject.toml", "beetsplug/**", ".github/workflows/workflow.yml"]
+    paths: ["pyproject.toml", "beetsplug/**", "locks/**", ".github/workflows/workflow.yml"]
   push:
     tags: ["v*"]
   workflow_dispatch:
@@ -27,13 +27,22 @@ jobs:
         with:
           python-version: "3.13"
 
+      # build and setuptools from the hash lock (scripts/lock.py, #19), without isolation, so
+      # nothing unhashed is downloaded
       - name: Build
-        run: pipx run build
+        run: |
+          python -m venv /tmp/build
+          /tmp/build/bin/pip install -q --require-hashes --only-binary :all: -r locks/latest/requirements.txt
+          /tmp/build/bin/python -m build --no-isolation
 
+      # A fresh environment: the locked dependencies, then the wheel without fetching
+      # anything else; pip check fails if the wheel declares a dependency the lock lacks.
       - name: The wheel installs and the plugin loads
         run: |
           python -m venv /tmp/clean
-          /tmp/clean/bin/pip install -q dist/*.whl
+          /tmp/clean/bin/pip install -q --require-hashes --only-binary :all: -r locks/latest/requirements.txt
+          /tmp/clean/bin/pip install -q --no-deps dist/*.whl
+          /tmp/clean/bin/pip check
           mkdir -p /tmp/beetsdir
           printf 'plugins: sacd\nlibrary: /tmp/beetsdir/l.db\ndirectory: /tmp/beetsdir/m\n' > /tmp/beetsdir/config.yaml
           BEETSDIR=/tmp/beetsdir /tmp/clean/bin/beet sacd-info --help
