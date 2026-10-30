@@ -114,8 +114,9 @@ jobs:
         run: |
           sudo apt-get update -q
           sudo apt-get install -y -q --no-install-recommends libflac-dev
-          pip wheel --no-deps --no-build-isolation -w "$RUNNER_TEMP/pysacd-wheel" ./pysacd-src
-          pip install --no-deps --force-reinstall "$RUNNER_TEMP"/pysacd-wheel/*.whl
+          # a literal *.whl path, which Scorecard recognises as a local wheel install
+          pip wheel --no-deps --no-build-isolation -w pysacd-wheel ./pysacd-src
+          pip install --no-deps --force-reinstall pysacd-wheel/*.whl
           pip check
 
       - name: Tests
