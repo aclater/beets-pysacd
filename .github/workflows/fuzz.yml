@@ -1,0 +1,57 @@
+# Fuzz the DVD/Blu-ray identifier (beetsplug/_sacd_discimage.py) with Atheris (#22): every
+# input is a whole disc image, seeded from tests/discgen.py's images, and identify() must
+# return a DiscImage or raise OSError. 150 seconds on pull requests that touch the identifier
+# or the harness, 20 minutes weekly. A crash fails the job and its input is uploaded as the
+# `fuzz-crashes` artifact; replay it with `python fuzz/fuzz_discimage.py <file>`.
+
+name: fuzz
+
+on:
+  pull_request:
+    paths: ["beetsplug/_sacd_discimage.py", "fuzz/**", "tests/discgen.py", "locks/fuzz/**",
+            ".github/workflows/fuzz.yml"]
+  schedule:
+    - cron: "23 4 * * 2"  # weekly
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  discimage:
+    name: fuzz (disc image identifier)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.13"
+
+      # hash-locked (scripts/lock.py, #19)
+      - name: Install Atheris
+        run: python -m pip install --require-hashes --only-binary :all: -r locks/fuzz/requirements.txt
+
+      - name: Seeds
+        run: python fuzz/fuzz_discimage.py --seeds "$RUNNER_TEMP/seeds"
+
+      - name: Fuzz
+        env:
+          FUZZ_SECONDS: ${{ github.event_name == 'schedule' && '1200' || '150' }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/corpus" crashes
+          python fuzz/fuzz_discimage.py -max_total_time="$FUZZ_SECONDS" -max_len=1048576 \
+            -timeout=10 -rss_limit_mb=2048 -print_final_stats=1 -artifact_prefix=crashes/ \
+            "$RUNNER_TEMP/corpus" "$RUNNER_TEMP/seeds"
+
+      - name: Upload crashing inputs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: fuzz-crashes
+          path: crashes/
+          if-no-files-found: ignore
+          retention-days: 14
