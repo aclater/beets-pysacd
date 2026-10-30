@@ -91,6 +91,15 @@ def test_out_of_range_lengths_are_bounded(tmp_path):
     assert identify(q).kind == "unknown"
 
 
+REGRESSIONS = Path(__file__).resolve().parent.parent / "fuzz" / "regressions"
+
+
+@pytest.mark.parametrize("image", sorted(p.name for p in REGRESSIONS.glob("*") if p.name != ".gitkeep"))
+def test_fuzz_regressions(image):
+    """Inputs that once crashed the Atheris harness (fuzz/fuzz_discimage.py) now give a result."""
+    assert identify(REGRESSIONS / image).kind in ("bluray", "dvd-audio", "dvd-video", "unknown")
+
+
 def test_reads_only(tmp_path):
     p = discgen.build(tmp_path / "r.iso", discgen.DVD_AUDIO)
     before, mtime = p.read_bytes(), p.stat().st_mtime_ns

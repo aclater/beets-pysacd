@@ -15,11 +15,12 @@ updates:
         patterns: ["*"]
     commit-message:
       prefix: ci
-  # pyproject.toml's dev pins, and CI's hash lock with the newest beets (scripts/lock.py), so
-  # the "beets latest" and "pysacd release" legs follow new releases. A release that brings a
+  # pyproject.toml's dev pins, CI's hash lock with the newest beets (scripts/lock.py), so
+  # the "beets latest" and "pysacd release" legs follow new releases, and the fuzz lock
+  # (Atheris). A release that brings a
   # new dependency fails the locked install; rerun scripts/lock.py on that PR.
   - package-ecosystem: pip
-    directories: ["/", "/locks/latest"]
+    directories: ["/", "/locks/latest", "/locks/fuzz"]
     schedule:
       interval: weekly
     cooldown:

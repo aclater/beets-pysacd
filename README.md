@@ -227,15 +227,22 @@ artifact; nothing goes to an external service. Changes to workflows are linted w
 [zizmor](https://docs.zizmor.sh) (`pipx run zizmor==1.30.1 --no-online-audits
 .github/workflows`), and changes to this README get a link check (lychee).
 
+Changes to the DVD/Blu-ray identifier (`beetsplug/_sacd_discimage.py`) or the
+harness are fuzzed for 150 seconds with [Atheris](https://github.com/google/atheris)
+(`fuzz/fuzz_discimage.py`, seeded from `tests/discgen.py`'s images; its docstring shows
+how to run it locally). A crashing input is uploaded as the `fuzz-crashes` artifact; once
+fixed, it goes into `fuzz/regressions/`, which the tests replay.
+
 Weekly: OpenSSF Scorecard (also on every push to `main`; results published for
 the badge and shown under code scanning), the live MusicBrainz test, the link
-check, and the test matrix, to catch new beets and pysacd releases.
+check, the test matrix, to catch new beets and pysacd releases, and 20 minutes of
+fuzzing.
 
 CI installs every Python dependency hash-checked (`pip install --require-hashes`),
 from two lock files written by `python3 -I scripts/lock.py` (needs
 [uv](https://docs.astral.sh/uv/)): `locks/latest/requirements.txt` with the newest
 beets and `locks/oldest/requirements.txt` with beets held at the floor in
-`pyproject.toml`. Both cover Python 3.11 to 3.14 on Linux, macOS and Windows, and
+`pyproject.toml` (plus `locks/fuzz/requirements.txt`, Atheris). Both cover Python 3.11 to 3.14 on Linux, macOS and Windows, and
 leave out releases younger than two weeks, except pysacd's and security fixes listed
 in the script. The plugin, and pysacd's master branch on that leg, are installed on
 top with `--no-deps`, so nothing unhashed is downloaded. Dependabot keeps both locks

@@ -9,11 +9,13 @@ whole dependency closure of the plugin, its `dev` extra and the build tools, for
 to 3.14 on Linux, macOS and Windows (a universal resolution, with every file's sha256):
 
 - locks/latest/requirements.txt: the newest beets 2.x, pysacd and everything else;
-- locks/oldest/requirements.txt: the same, but beets held at the floor in pyproject.toml.
+- locks/oldest/requirements.txt: the same, but beets held at the floor in pyproject.toml;
+
+and locks/fuzz/requirements.txt, Atheris for the fuzz workflow.
 
 Releases younger than two weeks are left out (CLAUDE.md), except the owner's own pysacd, so
 the "pysacd release" legs test what users get, and security fixes listed in NOT_HELD_BACK.
-Dependabot keeps both files current between runs (beets held at the floor in the oldest one);
+Dependabot keeps these files current between runs (beets held at the floor in the oldest one);
 rerun this when a new release brings a new dependency, or after changing pyproject.toml.
 """
 
@@ -38,6 +40,9 @@ NOT_HELD_BACK = {
     "pysacd": "",
     "certifi": "==2026.10.18",   # GHSA-6q48-6c7w-9gw2 (critical): the first fixed release
 }
+# the fuzz workflow (fuzz/fuzz_discimage.py, #22): Atheris, whose wheels start at Python 3.12
+FUZZ = ["atheris"]
+FUZZ_PYTHON = "3.12"
 MIN_AGE = datetime.timedelta(days=14)
 
 
@@ -57,25 +62,32 @@ def main() -> int:
     now = datetime.datetime.now(datetime.UTC).replace(microsecond=0)
     cutoff = (now - MIN_AGE).isoformat().replace("+00:00", "Z")
     fixes = [name + spec for name, spec in NOT_HELD_BACK.items() if spec]
-    locks = {"latest": fixes, "oldest": [f"beets=={beets_floor()}.*", *fixes]}
     with tempfile.TemporaryDirectory() as tmp:
         tools = Path(tmp, "build-tools.in")
         tools.write_text("\n".join(BUILD_TOOLS) + "\n")
-        for name, constraints in locks.items():
+        fuzz = Path(tmp, "fuzz.in")
+        fuzz.write_text("\n".join(FUZZ) + "\n")
+        project = ["--extra", "dev", "pyproject.toml", str(tools)]
+        # name: (inputs, constraints, oldest Python)
+        locks = {"latest": (project, fixes, "3.11"),
+                 "oldest": (project, [f"beets=={beets_floor()}.*", *fixes], "3.11"),
+                 "fuzz": ([str(fuzz)], fixes, FUZZ_PYTHON)}
+        for name, (inputs, constraints, python) in locks.items():
             out = ROOT / "locks" / name / "requirements.txt"
             cmd = [uv, "pip", "compile", "--no-config", "--quiet", "--universal",
-                   "--python-version", "3.11", "--generate-hashes",
+                   "--python-version", python, "--generate-hashes",
                    "--exclude-newer", cutoff,
                    *[f"--exclude-newer-package={p}={now.isoformat().replace('+00:00', 'Z')}" for p in NOT_HELD_BACK],
                    "--custom-compile-command", "python3 -I scripts/lock.py",
-                   "--extra", "dev", "pyproject.toml", str(tools), "-o", str(out)]
+                   *inputs, "-o", str(out)]
             if constraints:
                 c = Path(tmp, f"{name}-constraints.txt")
                 c.write_text("\n".join(constraints) + "\n")
                 cmd += ["--constraint", str(c)]
             subprocess.run(cmd, cwd=ROOT, check=True)
             # temporary paths in uv's "via" annotations would differ on every run
-            text = out.read_text().replace(str(tools), "build tools").replace(tmp + "/", "")
+            text = (out.read_text().replace(str(tools), "build tools").replace(str(fuzz), "fuzz tools")
+                    .replace(tmp + "/", ""))
             out.write_text(text)
             print(f"wrote {out.relative_to(ROOT)}")
     return 0

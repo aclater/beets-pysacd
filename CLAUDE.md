@@ -39,6 +39,8 @@ catalogued, never converted. That handler is the plugin's own, not pysacd's.
 - **Hostile images.** Disc images may be malformed. `_sacd_discimage` bounds
   every read and answers "unknown" for anything it can't parse; keep it so,
   and extend `tests/test_discimage.py` (it mutates images) with any change.
+  The `fuzz` workflow runs `fuzz/fuzz_discimage.py` (Atheris) on such changes;
+  a crash it finds gets a fix and its input in `fuzz/regressions/`.
 - **Untrusted text.** Disc text, volume labels and MusicBrainz data are attacker-controlled.
   Pass them only through pysacd's `safetext` and beets' own path handling;
   never to a shell, `subprocess` or `eval`.
@@ -69,7 +71,7 @@ CI also runs the tests on Python 3.11 to 3.14, on the oldest and newest beets,
 on Linux, macOS and Windows, and against pysacd's master branch (one leg
 under coverage), plus CodeQL, semgrep, the privacy check, dependency review,
 zizmor on workflow changes, a README link check and an AI review. Weekly:
-OpenSSF Scorecard and a live MusicBrainz test (README, "CI"). CI installs its
+OpenSSF Scorecard, a live MusicBrainz test and 20 minutes of fuzzing (README, "CI"). CI installs its
 dependencies only from the hash locks in `locks/` (`scripts/lock.py`; rerun it after
 changing dependencies in `pyproject.toml`). Workflow changes
 must keep zizmor clean: `persist-credentials: false` on every checkout, and no
