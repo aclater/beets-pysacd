@@ -10,7 +10,7 @@ the same command with `beet -v`, what you expected and what happened. Describe y
 discs and library in general terms; you don't need to share your collection.
 
 **Security problems** go through a private report instead, never a public issue: see
-[SECURITY.md](SECURITY.md) when present, or GitHub's
+[SECURITY.md](SECURITY.md), which uses GitHub's
 [private vulnerability reporting](https://github.com/aclater/beets-pysacd/security/advisories/new).
 
 ## Changing code

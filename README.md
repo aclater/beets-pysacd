@@ -225,8 +225,9 @@ Weekly: OpenSSF Scorecard (also on every push to `main`; results published for
 the badge and shown under code scanning), the live MusicBrainz test, the link
 check, and the test matrix, to catch new beets and pysacd releases.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report bugs and propose changes, and
-the [changelog](CHANGELOG.md) for what changed in each release.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report bugs and propose changes,
+[SECURITY.md](SECURITY.md) for reporting a vulnerability privately, and the
+[changelog](CHANGELOG.md) for what changed in each release.
 
 ## Licence
 
