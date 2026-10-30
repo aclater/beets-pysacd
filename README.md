@@ -1,6 +1,20 @@
 # beets-pysacd
 
+[![PyPI](https://img.shields.io/pypi/v/beets-pysacd)](https://pypi.org/project/beets-pysacd/)
+[![Python](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Faclater%2Fbeets-pysacd%2Fmain%2Fpyproject.toml)](pyproject.toml)
+[![Wheel](https://img.shields.io/pypi/wheel/beets-pysacd)](https://pypi.org/project/beets-pysacd/#files)
+[![Implementation](https://img.shields.io/pypi/implementation/beets-pysacd)](https://pypi.org/project/beets-pysacd/)
+[![Downloads](https://static.pepy.tech/badge/beets-pysacd/month)](https://pepy.tech/projects/beets-pysacd)
+[![License](https://img.shields.io/pypi/l/beets-pysacd)](LICENSE)
+
+[![CI](https://github.com/aclater/beets-pysacd/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aclater/beets-pysacd/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/aclater/beets-pysacd/branch/main/graph/badge.svg)](https://codecov.io/gh/aclater/beets-pysacd)
+[![CodeQL](https://github.com/aclater/beets-pysacd/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/aclater/beets-pysacd/actions/workflows/codeql.yml)
+[![Fuzzing](https://github.com/aclater/beets-pysacd/actions/workflows/fuzz.yml/badge.svg)](https://github.com/aclater/beets-pysacd/actions/workflows/fuzz.yml)
+[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/aclater/beets-pysacd/badge)](https://scorecard.dev/viewer/?uri=github.com/aclater/beets-pysacd)
+[![SLSA Build L2](https://slsa.dev/images/gh-badge-level2.svg)](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations)
 
 A [beets](https://beets.io) plugin that imports SACD ISO images, using
 [pysacd](https://github.com/aclater/pysacd).
@@ -223,7 +237,9 @@ and newest beets, Linux, macOS and Windows, pysacd's release and master branch),
 CodeQL, semgrep, a privacy check, dependency review (fails on high or critical
 vulnerabilities) and an AI review. One test leg runs under coverage.py and shows
 the report in its job summary, with HTML and XML reports as the `coverage`
-artifact; nothing goes to an external service. Changes to workflows are linted with
+artifact; the XML report also goes to [Codecov](https://codecov.io/gh/aclater/beets-pysacd)
+for the badge, authenticated with the job's GitHub OIDC token (no stored secret;
+pull requests from forks skip the upload). Changes to workflows are linted with
 [zizmor](https://docs.zizmor.sh) (`pipx run zizmor==1.30.1 --no-online-audits
 .github/workflows`), and changes to this README get a link check (lychee).
 
