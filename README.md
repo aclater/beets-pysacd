@@ -238,8 +238,9 @@ dependency, the locked install fails on Dependabot's PR, and rerunning
 `scripts/lock.py` there fixes it. Rerun it, too, after changing dependencies in
 `pyproject.toml`. For local work, `pip install -e '.[dev]'` still works.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report bugs and propose changes, and
-the [changelog](CHANGELOG.md) for what changed in each release.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report bugs and propose changes,
+[SECURITY.md](SECURITY.md) for reporting a vulnerability privately, and the
+[changelog](CHANGELOG.md) for what changed in each release.
 
 ## Licence
 
