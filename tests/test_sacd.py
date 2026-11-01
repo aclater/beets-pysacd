@@ -504,6 +504,17 @@ class TestMigrate(Base):
         assert all("sacdfs_path" not in i for i in self.lib.albums()[0].items())
 
 
+class TestMigrateErrors(Base):
+    def test_arguments_and_unreadable_images(self, capsys):
+        with pytest.raises(UserError):
+            self.run_command("sacd-migrate")
+        with pytest.raises(UserError):
+            self.run_command("sacd-migrate", str(self.isodir / "none"))
+        (self.isodir / "junk.iso").write_bytes(bytes(2048 * 600))
+        self.run_command("sacd-migrate", str(self.isodir / "junk.iso"))
+        assert "not a readable SACD image, skipped" in capsys.readouterr().out
+
+
 class TestSacdfsPaths:
     def test_layout_and_flatten(self, tmp_path):
         from beetsplug._sacd_migrate import image_folder, sacdfs_name, sacdfs_path
