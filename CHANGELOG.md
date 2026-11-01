@@ -8,6 +8,9 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## Unreleased
 
+- New `beet sacd-migrate`: finds the library albums that are extracts of an ISO and records
+  `sacd_iso`, `sacd_track` and the sacdfs path of each track, so extracts can be deleted once
+  sacdfs serves the ISO (part of #38). Report-only unless `--apply`; never deletes files.
 - CI's "pysacd release" legs test pysacd 0.3.0, which reads and decodes through
   scarletbook-rs. Disc fingerprints are unchanged from 0.2.2 (checked on the owner's
   library), so the plugin needs no change.
