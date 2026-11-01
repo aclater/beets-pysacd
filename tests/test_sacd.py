@@ -512,7 +512,7 @@ class TestSacdfsPaths:
         iso.write_bytes(b"")
         assert image_folder(iso, tmp_path, False).as_posix() == "Artist/2001 - Album/rip/Album/disc"
         assert image_folder(iso, tmp_path, True).as_posix() == "Artist/2001 - Album"
-        (iso.parent.parent / "extra.jpg").write_text("x")      # 'rip' holds more than one thing
-        assert image_folder(iso, tmp_path, True).as_posix() == "Artist/2001 - Album/rip"
+        (iso.parent.parent / "extra.jpg").write_text("x")      # "rip" holds more than the chain
+        assert image_folder(iso, tmp_path, True).as_posix() == "Artist/2001 - Album/rip/Album"
         assert sacdfs_path(iso, tmp_path, False, "multichannel", 3, "A/B").endswith("/Multichannel/03 - A_B.dsf")
         assert sacdfs_name(7, None, "wav") == "07.wav"
