@@ -456,3 +456,63 @@ class TestChooseMedium:
         restrict(info, 2)
         assert {t.medium for t in info.tracks} == {2}
         assert info.media == STEREO
+
+
+class TestMigrate(Base):
+    def imported(self):
+        self.run_command("sacd-import", str(self.iso))
+        [album] = self.albums()
+        return album
+
+    def test_reports_without_applying(self, capsys):
+        album = self.imported()
+        before = sha(self.iso)
+        self.run_command("sacd-migrate", str(self.iso))
+        out = capsys.readouterr().out
+        assert "stereo: album" in out and "3 tracks match; would record" in out
+        assert "Nothing was deleted" in out
+        assert all("sacdfs_path" not in i for i in album.items())
+        assert sha(self.iso) == before and all(Path(os.fsdecode(i.path)).exists() for i in album.items())
+
+    def test_apply_records_iso_and_sacdfs_paths_keeping_musicbrainz_data(self):
+        album = self.imported()
+        ids = sorted(i.mb_releasetrackid for i in album.items())
+        self.run_command("sacd-migrate", "--apply", "--source", str(self.isodir), str(self.iso))
+        items = sorted(self.lib.albums()[0].items(), key=lambda i: int(i.sacd_track))
+        assert [int(i.sacd_track) for i in items] == [1, 2, 3]
+        assert {i.sacd_iso for i in items} == {str(self.iso)}
+        assert all(i.sacdfs_path.startswith("disc/Stereo/0") and i.sacdfs_path.endswith(".dsf") for i in items)
+        assert sorted(i.mb_releasetrackid for i in items) == ids
+
+    def test_extracts_imported_without_the_plugin_match_by_folder_and_length(self, capsys):
+        album = self.imported()
+        album["sacd_iso_sha"] = ""
+        album.store()
+        folder = Path(os.fsdecode(album.items().get().path)).parent
+        iso = self.iso.rename(folder / "disc.iso")
+        self.run_command("sacd-migrate", "--apply", str(iso))
+        assert "3 tracks match; recorded" in capsys.readouterr().out
+        assert {i.sacd_iso for i in self.lib.albums()[0].items()} == {str(iso)}
+
+    def test_other_lengths_do_not_match(self, capsys):
+        album = self.imported()
+        for i in album.items():
+            i.length = 90.0
+            i.store()
+        self.run_command("sacd-migrate", "--apply", str(self.iso))
+        assert "no extracts in the library" in capsys.readouterr().out
+        assert all("sacdfs_path" not in i for i in self.lib.albums()[0].items())
+
+
+class TestSacdfsPaths:
+    def test_layout_and_flatten(self, tmp_path):
+        from beetsplug._sacd_migrate import image_folder, sacdfs_name, sacdfs_path
+        iso = tmp_path / "Artist" / "2001 - Album" / "rip" / "Album" / "disc.iso"
+        iso.parent.mkdir(parents=True)
+        iso.write_bytes(b"")
+        assert image_folder(iso, tmp_path, False).as_posix() == "Artist/2001 - Album/rip/Album/disc"
+        assert image_folder(iso, tmp_path, True).as_posix() == "Artist/2001 - Album"
+        (iso.parent.parent / "extra.jpg").write_text("x")      # 'rip' holds more than one thing
+        assert image_folder(iso, tmp_path, True).as_posix() == "Artist/2001 - Album/rip"
+        assert sacdfs_path(iso, tmp_path, False, "multichannel", 3, "A/B").endswith("/Multichannel/03 - A_B.dsf")
+        assert sacdfs_name(7, None, "wav") == "07.wav"

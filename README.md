@@ -83,6 +83,29 @@ flexible attributes, `sacd_iso_sha` (a fingerprint of the disc's TOCs) and
 `sacd_area` (`stereo` or `multichannel`), so `beet ls sacd_area:multichannel`
 lists the multichannel albums.
 
+### Moving a library from extracts to ISOs (sacdfs)
+
+If you serve your ISOs with [sacdfs](https://github.com/aclater/sacdfs) and delete the extracted
+files, the beets items for those extracts would dangle. `beet sacd-migrate` finds the albums that
+are extracts of an ISO and records where the ISO and sacdfs hold each track, keeping their
+MusicBrainz IDs and your other beets data:
+
+```sh
+beet sacd-migrate ~/rips/                  # report which albums are extracts of which ISO area
+beet sacd-migrate --apply --source ~/rips --flatten ~/rips/    # record it
+beet ls -f '$path $sacdfs_path' sacd_area:stereo
+```
+
+An album is an extract of an ISO area when it carries that disc's `sacd_iso_sha` and
+`sacd_area` (imported with this plugin), or when it lives under the ISO's folder and its
+tracks agree with the area's in number and length (within 2 seconds). With `--apply` each item
+gets the flexible attributes `sacd_iso` (the ISO), `sacd_track`, `sacd_area` and `sacdfs_path`
+(`Folder/Stereo/NN - Title.dsf`, relative to the sacdfs mount; `--source` is sacdfs' SOURCE
+and `--flatten` matches its option). It writes only to the beets database: nothing is moved
+or deleted, and tags are not written to files. The check is of the TOC, not the audio; run
+`sacdfs verify` before deleting any extract. Item paths are not changed, and sacdfs' file
+names are derived from track titles, so `sacdfs_path` is a best-effort name.
+
 ### DVD-Audio, DVD-Video and Blu-ray images
 
 Disc-image folders often hold DVD and Blu-ray images next to SACDs. The plugin

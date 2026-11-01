@@ -38,6 +38,7 @@ from beets.ui.commands.import_ import import_files
 from beets.util import MoveOperation, bytestring_path, displayable_path, syspath
 
 from beetsplug._sacd_discimage import identify
+from beetsplug._sacd_migrate import durations_match, sacdfs_path
 
 AREAS = ("stereo", "multichannel")
 FORMATS = ("dsf", "flac")
@@ -238,7 +239,18 @@ class SacdPlugin(BeetsPlugin):
         info = ui.Subcommand("sacd-info", help="print the TOC of SACD ISO images; catalogue DVD and Blu-ray images")
         info.parser.usage = "%prog [options] ISO|DIRECTORY..."
         info.func = self.sacd_info
-        return [imp, info]
+
+        mig = ui.Subcommand("sacd-migrate", help="match library items to the SACD ISOs they were extracted "
+                                                 "from; record where the ISO and sacdfs hold each track")
+        mig.parser.add_option("--apply", action="store_true", default=False,
+                              help="write the attributes (default: only report)")
+        mig.parser.add_option("--source", metavar="DIR",
+                              help="sacdfs SOURCE directory, to work out sacdfs paths (default: the ISO's folder)")
+        mig.parser.add_option("--flatten", action="store_true", default=False,
+                              help="sacdfs is mounted with --flatten")
+        mig.parser.usage = "%prog [options] ISO|DIRECTORY..."
+        mig.func = self.sacd_migrate
+        return [imp, info, mig]
 
     def sacd_info(self, lib, opts, args) -> None:
         from pysacd import safetext
@@ -293,6 +305,78 @@ class SacdPlugin(BeetsPlugin):
             self.finish(lib)
         finally:
             self.cleanup()
+
+    def sacd_migrate(self, lib, opts, args) -> None:
+        """Report, and with --apply record, which library albums are extracts of which ISO area.
+
+        Albums are matched by the `sacd_iso_sha` and `sacd_area` that `sacd-import` wrote or,
+        for extracts imported some other way, by living under the ISO's folder with the area's
+        track count and lengths. Matched items get `sacd_iso`, `sacd_track` and `sacdfs_path`
+        (flexible attributes: beets' own data, never the files). Nothing is deleted or moved."""
+        from pysacd import safetext
+        from pysacd.toc import SACDError, SACDImage
+        if not args:
+            raise ui.UserError("give one or more ISO images or directories")
+        isos = [iso for a in args for iso in find_isos(a)]
+        if not isos:
+            raise ui.UserError("no ISO images found")
+        source = Path(os.path.abspath(opts.source)) if opts.source else None
+        claimed: set[int] = set()
+        n_albums = 0
+        for iso in isos:
+            shown = safetext.for_terminal(displayable_path(str(iso)))
+            iso = Path(os.path.abspath(iso))
+            try:
+                with SACDImage(str(iso)) as img:       # read-only
+                    disc = img.read_toc()
+                    fp = fingerprint(img, disc)
+            except (SACDError, OSError):
+                ui.print_(f"{shown}: not a readable SACD image, skipped")
+                continue
+            root = source or iso.parent
+            for kind in AREAS:
+                area = disc.stereo if kind == "stereo" else disc.multichannel
+                if area is None:
+                    continue
+                tracks = sorted(area.tracks, key=lambda t: t.number)
+                secs = [t.duration.seconds_float for t in tracks]
+                found = self._extracts(lib, iso, fp, kind, secs, claimed)
+                if not found:
+                    ui.print_(f"{shown}: {kind}: no extracts in the library")
+                    continue
+                for album, items in found:
+                    claimed.add(album.id)
+                    n_albums += 1
+                    ui.print_(safetext.for_terminal(
+                        f"{shown}: {kind}: album {album.id} {album.albumartist} - {album.album}: "
+                        f"{len(items)} tracks match; {'recorded' if opts.apply else 'would record'}"))
+                    for item, t in zip(items, tracks, strict=True):
+                        item["sacd_iso"] = os.fsdecode(iso)
+                        item["sacd_track"] = t.number
+                        item["sacd_area"] = kind
+                        item["sacdfs_path"] = sacdfs_path(iso, root, opts.flatten, kind, t.number, t.title)
+                        if opts.apply:
+                            item.store()
+        ui.print_(f"{n_albums} album(s) matched. Nothing was deleted: check them with sacdfs verify "
+                  f"before removing any extract.")
+
+    def _extracts(self, lib, iso: Path, fp: str, kind: str, secs: list[float], claimed: set[int]):
+        """[(album, items in track order)] of the library's extracts of this ISO area."""
+        out = []
+        seen: set[int] = set()
+        candidates = list(lib.albums(f"sacd_iso_sha:{fp} sacd_area:{kind}"))
+        folder = os.fsencode(str(iso.parent)).rstrip(os.sep.encode()) + os.sep.encode()
+        for a in lib.albums():
+            if a.id not in {c.id for c in candidates} and all(i.path.startswith(folder) for i in a.items()):
+                candidates.append(a)
+        for a in candidates:
+            if a.id in seen or a.id in claimed:
+                continue
+            seen.add(a.id)
+            items = sorted(a.items(), key=lambda i: (i.disc or 1, i.track or 0))
+            if items and durations_match([i.length for i in items], secs):
+                out.append((a, items))
+        return out
 
     # ------------------------------------------------------------ converting
 
