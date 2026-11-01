@@ -8,6 +8,9 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## Unreleased
 
+- CI's "pysacd release" legs test pysacd 0.3.0, which reads and decodes through
+  scarletbook-rs. Disc fingerprints are unchanged from 0.2.2 (checked on the owner's
+  library), so the plugin needs no change.
 - Releases carry their build provenance as `<file>.intoto.jsonl` assets, so a download
   can be verified offline (`gh attestation verify <file> --repo aclater/beets-pysacd
   --bundle <file>.intoto.jsonl`); 0.1.0 to 0.1.2 have them too (#20).
