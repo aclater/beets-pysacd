@@ -163,6 +163,52 @@ jobs:
             coverage.xml
           retention-days: 14
 
+  sacdfs-tags:
+    # beet sacd-tags-export against a real mount: a container build of sacdfs main serves the
+    # exported tags (tests/test_tags_export.py, skipped elsewhere without SACDFS_IMAGE).
+    name: tags served by sacdfs main
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Install
+        run: |
+          pip install --require-hashes --only-binary :all: -r locks/latest/requirements.txt
+          pip install --no-deps --no-build-isolation -e .
+
+      - name: Find the pysacd release
+        id: pysacd
+        run: echo "ref=v$(python -c 'import importlib.metadata as m; print(m.version("pysacd"))')" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: aclater/pysacd
+          ref: ${{ steps.pysacd.outputs.ref }}
+          path: pysacd-src
+          persist-credentials: false
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: aclater/sacdfs
+          ref: main
+          path: sacdfs-src
+          persist-credentials: false
+
+      - name: Build sacdfs
+        run: podman build -t sacdfs-main sacdfs-src
+
+      - name: Test
+        env:
+          PYSACD_TESTS: ${{ github.workspace }}/pysacd-src/tests
+          SACDFS_IMAGE: localhost/sacdfs-main
+        run: pytest -q tests/test_tags_export.py
+
   privacy:
     # No hostnames, private IPs or local paths in files or commit identities.
     # Extra names come from the PRIVATE_NAMES repository variable (a regex), so

@@ -124,6 +124,30 @@ albums have `sacd_catalogued: 1`. They have no MusicBrainz match: run beets' own
 the mounted files for that. Without `--apply` the command only reports; a second run
 adds nothing.
 
+### Keeping your tags: `sacd-tags-export`
+
+sacdfs 0.3.0 can serve your own tags over an image's: a **tags directory** (`--tags DIR`,
+`SACDFS_TAGS` in the container) holds one TOML file per disc. `beet sacd-tags-export` writes
+those files from beets, so the genres, MusicBrainz IDs and cover art you have in beets survive
+deleting the extracts:
+
+```sh
+beet sacd-tags-export --tags ~/music/sacd-tags            # every SACD album
+beet sacd-tags-export --tags ~/music/sacd-tags -n genre:jazz   # a query; -n only reports
+```
+
+It covers the albums whose items have `sacd_iso`, `sacd_area` and `sacd_track` (from
+`sacd-migrate` or `--catalogue`). For each disc it works out the file name the way sacdfs does
+(`sacdfs tags key`: a hash of the disc's table of contents, read from the ISO, which is only
+read) and writes, for the album's area (`[stereo.*]` or `[multichannel.*]`): `genre`,
+`publisher` (the label), `MusicBrainz Album Id`, `Release Group Id` and `Album Artist Id`, and
+the album's cover as `<key>-<area>.jpg` or `.png` (JPEG or PNG up to 960 KiB) named by `art`;
+per track, the recording (`UFID`), release track and artist IDs. It leaves everything else in
+an existing file alone, so your own edits stay, and rewrites the file atomically, only when
+something changed (comments in it are not kept). A beets value replaces the same field in the
+area's section; a field beets has no value for is not touched. A file that is not valid TOML is
+left as it is. sacdfs shows the change within a few seconds.
+
 ### DVD-Audio, DVD-Video and Blu-ray images
 
 Disc-image folders often hold DVD and Blu-ray images next to SACDs. The plugin
@@ -261,7 +285,9 @@ default `../pysacd/tests`) and import them into a throwaway beets library.
 MusicBrainz is mocked with a hybrid release whose media share recordings, so
 the tests need no network. DVD and Blu-ray images for the cataloguing tests
 come from `tests/discgen.py`, which writes minimal UDF and ISO 9660 file
-systems.
+systems. `tests/test_tags_export.py` has one test that mounts sacdfs and reads the tags it
+serves; it runs when `SACDFS_IMAGE` names a container build of sacdfs main (needs podman and
+`/dev/fuse`), and CI builds one.
 
 `tests/test_live_musicbrainz.py` is the exception: it runs the plugin's matching
 against a real hybrid SACD release on musicbrainz.org (two requests). It skips

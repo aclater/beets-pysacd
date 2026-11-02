@@ -8,6 +8,9 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## Unreleased
 
+- New `beet sacd-tags-export --tags DIR [QUERY]`: writes sacdfs's tag-layer files (genre, label,
+  MusicBrainz IDs, cover art) from the albums `sacd-migrate` matched to an ISO, keyed by the
+  disc's TOC as sacdfs does, merging with the fields already in each file (#42).
 - New `beet sacd-migrate`: finds the library albums that are extracts of an ISO and records
   `sacd_iso`, `sacd_track` and the sacdfs path of each track, so extracts can be deleted once
   sacdfs serves the ISO (part of #38). Report-only unless `--apply`; never deletes files.

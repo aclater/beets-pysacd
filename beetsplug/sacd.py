@@ -37,6 +37,7 @@ from beets.plugins import BeetsPlugin
 from beets.ui.commands.import_ import import_files
 from beets.util import MoveOperation, bytestring_path, displayable_path, syspath
 
+from beetsplug import _sacd_tags
 from beetsplug._sacd_discimage import identify
 from beetsplug._sacd_migrate import durations_match, parse_verify_report, sacdfs_path
 
@@ -258,7 +259,15 @@ class SacdPlugin(BeetsPlugin):
                               help="where sacdfs is mounted: the paths of catalogued items")
         mig.parser.usage = "%prog [options] ISO|DIRECTORY..."
         mig.func = self.sacd_migrate
-        return [imp, info, mig]
+
+        exp = ui.Subcommand("sacd-tags-export", help="write sacdfs tag-layer files (genre, MusicBrainz IDs, art) "
+                                                     "from the library's SACD albums")
+        exp.parser.add_option("--tags", metavar="DIR", help="sacdfs's tags directory (--tags / SACDFS_TAGS)")
+        exp.parser.add_option("-n", "--dry-run", action="store_true", default=False,
+                              help="report what would be written; write nothing")
+        exp.parser.usage = "%prog --tags DIR [QUERY]"
+        exp.func = self.sacd_tags_export
+        return [imp, info, mig, exp]
 
     def sacd_info(self, lib, opts, args) -> None:
         from pysacd import safetext
@@ -423,6 +432,103 @@ class SacdPlugin(BeetsPlugin):
         album["sacd_area"] = kind
         album["sacd_catalogued"] = 1
         album.store()
+
+    def sacd_tags_export(self, lib, opts, args) -> None:
+        """Write the sacdfs tags file of every SACD disc the library has albums for.
+
+        Albums are those whose items carry `sacd_iso` and `sacd_area` (sacd-import, sacd-migrate).
+        The file is named by the disc's TOC key, worked out as sacdfs does. Per area, the genre,
+        label and MusicBrainz IDs of the album and its tracks, and the album's cover, are written
+        to `[<area>.album]` and `[<area>.track.N]`; every other field already in the file stays."""
+        from pysacd import safetext
+        from pysacd.toc import SACDError, SACDImage
+        if not opts.tags:
+            raise ui.UserError("give the tags directory: --tags DIR")
+        tags_dir = Path(os.path.abspath(opts.tags))
+        if not tags_dir.is_dir():
+            raise ui.UserError("the tags directory does not exist")
+        discs: dict[str, dict[str, list]] = {}              # iso -> area -> items
+        for item in lib.items(list(args)):
+            iso, area = item.get("sacd_iso"), item.get("sacd_area")
+            if iso and area in AREAS and item.get("sacd_track"):
+                discs.setdefault(str(iso), {}).setdefault(area, []).append(item)
+        if not discs:
+            ui.print_("no albums with an SACD image in the library (see sacd-migrate)")
+            return
+        written = 0
+        for iso, areas in sorted(discs.items()):
+            shown = safetext.for_terminal(displayable_path(iso))
+            try:
+                with SACDImage(iso) as img:                 # read-only
+                    key = _sacd_tags.disc_key(img, img.read_toc())
+            except (SACDError, OSError):
+                ui.print_(f"{shown}: not a readable SACD image, skipped")
+                continue
+            path = tags_dir / f"{key}.toml"
+            try:
+                existing = _sacd_tags.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+            except (OSError, ValueError):
+                ui.print_(f"{shown}: {key}.toml exists but is not readable TOML, left alone")
+                continue
+            ours: dict = {}
+            for area, items in areas.items():
+                section = self._tag_section(items, tags_dir, key, area, opts.dry_run)
+                if section:
+                    ours[area] = section
+            data = _sacd_tags.dumps(_sacd_tags.merge(existing, ours)).encode()
+            if opts.dry_run:
+                changed = not path.exists() or path.read_bytes() != data
+            else:
+                changed = _sacd_tags.write_atomic(path, data)
+            written += changed
+            state = ("would be written" if opts.dry_run else "written") if changed else "unchanged"
+            ui.print_(f"{shown}: {key}.toml {state}")
+        ui.print_(f"{written} tags file(s) {'would change' if opts.dry_run else 'written'}.")
+
+    def _tag_section(self, items: list, tags_dir: Path, key: str, area: str, dry: bool) -> dict:
+        """{"album": {...}, "track": {"N": {...}}} for one area's items."""
+        first = items[0]
+        album = first.get_album()
+        src = album if album is not None else first
+        fields = {"genre": src.get("genre"), "publisher": src.get("label"),
+                  "TXXX:MusicBrainz Album Id": src.get("mb_albumid"),
+                  "TXXX:MusicBrainz Release Group Id": src.get("mb_releasegroupid"),
+                  "TXXX:MusicBrainz Album Artist Id": src.get("mb_albumartistid")}
+        alb = {k: str(v) for k, v in fields.items() if v}
+        artpath = album.get("artpath") if album is not None else None
+        if artpath:
+            name = self._export_art(os.fsdecode(artpath), tags_dir, f"{key}-{area}", dry)
+            if name:
+                alb["art"] = name
+        tracks: dict[str, dict[str, str]] = {}
+        for it in items:
+            f = {"UFID:http://musicbrainz.org": it.get("mb_trackid"),
+                 "TXXX:MusicBrainz Release Track Id": it.get("mb_releasetrackid"),
+                 "TXXX:MusicBrainz Artist Id": it.get("mb_artistid")}
+            f = {k: str(v) for k, v in f.items() if v}
+            if f:
+                tracks[str(int(it["sacd_track"]))] = f
+        out: dict = {}
+        if alb:
+            out["album"] = alb
+        if tracks:
+            out["track"] = tracks
+        return out
+
+    def _export_art(self, artpath: str, tags_dir: Path, stem: str, dry: bool) -> str | None:
+        """Copy the album cover into the tags directory; its name there, or None if it can't be used."""
+        try:
+            data = Path(artpath).read_bytes()
+        except OSError:
+            return None
+        ext = _sacd_tags.picture_ext(data)
+        if ext is None or len(data) > _sacd_tags.ART_MAX_BYTES:
+            self._log.warning("cover art is not a JPEG or PNG of at most 960 KiB; not exported")
+            return None
+        name = f"{stem}.{ext}"
+        if not dry:
+            _sacd_tags.write_atomic(tags_dir / name, data)
+        return name
 
     def _extracts(self, lib, iso: Path, fp: str, kind: str, secs: list[float], claimed: set[int]):
         """[(album, items in track order)] of the library's extracts of this ISO area."""
