@@ -55,3 +55,57 @@ def durations_match(item_lengths: Sequence[float], toc_seconds: Sequence[float])
     """Items (in track order) agree with the area's tracks in number and length."""
     return len(item_lengths) == len(toc_seconds) and all(
         abs(a - b) <= DURATION_TOLERANCE for a, b in zip(item_lengths, toc_seconds, strict=True))
+
+
+# ----------------------------------------------------------------- sacdfs verify reports
+
+VERIFIED = frozenset({"IDENTICAL", "IDENTICAL-PAUSE"})      # the statuses that make an extract safe to replace
+_ESCAPES = {ord("t"): 9, ord("n"): 10, ord("\\"): 92}
+
+
+def _unescape(field: bytes) -> bytes:
+    """Undo `sacdfs verify`'s field escaping: `\\t`, `\\n`, `\\\\` and `\\xNN` (a byte that isn't UTF-8)."""
+    if b"\\" not in field:
+        return field
+    out = bytearray()
+    i = 0
+    while i < len(field):
+        c = field[i]
+        if c == 92 and i + 1 < len(field):
+            n = field[i + 1]
+            if n in _ESCAPES:
+                out.append(_ESCAPES[n])
+                i += 2
+                continue
+            if n == ord("x") and i + 4 <= len(field):
+                try:
+                    out.append(int(field[i + 2:i + 4], 16))
+                    i += 4
+                    continue
+                except ValueError:
+                    pass
+        out.append(c)
+        i += 1
+    return bytes(out)
+
+
+def parse_verify_report(data: bytes) -> dict[bytes, bool]:
+    """Read a `sacdfs verify` report (tab-separated, header row with `status` and `path`).
+    Returns {absolute file path: True when every row for it is IDENTICAL or IDENTICAL-PAUSE}.
+    Raises ValueError when it isn't such a report."""
+    lines = data.split(b"\n")
+    header = lines[0].rstrip(b"\r").split(b"\t")
+    if b"status" not in header or b"path" not in header:
+        raise ValueError("not a sacdfs verify report: the header row needs `status` and `path` columns")
+    s, p = header.index(b"status"), header.index(b"path")
+    result: dict[bytes, bool] = {}
+    for line in lines[1:]:
+        cols = line.rstrip(b"\r").split(b"\t")
+        if len(cols) <= max(s, p):
+            continue
+        path = _unescape(cols[p])
+        if not (path.startswith((b"/", b"\\\\")) or path[1:2] == b":"):      # relative: as given to verify
+            path = os.getcwdb() + os.sep.encode() + path
+        ok = cols[s].decode("ascii", "replace") in VERIFIED
+        result[path] = result.get(path, True) and ok
+    return result

@@ -106,6 +106,24 @@ or deleted, and tags are not written to files. The check is of the TOC, not the 
 `sacdfs verify` before deleting any extract. Item paths are not changed, and sacdfs' file
 names are derived from track titles, so `sacdfs_path` is a best-effort name.
 
+**Only verified extracts.** `sacdfs verify` writes a tab-separated report (`-o report.tsv`) with a
+row for each extract. Give it to the migration and `--apply` records an album only when every
+one of its items is `IDENTICAL` or `IDENTICAL-PAUSE` in it (matched by file path); any other
+status, or a missing row, holds the whole album back and says so:
+
+```sh
+sacdfs verify -o report.tsv --map ~/dsf ~/isos ~/isos ~/dsf
+beet sacd-migrate --apply --verify report.tsv --source ~/isos ~/isos/
+```
+
+**ISOs with no extracts.** `--catalogue --mount DIR --apply` adds an album for each ISO area
+that has no extracts in the library (no album imported from it, none under its folder with
+the area's track count). Its items carry the disc's text, track order, length, channel count
+and `sacdfs_path`, and their `path` is that file under `DIR`, where sacdfs is mounted; the
+albums have `sacd_catalogued: 1`. They have no MusicBrainz match: run beets' own tools on
+the mounted files for that. Without `--apply` the command only reports; a second run
+adds nothing.
+
 ### DVD-Audio, DVD-Video and Blu-ray images
 
 Disc-image folders often hold DVD and Blu-ray images next to SACDs. The plugin
