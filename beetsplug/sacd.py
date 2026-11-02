@@ -38,7 +38,7 @@ from beets.ui.commands.import_ import import_files
 from beets.util import MoveOperation, bytestring_path, displayable_path, syspath
 
 from beetsplug._sacd_discimage import identify
-from beetsplug._sacd_migrate import durations_match, sacdfs_path
+from beetsplug._sacd_migrate import durations_match, parse_verify_report, sacdfs_path
 
 AREAS = ("stereo", "multichannel")
 FORMATS = ("dsf", "flac")
@@ -248,6 +248,14 @@ class SacdPlugin(BeetsPlugin):
                               help="sacdfs SOURCE directory, to work out sacdfs paths (default: the ISO's folder)")
         mig.parser.add_option("--flatten", action="store_true", default=False,
                               help="sacdfs is mounted with --flatten")
+        mig.parser.add_option("--verify", metavar="REPORT",
+                              help="a `sacdfs verify -o REPORT` report: with --apply, only albums whose every "
+                                   "extract is IDENTICAL or IDENTICAL-PAUSE in it are recorded")
+        mig.parser.add_option("--catalogue", action="store_true", default=False,
+                              help="with --apply: add an album for each ISO area that has no extracts "
+                                   "in the library (needs --mount)")
+        mig.parser.add_option("--mount", metavar="DIR",
+                              help="where sacdfs is mounted: the paths of catalogued items")
         mig.parser.usage = "%prog [options] ISO|DIRECTORY..."
         mig.func = self.sacd_migrate
         return [imp, info, mig]
@@ -321,7 +329,17 @@ class SacdPlugin(BeetsPlugin):
         if not isos:
             raise ui.UserError("no ISO images found")
         source = Path(os.path.abspath(opts.source)) if opts.source else None
+        if opts.catalogue and not opts.mount:
+            raise ui.UserError("--catalogue needs --mount DIR, where sacdfs is mounted")
+        verified = None
+        if opts.verify:
+            try:
+                with open(opts.verify, "rb") as f:
+                    verified = parse_verify_report(f.read())
+            except (OSError, ValueError) as e:
+                raise ui.UserError(f"cannot use the verify report: {e}") from e
         claimed: set[int] = set()
+        n_cat = n_held = 0
         n_albums = 0
         for iso in isos:
             shown = safetext.for_terminal(displayable_path(str(iso)))
@@ -343,10 +361,24 @@ class SacdPlugin(BeetsPlugin):
                 found = self._extracts(lib, iso, fp, kind, secs, claimed)
                 if not found:
                     ui.print_(f"{shown}: {kind}: no extracts in the library")
+                    if opts.catalogue and not self._has_extracts(lib, iso, fp, kind, len(tracks)):
+                        n_cat += 1
+                        ui.print_(f"{shown}: {kind}: {'catalogued' if opts.apply else 'would catalogue'} "
+                                  f"as an album of {len(tracks)} tracks")
+                        if opts.apply:
+                            self._catalogue(lib, iso, fp, kind, disc, area, tracks, root, opts)
                     continue
                 for album, items in found:
                     claimed.add(album.id)
                     n_albums += 1
+                    bad = [] if verified is None else [i for i in items if not verified.get(i.path, False)]
+                    if bad:
+                        n_held += 1
+                        ui.print_(safetext.for_terminal(
+                            f"{shown}: {kind}: album {album.id} {album.albumartist} - {album.album}: "
+                            f"{len(items)} tracks match, but {len(bad)} are not IDENTICAL or "
+                            f"IDENTICAL-PAUSE in the verify report; not recorded"))
+                        continue
                     ui.print_(safetext.for_terminal(
                         f"{shown}: {kind}: album {album.id} {album.albumartist} - {album.album}: "
                         f"{len(items)} tracks match; {'recorded' if opts.apply else 'would record'}"))
@@ -357,8 +389,40 @@ class SacdPlugin(BeetsPlugin):
                         item["sacdfs_path"] = sacdfs_path(iso, root, opts.flatten, kind, t.number, t.title)
                         if opts.apply:
                             item.store()
-        ui.print_(f"{n_albums} album(s) matched. Nothing was deleted: check them with sacdfs verify "
-                  f"before removing any extract.")
+        ui.print_(f"{n_albums} album(s) matched" + (f", {n_held} held back by the verify report" if n_held else "")
+                  + (f"; {n_cat} catalogued" if opts.catalogue else "")
+                  + ". Nothing was deleted: check them with sacdfs verify before removing any extract.")
+
+    def _has_extracts(self, lib, iso: Path, fp: str, kind: str, n_tracks: int) -> bool:
+        """Does the library hold anything that could be extracts of this ISO area: an album it
+        imported from it, or one under the ISO's folder with the area's number of tracks?"""
+        if any(True for _ in lib.albums(f"sacd_iso_sha:{fp} sacd_area:{kind}")):
+            return True
+        folder = os.fsencode(str(iso.parent)).rstrip(os.sep.encode()) + os.sep.encode()
+        return any(len(items := a.items()) == n_tracks and all(i.path.startswith(folder) for i in items)
+                   for a in lib.albums())
+
+    def _catalogue(self, lib, iso: Path, fp: str, kind: str, disc, area, tracks, root: Path, opts) -> None:
+        """Add the area as an album whose items are the files sacdfs shows: no extracts, no tags
+        written. Items carry the disc's text, track order, lengths and channels."""
+        from beets.library import Item
+        mount = Path(os.path.abspath(opts.mount))
+        items = []
+        for t in tracks:
+            rel = sacdfs_path(iso, root, opts.flatten, kind, t.number, t.title)
+            item = Item(path=os.fsencode(mount / rel), title=t.title or f"Track {t.number}",
+                        artist=t.performer or disc.artist or "", albumartist=disc.artist or "",
+                        album=disc.title or "", track=t.number, tracktotal=len(tracks),
+                        disc=disc.album_sequence_number or 1, disctotal=disc.album_set_size or 1,
+                        length=t.duration.seconds_float, channels=area.channel_count, format="DSF",
+                        sacd_iso=os.fsdecode(iso), sacd_track=t.number, sacd_area=kind,
+                        sacd_iso_sha=fp, sacdfs_path=rel, sacd_catalogued=1)
+            items.append(item)
+        album = lib.add_album(items)
+        album["sacd_iso_sha"] = fp
+        album["sacd_area"] = kind
+        album["sacd_catalogued"] = 1
+        album.store()
 
     def _extracts(self, lib, iso: Path, fp: str, kind: str, secs: list[float], claimed: set[int]):
         """[(album, items in track order)] of the library's extracts of this ISO area."""

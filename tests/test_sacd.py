@@ -504,6 +504,90 @@ class TestMigrate(Base):
         assert all("sacdfs_path" not in i for i in self.lib.albums()[0].items())
 
 
+class TestMigrateVerify(Base):
+    def report(self, album, status, tmp_path_name="verify.tsv", skip=None):
+        rows = ["status\tpath\tbytes\tmtime\timage\tarea\ttrack\tchannels\tsamples\tsha256\tloses\treason"]
+        for n, i in enumerate(sorted(album.items(), key=lambda i: i.track)):
+            if n == skip:
+                continue
+            path = os.fsdecode(i.path).replace("\\", "\\\\").replace("\t", "\\t")
+            rows.append(f"{status[n] if isinstance(status, list) else status}\t{path}\t1\t2\ti\ts\t{n}\t2\t3\tab\t\t")
+        out = self.tmp_root / tmp_path_name
+        out.write_text("\n".join(rows) + "\n")
+        return out
+
+    def imported(self):
+        self.run_command("sacd-import", str(self.iso))
+        return self.albums()[0]
+
+    def test_identical_and_pause_are_recorded(self, capsys):
+        album = self.imported()
+        rep = self.report(album, ["IDENTICAL", "IDENTICAL-PAUSE", "IDENTICAL"])
+        self.run_command("sacd-migrate", "--apply", "--verify", str(rep), str(self.iso))
+        assert "3 tracks match; recorded" in capsys.readouterr().out
+        assert all(i.get("sacdfs_path") for i in self.lib.albums()[0].items())
+
+    def test_any_other_status_or_missing_row_holds_the_album_back(self, capsys):
+        album = self.imported()
+        for status, skip in ((["IDENTICAL", "DIFFERENT", "IDENTICAL"], None), ("IDENTICAL", 1),
+                             (["NOT-COMPARABLE"] * 3, None)):
+            rep = self.report(album, status, skip=skip)
+            self.run_command("sacd-migrate", "--apply", "--verify", str(rep), str(self.iso))
+            out = capsys.readouterr().out
+            assert "not IDENTICAL or IDENTICAL-PAUSE in the verify report; not recorded" in out
+            assert "1 album(s) matched, 1 held back" in out
+            assert all("sacdfs_path" not in i for i in self.lib.albums()[0].items())
+
+    def test_report_escapes_and_bad_reports(self, tmp_path):
+        from beetsplug._sacd_migrate import parse_verify_report
+        data = b"status\tpath\nIDENTICAL\t/a/b\\tc\\xe9\\\\.dsf\nDIFFERENT\t/a/x.dsf\nIDENTICAL\t/a/x.dsf\nshort\n"
+        assert parse_verify_report(data) == {b"/a/b\tc\xe9\\.dsf": True, b"/a/x.dsf": False}
+        with pytest.raises(ValueError):
+            parse_verify_report(b"a\tb\n")
+        with pytest.raises(UserError):
+            self.run_command("sacd-migrate", "--verify", str(tmp_path / "none.tsv"), str(self.iso))
+        bad = tmp_path / "bad.tsv"
+        bad.write_text("hello\n")
+        with pytest.raises(UserError):
+            self.run_command("sacd-migrate", "--verify", str(bad), str(self.iso))
+
+
+class TestCatalogue(Base):
+    def test_reports_without_applying(self, capsys):
+        self.run_command("sacd-migrate", "--catalogue", "--mount", str(self.tmp_root / "mnt"), str(self.iso))
+        out = capsys.readouterr().out
+        assert "would catalogue as an album of 3 tracks" in out
+        assert list(self.lib.albums()) == []
+
+    def test_needs_a_mount(self):
+        with pytest.raises(UserError):
+            self.run_command("sacd-migrate", "--catalogue", "--apply", str(self.iso))
+
+    def test_apply_adds_one_album_per_area_with_sacdfs_paths_and_is_idempotent(self, capsys):
+        mnt = self.tmp_root / "mnt"
+        before = sha(self.iso)
+        for _ in range(2):
+            self.run_command("sacd-migrate", "--catalogue", "--apply", "--mount", str(mnt),
+                             "--source", str(self.isodir), str(self.iso))
+        albums = {a.sacd_area: a for a in self.lib.albums()}
+        assert set(albums) == {"stereo", "multichannel"}
+        items = sorted(albums["stereo"].items(), key=lambda i: i.track)
+        assert [i.track for i in items] == [1, 2, 3] and all(i.length == pytest.approx(1.0, abs=0.1) for i in items)
+        assert {i.channels for i in items} == {2} and {i.channels for i in albums["multichannel"].items()} == {6}
+        assert items[0].path == os.fsencode(mnt / items[0].sacdfs_path)
+        assert items[0].sacdfs_path.startswith("disc/Stereo/01") and items[0].sacd_iso == str(self.iso)
+        assert not mnt.exists() and sha(self.iso) == before
+
+    def test_areas_with_extracts_are_not_catalogued(self):
+        self.run_command("sacd-import", "--areas", "stereo", str(self.iso))
+        self.run_command("sacd-migrate", "--catalogue", "--apply", "--mount", str(self.tmp_root / "mnt"),
+                         str(self.iso))
+        kinds = sorted(a.sacd_area for a in self.lib.albums())
+        assert kinds == ["multichannel", "stereo"]
+        stereo = next(a for a in self.lib.albums() if a.sacd_area == "stereo")
+        assert not stereo.get("sacd_catalogued") and all(os.path.exists(i.path) for i in stereo.items())
+
+
 class TestMigrateErrors(Base):
     def test_arguments_and_unreadable_images(self, capsys):
         with pytest.raises(UserError):
