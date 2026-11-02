@@ -104,8 +104,8 @@ def parse_verify_report(data: bytes) -> dict[bytes, bool]:
         if len(cols) <= max(s, p):
             continue
         path = _unescape(cols[p])
-        if not os.path.isabs(path):
-            path = os.path.join(os.getcwdb(), path)      # as given to verify, relative to here
+        if not (path.startswith((b"/", b"\\\\")) or path[1:2] == b":"):      # relative: as given to verify
+            path = os.getcwdb() + os.sep.encode() + path
         ok = cols[s].decode("ascii", "replace") in VERIFIED
         result[path] = result.get(path, True) and ok
     return result
