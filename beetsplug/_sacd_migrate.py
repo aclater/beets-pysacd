@@ -103,7 +103,9 @@ def parse_verify_report(data: bytes) -> dict[bytes, bool]:
         cols = line.rstrip(b"\r").split(b"\t")
         if len(cols) <= max(s, p):
             continue
-        path = os.path.abspath(_unescape(cols[p]))
+        path = _unescape(cols[p])
+        if not os.path.isabs(path):
+            path = os.path.join(os.getcwdb(), path)      # as given to verify, relative to here
         ok = cols[s].decode("ascii", "replace") in VERIFIED
         result[path] = result.get(path, True) and ok
     return result
