@@ -6,7 +6,7 @@ behaviour, and a patch version only adds or fixes. Releases are on
 [GitHub](https://github.com/aclater/beets-pysacd/releases) and
 [PyPI](https://pypi.org/project/beets-pysacd/), with signed build provenance.
 
-## Unreleased
+## 0.2.0 (2026-11-02)
 
 - New `beet sacd-tags-export --tags DIR [QUERY]`: writes sacdfs's tag-layer files (genre, label,
   MusicBrainz IDs, cover art) from the albums `sacd-migrate` matched to an ISO, keyed by the
