@@ -6,8 +6,8 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import os
-import tempfile
 import struct
+import tempfile
 import tomllib
 from collections.abc import Mapping
 from pathlib import Path
