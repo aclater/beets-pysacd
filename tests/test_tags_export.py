@@ -111,12 +111,55 @@ class TestExport(TagsBase):
         self.run_command("sacd-tags-export", "--tags", str(self.tags), "genre:Nothing")
         assert "no albums with an SACD image" in capsys.readouterr().out and not list(self.tags.iterdir())
 
+    def test_unusable_art_and_unreadable_images_are_skipped(self, capsys):
+        album = self.migrated()
+        art = self.tmp_root / "cover.bin"
+        for content in (b"not a picture", JPEG + b"\0" * _sacd_tags.ART_MAX_BYTES):
+            art.write_bytes(content)
+            album["artpath"] = str(art)
+            album.store()
+            self.run_command("sacd-tags-export", "--tags", str(self.tags))
+            assert "art" not in self.file()["stereo"]["album"]
+        assert not list(self.tags.glob("*.jpg"))
+        album["artpath"] = str(self.tmp_root / "missing.jpg")
+        album.store()
+        self.run_command("sacd-tags-export", "--tags", str(self.tags))
+        self.iso.write_bytes(b"junk")
+        self.run_command("sacd-tags-export", "--tags", str(self.tags))
+        assert "not a readable SACD image, skipped" in capsys.readouterr().out
+
+    def test_albums_without_ids_write_what_they_have(self):
+        album = self.migrated()
+        for it in album.items():
+            it["mb_releasetrackid"] = it["mb_trackid"] = it["mb_artistid"] = ""
+            it.store()
+        album["mb_albumid"] = album["genre"] = ""
+        album.store()
+        self.run_command("sacd-tags-export", "--tags", str(self.tags))
+        assert self.file()["stereo"]["album"].get("genre") is None
+
     def test_needs_a_tags_directory(self):
         from beets.ui import UserError
         with pytest.raises(UserError):
             self.run_command("sacd-tags-export")
         with pytest.raises(UserError):
             self.run_command("sacd-tags-export", "--tags", str(self.tags / "missing"))
+
+
+class TestWrite:
+    def test_failed_write_leaves_the_old_file_and_no_temporary(self, tmp_path):
+        from unittest.mock import patch
+        target = tmp_path / "k.toml"
+        target.write_text("old")
+        with patch("os.replace", side_effect=OSError("disk")), pytest.raises(OSError):
+            _sacd_tags.write_atomic(target, b"new")
+        assert target.read_text() == "old" and [p.name for p in tmp_path.iterdir()] == ["k.toml"]
+        assert _sacd_tags.write_atomic(target, b"new") and not _sacd_tags.write_atomic(target, b"new")
+
+    def test_merge_keeps_unowned_and_replaces_owned(self):
+        merged = _sacd_tags.merge({"album": {"a": "1"}, "stereo": {"album": {"g": "x", "k": "y"}}},
+                                  {"stereo": {"album": {"g": "z"}}})
+        assert merged == {"album": {"a": "1"}, "stereo": {"album": {"g": "z", "k": "y"}}}
 
 
 class TestToml:

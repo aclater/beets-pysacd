@@ -117,8 +117,8 @@ def write_atomic(path: Path, data: bytes) -> bool:
         pass
     tmp = path.with_name(f".{path.name}.{os.getpid()}.{os.urandom(4).hex()}.tmp")
     try:
-        # created with the umask's permissions, as any file the user makes
-        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666)
+        # readable by everyone (sacdfs may run as another user), narrowed by the umask
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
         with os.fdopen(fd, "wb") as f:
             f.write(data)
             f.flush()
