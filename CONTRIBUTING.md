@@ -38,6 +38,11 @@ discs and library in general terms; you don't need to share your collection.
 6. **Answer the review.** An AI reviewer comments on every pull request; reply to each
    finding (fix it, or say why not).
 
+## Releasing
+
+When a version is released, update [RELEASES.md](https://github.com/aclater/sacd/blob/main/RELEASES.md)
+in aclater/sacd (the minor version's summary and release list).
+
 ## Rules
 
 - **Never lose user data.** An ISO is deleted only with `remove_iso: yes`, after every
