@@ -146,16 +146,16 @@ class TestServedByRealSacdfs(TagsBase):
         try:
             served = None
             for _ in range(60):
-                ls = subprocess.run(["podman", "exec", name, "sh", "-c", "ls /mnt/disc/Stereo/*.dsf"],
+                ls = subprocess.run(["podman", "exec", name, "sh", "-c", "cd /mnt && ls disc/Stereo/*.dsf"],
                                     capture_output=True, text=True, env=ENV)
                 if ls.returncode == 0 and ls.stdout.strip():
                     served = ls.stdout.splitlines()[0]
                     break
                 time.sleep(1)
-            assert served, subprocess.run(["podman", "logs", name], capture_output=True, text=True).stdout
+            assert served, subprocess.run(["podman", "logs", name], capture_output=True, text=True, env=ENV).stdout
             out = self.tmp_root / "served.dsf"
             with out.open("wb") as fh:
-                subprocess.run(["podman", "exec", name, "cat", served], check=True, stdout=fh, env=ENV)
+                subprocess.run(["podman", "exec", name, "cat", f"/mnt/{served}"], check=True, stdout=fh, env=ENV)
             tags = DSF(str(out)).tags
             assert [str(g) for g in tags["TCON"].text] == ["Jazz"]
             assert tags["TXXX:MusicBrainz Album Id"].text == [album.mb_albumid]

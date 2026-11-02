@@ -7,7 +7,6 @@ import contextlib
 import hashlib
 import os
 import struct
-import tempfile
 import tomllib
 from collections.abc import Mapping
 from pathlib import Path
@@ -116,13 +115,14 @@ def write_atomic(path: Path, data: bytes) -> bool:
             return False
     except OSError:
         pass
-    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.{os.urandom(4).hex()}.tmp")
     try:
+        # created with the umask's permissions, as any file the user makes
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666)
         with os.fdopen(fd, "wb") as f:
             f.write(data)
             f.flush()
             os.fsync(f.fileno())
-        os.chmod(tmp, 0o644)
         os.replace(tmp, path)
     except BaseException:
         with contextlib.suppress(OSError):
