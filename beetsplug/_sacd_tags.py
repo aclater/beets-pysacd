@@ -6,6 +6,7 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import os
+import tempfile
 import struct
 import tomllib
 from collections.abc import Mapping
@@ -115,13 +116,15 @@ def write_atomic(path: Path, data: bytes) -> bool:
             return False
     except OSError:
         pass
-    tmp = path.with_name(f".{path.name}.{os.getpid()}.{os.urandom(4).hex()}.tmp")
+    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     try:
-        # readable by everyone (sacdfs may run as another user), narrowed by the umask
-        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
         with os.fdopen(fd, "wb") as f:
             f.write(data)
             f.flush()
+            # as readable as the file it replaces, or as the folder it goes in (sacdfs may run as
+            # another user); mkstemp's own 0600 would hide it
+            model = path if path.exists() else path.parent
+            os.chmod(tmp, os.stat(model).st_mode & 0o666)
             os.fsync(f.fileno())
         os.replace(tmp, path)
     except BaseException:
