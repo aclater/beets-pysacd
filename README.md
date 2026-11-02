@@ -336,7 +336,8 @@ dependency, the locked install fails on Dependabot's PR, and rerunning
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report bugs and propose changes,
 [SECURITY.md](SECURITY.md) for reporting a vulnerability privately, and the
-[changelog](CHANGELOG.md) for what changed in each release.
+[changelog](CHANGELOG.md) for what changed in each release. What each minor version brought,
+across the SACD projects: [RELEASES.md](https://github.com/aclater/sacd/blob/main/RELEASES.md).
 
 ## Licence
 
