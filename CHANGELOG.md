@@ -6,6 +6,11 @@ behaviour, and a patch version only adds or fixes. Releases are on
 [GitHub](https://github.com/aclater/beets-pysacd/releases) and
 [PyPI](https://pypi.org/project/beets-pysacd/), with signed build provenance.
 
+## Unreleased
+
+- Python 3.15 is supported and tested (#50), with a Python 3.15 CI leg. Its dependencies install
+  differently while beets declares `Requires-Python <3.15` and PyYAML has no 3.15 wheel: see the README.
+
 ## 0.2.0 (2026-11-02)
 
 - New `beet sacd-tags-export --tags DIR [QUERY]`: writes sacdfs's tag-layer files (genre, label,

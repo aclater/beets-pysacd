@@ -40,6 +40,11 @@ plugins: musicbrainz sacd
 Requirements: Python 3.11 or later, beets 2.12 or later (2.x), pysacd 0.2 or
 later (its engine, and libFLAC for `format: flac`).
 
+The tests pass on Python 3.11 to 3.15. On 3.15, pip refuses to install beets (beets 2.9 to
+2.14.1, the latest, declare `Requires-Python <3.15`) and PyYAML has no 3.15 wheel, so CI
+installs beets with `--ignore-requires-python` and builds PyYAML from its sdist. Until beets
+supports 3.15, expect to do the same there, or use Python 3.14 or earlier.
+
 Each [GitHub release](https://github.com/aclater/beets-pysacd/releases) has the wheel
 and the sdist, each with its build provenance attestation beside it as
 `<file>.intoto.jsonl`. Check a download with
@@ -299,7 +304,7 @@ PYSACD_LIVE_MB=1 pytest tests/test_live_musicbrainz.py
 
 ### CI
 
-Every pull request runs ruff, mypy and the tests (Python 3.11 to 3.14, the oldest
+Every pull request runs ruff, mypy and the tests (Python 3.11 to 3.15, the oldest
 and newest beets, Linux, macOS and Windows, pysacd's release and master branch),
 CodeQL, semgrep, a privacy check, dependency review (fails on high or critical
 vulnerabilities) and an AI review. One test leg runs under coverage.py and shows
@@ -325,9 +330,9 @@ CI installs every Python dependency hash-checked (`pip install --require-hashes`
 from two lock files written by `python3 -I scripts/lock.py` (needs
 [uv](https://docs.astral.sh/uv/)): `locks/latest/requirements.txt` with the newest
 beets and `locks/oldest/requirements.txt` with beets held at the floor in
-`pyproject.toml` (plus `locks/fuzz/requirements.txt`, Atheris). Both cover Python 3.11 to 3.14 on Linux, macOS and Windows, and
-leave out releases younger than two weeks, except pysacd's and security fixes listed
-in the script. The plugin, and pysacd's master branch on that leg, are installed on
+`pyproject.toml` (plus `locks/fuzz/requirements.txt`, Atheris). Both cover Python 3.11 to 3.15 on Linux, macOS and Windows, and
+leave out releases younger than two weeks, except pysacd's, security fixes and the lap
+release with Python 3.15 wheels listed in the script. The plugin, and pysacd's master branch on that leg, are installed on
 top with `--no-deps`, so nothing unhashed is downloaded. Dependabot keeps both locks
 current (beets stays on the floor in the oldest); when a new release brings a new
 dependency, the locked install fails on Dependabot's PR, and rerunning
