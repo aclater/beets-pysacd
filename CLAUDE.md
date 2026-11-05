@@ -67,7 +67,7 @@ The tests build synthetic SACD images with pysacd's test generator
 (default `../pysacd/tests`). DVD and Blu-ray test images come from
 `tests/discgen.py`. MusicBrainz is mocked; tests need no network.
 
-CI also runs the tests on Python 3.11 to 3.15, on the oldest and newest beets,
+CI also runs the tests on Python 3.11 to 3.14 (and 3.15 as an early warning), on the oldest and newest beets,
 on Linux, macOS and Windows, and against pysacd's master branch (one leg
 under coverage, uploaded to Codecov by OIDC), plus CodeQL, semgrep, the privacy check, dependency review,
 zizmor on workflow changes, a README link check and an AI review. Weekly:

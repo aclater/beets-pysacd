@@ -8,8 +8,8 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## Unreleased
 
-- Python 3.15 is supported and tested (#50), with a Python 3.15 CI leg. Its dependencies install
-  differently while beets declares `Requires-Python <3.15` and PyYAML has no 3.15 wheel: see the README.
+- CI tests on Python 3.15 ahead of beets' own support (#50). Not claimed as supported: beets doesn't
+  yet install on 3.15 without `--ignore-requires-python`. See the README.
 
 ## 0.2.0 (2026-11-02)
 

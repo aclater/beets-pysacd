@@ -27,7 +27,7 @@ discs and library in general terms; you don't need to share your collection.
    PYSACD_TESTS=/path/to/pysacd/tests pytest -q
    ```
 
-   CI runs the tests on Python 3.11 to 3.15, against the oldest and newest supported
+   CI runs the tests on Python 3.11 to 3.14 (and 3.15 as an early warning), against the oldest and newest supported
    beets, on Linux, macOS and Windows, with pysacd's release and master branch, plus
    CodeQL, semgrep and a privacy check (see the README, "Development").
 4. **Add tests with every change.** Anything that touches matching needs a test with a

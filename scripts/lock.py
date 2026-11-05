@@ -6,7 +6,7 @@
 CI installs every Python dependency with `pip install --require-hashes`, so a replaced or
 tampered release on PyPI fails the install instead of running in CI. Two locks, both the
 whole dependency closure of the plugin, its `dev` extra and the build tools, for Python 3.11
-to 3.15 on Linux, macOS and Windows (a universal resolution, with every file's sha256):
+to 3.14 on Linux (plus the 3.15 CI leg), macOS and Windows (a universal resolution, with every file's sha256):
 
 - locks/latest/requirements.txt: the newest beets 2.x, pysacd and everything else;
 - locks/oldest/requirements.txt: the same, but beets held at the floor in pyproject.toml;
@@ -39,7 +39,9 @@ BUILD_TOOLS = ["setuptools>=77", "build", "pyproject-hooks"]
 NOT_HELD_BACK = {
     "pysacd": "",
     "certifi": ">=2026.10.18",   # GHSA-6q48-6c7w-9gw2 (critical): 2026.10.18 is the first fixed release
-    # the first lap with Python 3.15 wheels (#50), released 2026-11-03; drop this entry after 2026-11-17
+    # lap 0.5.14, released 2026-11-03, is the first version with a Python 3.15 wheel, which the 3.15
+    # CI leg needs (#50). An exception to the two-week hold-back that the owner accepted; the hash
+    # pins exactly what is installed. Drop this entry on 2026-11-17, when 0.5.14 is two weeks old.
     "lap": ">=0.5.14",
 }
 # the fuzz workflow (fuzz/fuzz_discimage.py, #22): Atheris, whose wheels start at Python 3.12
