@@ -301,7 +301,8 @@ PYSACD_LIVE_MB=1 pytest tests/test_live_musicbrainz.py
 
 Every pull request runs ruff, mypy and the tests (Python 3.11 to 3.14, the oldest
 and newest beets, Linux, macOS and Windows, pysacd's release and master branch),
-CodeQL, semgrep, a privacy check, dependency review (fails on high or critical
+only the expected tests skipping (`tests/expected-skips.json` lists each skip and why; a new,
+stopped or changed skip fails the job), CodeQL, semgrep, a privacy check, dependency review (fails on high or critical
 vulnerabilities) and an AI review. One test leg runs under coverage.py and shows
 the report in its job summary, with HTML and XML reports as the `coverage`
 artifact; the XML report also goes to [Codecov](https://codecov.io/gh/aclater/beets-pysacd)
