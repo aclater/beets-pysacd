@@ -987,15 +987,17 @@ pyrate-limiter==4.5.1 \
     --hash=sha256:7f03c6a9235b00a4ba3c7b1e8cb6b23fbacc9d40b09f326220917a12ef22cc09 \
     --hash=sha256:bb8dd2926b0679e4ada6629a865e85daa5599268f930c61a8992dafa8bf3ba0d
     # via requests-ratelimiter
-pysacd==0.4.3 \
-    --hash=sha256:028e24524fba658e58e85c56c68af7544533f5e856cd8b075522ae9679a4960c \
-    --hash=sha256:292d15439e7ab5c3a0369baddec06083932cbaa27f8649ee37c335ee3d50e435 \
-    --hash=sha256:61a32345cacc90ae087e9dea7c6769445e283f26067c86399342b782ccde39ce \
-    --hash=sha256:75e9b2e7bece2c670f7178cd268ca0a0cf40fae21fcaf30a3f84b0e5a0e7d126 \
-    --hash=sha256:900515a832671610fde6811bf26c1229262b26118a86a355acc5ae2e500948a0 \
-    --hash=sha256:ddfbbcb64cf3750ba4d82eb05bab7350f9eba7c5cb999e6332e546bd9f8f1152 \
-    --hash=sha256:f69e1426914c767875ba3c39db3f6ae958980654bc538d6391e6979951375162
-    # via beets-pysacd (pyproject.toml)
+pysacd==0.5.0 \
+    --hash=sha256:20888c0d44121f1247c3f82f1facb084b4d168a6d7dc20d12fdd87eb31b4b0d5 \
+    --hash=sha256:31325ec559311ab4bfbc165b00dd111d5817c5e1cde4e96a3a09896f3466eba3 \
+    --hash=sha256:33df4a9808468fd905e46260c2192ae32a58135afd5ee67dc8301e316b41b284 \
+    --hash=sha256:4b95c87d184c23a391532c79911b9423463c80dc5799261a75953fe5d320a68f \
+    --hash=sha256:945f7ff49f3263e2765ad02049e8e7c328d5ac917c0adbac486f321ade02b664 \
+    --hash=sha256:b61e503802bfa531bff820cb4093d52c0781aeb1c3c94f6d35223cf9024d52da \
+    --hash=sha256:e17cde675184943b879d0af6fdf3282badedcceb0aa629a7df4b04277d9c9171
+    # via
+    #   -c oldest-constraints.txt
+    #   beets-pysacd (pyproject.toml)
 pytest==9.1.1 \
     --hash=sha256:1088fbde8f2b49d95a549a195707afa7a76a3ce9bcadc26b6d71f0ffda5fe313 \
     --hash=sha256:37a86b45efb9a47a61a36449063e8e18d0cab3161329fc099eb21783169c4f0c
