@@ -8,6 +8,8 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## Unreleased
 
+- CI tests on Python 3.15 ahead of beets' own support (#50). Not claimed as supported: beets doesn't
+  yet install on 3.15 without `--ignore-requires-python`. See the README.
 - CI names every skipped test and fails if a skip is new, has stopped or has a different reason
   (`tests/expected-skips.json`), so a test job can't go quiet the way pysacd's comparison did (#51).
   The three skips today: the live MusicBrainz test, the fuzz-regression replay (no regression files

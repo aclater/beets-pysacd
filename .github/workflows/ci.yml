@@ -54,6 +54,7 @@ jobs:
           # this leg also measures coverage (job summary and the `coverage` artifact)
           - {os: ubuntu-latest, python: "3.13", beets: latest, pysacd: release, coverage: true}
           - {os: ubuntu-latest, python: "3.14", beets: latest, pysacd: release}
+          - {os: ubuntu-latest, python: "3.15", beets: latest, pysacd: release}
           - {os: ubuntu-latest, python: "3.13", beets: latest, pysacd: master}
           - {os: macos-latest, python: "3.13", beets: latest, pysacd: release}
           - {os: windows-latest, python: "3.13", beets: latest, pysacd: release}
@@ -73,8 +74,20 @@ jobs:
         shell: bash
         env:
           BEETS: ${{ matrix.beets }}
+          PYTHON: ${{ matrix.python }}
         run: |
-          pip install --require-hashes --only-binary :all: -r "locks/$BEETS/requirements.txt"
+          if [ "$PYTHON" = 3.15 ]; then
+            # Python 3.15 (#50): beets 2.14 declares Requires-Python <3.15, though its tests pass
+            # (--ignore-requires-python), and PyYAML has no 3.15 wheel yet, so it is built from its
+            # locked, hash-checked sdist: setuptools first, then no build isolation, so the build
+            # fetches nothing unlocked. Drop this branch once beets and PyYAML ship for 3.15.
+            awk '/^setuptools==/{p=1} p{print} p&&!/\\$/{exit}' "locks/$BEETS/requirements.txt" > setuptools-lock.txt
+            pip install --require-hashes --only-binary :all: -r setuptools-lock.txt
+            pip install --require-hashes --no-build-isolation --only-binary :all: --no-binary pyyaml \
+              --ignore-requires-python -r "locks/$BEETS/requirements.txt"
+          else
+            pip install --require-hashes --only-binary :all: -r "locks/$BEETS/requirements.txt"
+          fi
           pip install --no-deps --no-build-isolation -e .
           pip check
           python -c "import beets; print('beets', beets.__version__)"
