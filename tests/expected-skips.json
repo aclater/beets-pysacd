@@ -1,0 +1,20 @@
+[
+  {
+    "why": "Makes a real request to MusicBrainz, so pull requests don't depend on it; the live-musicbrainz workflow sets PYSACD_LIVE_MB=1 and runs it.",
+    "reason": "live MusicBrainz test: set PYSACD_LIVE_MB=1",
+    "jobs": ["tests"],
+    "tests": ["tests.test_live_musicbrainz"]
+  },
+  {
+    "why": "Replays the inputs that once crashed the fuzz harness from fuzz/regressions, which holds none yet (only .gitkeep), so pytest has no parameters and skips. Nothing is untested; when the first regression file is added this stops skipping and CI says to remove the entry.",
+    "reason": "got empty parameter set for (image)",
+    "jobs": ["tests"],
+    "tests": ["tests.test_discimage.test_fuzz_regressions[NOTSET]"]
+  },
+  {
+    "why": "Needs a container image of sacdfs main, which only the 'tags served by sacdfs main' job builds, where it runs (and must not skip).",
+    "reason": "SACDFS_IMAGE not set",
+    "jobs": ["tests"],
+    "tests": ["tests.test_tags_export.TestServedByRealSacdfs.test_mounted_sacdfs_serves_the_exported_tags"]
+  }
+]

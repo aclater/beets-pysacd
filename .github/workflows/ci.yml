@@ -126,20 +126,27 @@ jobs:
         shell: bash
         env:
           PYSACD_TESTS: ${{ github.workspace }}/pysacd-src/tests
+          PYSACD_TEST_REPORT: ${{ runner.temp }}/test-report.json
           PYTHONUTF8: "1"
           COVERAGE: ${{ matrix.coverage && 'true' || 'false' }}
         run: |
           python -c "import pysacd, pysacd._native as n; print('pysacd', pysacd.__version__, n.build_info())"
           if [ "$COVERAGE" = true ]; then
             # coverage.py, pinned in the dev extra and the lock; settings in pyproject.toml
-            coverage run -m pytest -q
+            coverage run -m pytest -q -rs
             coverage report
             { echo "## Coverage"; coverage report --format=markdown; } >> "$GITHUB_STEP_SUMMARY"
             coverage html -d coverage-html
             coverage xml -o coverage.xml
           else
-            pytest -q
+            pytest -q -rs
           fi
+
+      # A test that starts skipping, stops skipping or changes its reason fails the job (#51);
+      # tests/expected-skips.json says why each skip is legitimate.
+      - name: Only the expected tests skipped
+        shell: bash
+        run: python -I scripts/check_skips.py --job tests "$RUNNER_TEMP/test-report.json"
 
       # Coverage also goes to Codecov for the README badge and PR comparisons, authenticated
       # with the job's OIDC token. Pull requests from forks get no token, so they skip it, and
@@ -207,7 +214,11 @@ jobs:
         env:
           PYSACD_TESTS: ${{ github.workspace }}/pysacd-src/tests
           SACDFS_IMAGE: localhost/sacdfs-main
-        run: pytest -q tests/test_tags_export.py
+          PYSACD_TEST_REPORT: ${{ runner.temp }}/test-report.json
+        run: pytest -q -rs tests/test_tags_export.py
+
+      - name: No test skipped
+        run: python -I scripts/check_skips.py --job sacdfs-tags "$RUNNER_TEMP/test-report.json"
 
   privacy:
     # No hostnames, private IPs or local paths in files or commit identities.

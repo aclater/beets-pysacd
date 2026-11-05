@@ -6,6 +6,13 @@ behaviour, and a patch version only adds or fixes. Releases are on
 [GitHub](https://github.com/aclater/beets-pysacd/releases) and
 [PyPI](https://pypi.org/project/beets-pysacd/), with signed build provenance.
 
+## Unreleased
+
+- CI names every skipped test and fails if a skip is new, has stopped or has a different reason
+  (`tests/expected-skips.json`), so a test job can't go quiet the way pysacd's comparison did (#51).
+  The three skips today: the live MusicBrainz test, the fuzz-regression replay (no regression files
+  yet) and the sacdfs mount test, which has its own job.
+
 ## 0.2.0 (2026-11-02)
 
 - New `beet sacd-tags-export --tags DIR [QUERY]`: writes sacdfs's tag-layer files (genre, label,
