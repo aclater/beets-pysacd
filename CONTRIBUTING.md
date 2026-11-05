@@ -16,8 +16,9 @@ discs and library in general terms; you don't need to share your collection.
 ## Changing code
 
 1. **Start with an issue,** so the change can be discussed first.
-2. **Work on a branch and open a pull request** against `main`. The default branch only
-   accepts pull requests whose checks pass.
+2. **Work on a branch and open a pull request** against `main`. The default branch only accepts
+   pull requests whose checks pass on a branch that is up to date with `main`. If `main` moves
+   while yours waits, merge it into your branch (no force-push) and let the checks run again.
 3. **Run the checks before you push:**
 
    ```sh
