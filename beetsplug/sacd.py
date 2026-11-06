@@ -419,7 +419,12 @@ class SacdPlugin(BeetsPlugin):
         items = []
         for t in tracks:
             rel = sacdfs_path(iso, root, opts.flatten, kind, t.number, t.title)
-            item = Item(path=os.fsencode(mount / rel), title=t.title or f"Track {t.number}",
+            if not (mount / rel).exists():
+                # sacdfs 0.4.0 named a track without a title `NN.dsf`: keep that if the mount shows it
+                old = sacdfs_path(iso, root, opts.flatten, kind, t.number, t.title, legacy=True)
+                if old != rel and (mount / old).exists():
+                    rel = old
+            item = Item(path=os.fsencode(mount / rel), title=t.title or f"Track {t.number:02d}",
                         artist=t.performer or disc.artist or "", albumartist=disc.artist or "",
                         album=disc.title or "", track=t.number, tracktotal=len(tracks),
                         disc=disc.album_sequence_number or 1, disctotal=disc.album_set_size or 1,
