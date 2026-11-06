@@ -8,6 +8,14 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## Unreleased
 
+- `sacdfs_path` now follows sacdfs 0.4.1's file names, so it matches a mount for a disc whose tracks have
+  no title (`NN - Track NN.dsf`; control characters and long titles are handled as sacdfs does) (#55).
+  Before, `sacd-migrate --catalogue --mount` recorded `NN.dsf` for such discs: the catalogued items
+  pointed at files an 0.4.1 mount does not have, and `beet update` then removed them from the library
+  (12 of 12 on one disc). With `--catalogue --mount`, a mount that shows only `NN.dsf` (sacdfs 0.4.0)
+  still gets that name. Catalogued titles without a disc title are now `Track NN`, as sacdfs tags them.
+  Albums already catalogued by 0.2.0 on a no-text disc keep their old paths; this change does not rewrite them.
+  Tested with sacdfs's own naming cases and against a real no-text disc on both sacdfs versions.
 - CI tests on Python 3.15 ahead of beets' own support (#50). Not claimed as supported: beets doesn't
   yet install on 3.15 without `--ignore-requires-python`. See the README.
 - CI names every skipped test and fails if a skip is new, has stopped or has a different reason

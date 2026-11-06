@@ -4,6 +4,7 @@ are the extracts of an ISO's area. No beets, no pysacd imports: callers pass pla
 from __future__ import annotations
 
 import os
+import unicodedata
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -39,16 +40,38 @@ def image_folder(iso: Path, source: Path | None, flatten: bool) -> Path:
     return Path(*parts[:keep + 1])
 
 
-def sacdfs_name(number: int, title: str | None, ext: str) -> str:
-    """A track's file name: `NN - Title.ext`, or `NN.ext` without a title."""
-    safe = (title or "").replace("/", "_").replace("\0", "").strip()
-    return f"{number:02d} - {safe}.{ext}" if safe else f"{number:02d}.{ext}"
+NAME_MAX = 255      # longest file name sacdfs shows, in bytes
+
+
+def _sanitize(text: str) -> str:
+    """sacdfs's `names::sanitize`: `/`, NUL and control characters become `_`; the ends are trimmed."""
+    return "".join("_" if c == "/" or unicodedata.category(c) == "Cc" else c for c in text).strip()
+
+
+def _cut(text: str, room: int) -> str:
+    """At most `room` bytes of UTF-8, cut at a character boundary."""
+    return text.encode()[:room].decode("utf-8", "ignore")
+
+
+def sacdfs_name(number: int, title: str | None, ext: str, *, legacy: bool = False) -> str:
+    """A track's file name as sacdfs 0.4.1 and later show it (sacdfs `names::track_file_name`):
+    `NN - Title.ext`, and `NN - Track NN.ext` for a track whose title is missing or empty once
+    sanitised. `legacy=True` gives sacdfs 0.4.0's name for such a track, `NN.ext`."""
+    safe = _sanitize(title or "")
+    if not safe:
+        if legacy:
+            return f"{number:02d}.{ext}"
+        safe = f"Track {number:02d}"
+    prefix = f"{number:02d} - "
+    room = max(NAME_MAX - (len(prefix) + 1 + len(ext) + 6), 0)      # room for " (NNN)" de-duplication
+    return f"{prefix}{_cut(safe, room).rstrip()}.{ext}"
 
 
 def sacdfs_path(iso: Path, source: Path | None, flatten: bool, area: str, number: int,
-                title: str | None, ext: str = "dsf") -> str:
+                title: str | None, ext: str = "dsf", *, legacy: bool = False) -> str:
     """Where a mounted sacdfs shows a track, relative to its mount point."""
-    return (image_folder(iso, source, flatten) / AREA_DIRS[area] / sacdfs_name(number, title, ext)).as_posix()
+    return (image_folder(iso, source, flatten) / AREA_DIRS[area]
+            / sacdfs_name(number, title, ext, legacy=legacy)).as_posix()
 
 
 def durations_match(item_lengths: Sequence[float], toc_seconds: Sequence[float]) -> bool:

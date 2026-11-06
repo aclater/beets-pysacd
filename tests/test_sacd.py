@@ -610,4 +610,85 @@ class TestSacdfsPaths:
         (iso.parent.parent / "extra.jpg").write_text("x")      # "rip" holds more than the chain
         assert image_folder(iso, tmp_path, True).as_posix() == "Artist/2001 - Album/rip/Album"
         assert sacdfs_path(iso, tmp_path, False, "multichannel", 3, "A/B").endswith("/Multichannel/03 - A_B.dsf")
-        assert sacdfs_name(7, None, "wav") == "07.wav"
+        assert sacdfs_name(7, None, "wav") == "07 - Track 07.wav"
+        assert sacdfs_name(7, None, "wav", legacy=True) == "07.wav"
+
+
+# Cases from sacdfs's own tests of `names::track_file_name` (src/names.rs, 0.4.1): the plugin must give the
+# names sacdfs gives. 0.4.0 named a track without a title `NN.ext`.
+SACDFS_NAMES = [
+    (1, "Intro", "dsf", "01 - Intro.dsf"),
+    (1, "Intro", "wav", "01 - Intro.wav"),
+    (12, None, "dsf", "12 - Track 12.dsf"),
+    (3, None, "wav", "03 - Track 03.wav"),
+    (200, None, "dsf", "200 - Track 200.dsf"),
+    (3, " / ", "dsf", "03 - _.dsf"),
+    (3, "\u0001", "dsf", "03 - _.dsf"),
+    (3, "   ", "wav", "03 - Track 03.wav"),
+    (3, "", "wav", "03 - Track 03.wav"),
+    (200, "x", "dsf", "200 - x.dsf"),
+    (1, "a/b\0c\x01d\x7fe\x9ff", "dsf", "01 - a_b_c_d_e_f.dsf"),       # `/`, NUL and C0/C1 controls become `_`
+]
+
+
+class TestSacdfsNames:
+    @pytest.mark.parametrize(("number", "title", "ext", "expected"), SACDFS_NAMES)
+    def test_follow_sacdfs(self, number, title, ext, expected):
+        from beetsplug._sacd_migrate import sacdfs_name
+        assert sacdfs_name(number, title, ext) == expected
+
+    def test_long_titles_are_cut_like_sacdfs(self):
+        from beetsplug._sacd_migrate import sacdfs_name
+        dsf, wav = sacdfs_name(1, "\u00e9" * 300, "dsf"), sacdfs_name(1, "\u00e9" * 300, "wav")
+        assert len(dsf.encode()) <= 255 - 6 and dsf.endswith(".dsf") and dsf.startswith("01 - \u00e9")
+        assert dsf.removesuffix(".dsf") == wav.removesuffix(".wav")       # one stem for all files of a track
+
+    def test_legacy_name_for_sacdfs_0_4_0(self):
+        from beetsplug._sacd_migrate import sacdfs_name
+        assert sacdfs_name(3, None, "dsf", legacy=True) == "03.dsf"
+        assert sacdfs_name(3, "  ", "dsf", legacy=True) == "03.dsf"
+        assert sacdfs_name(3, "Song", "dsf", legacy=True) == "03 - Song.dsf"
+
+
+class TestCatalogueNoText(Base):
+    """A disc without track titles, as the one that exposed #55: sacdfs 0.4.1 shows `NN - Track NN.dsf`,
+    0.4.0 showed `NN.dsf`. The catalogue's item paths must be files the mount really has."""
+
+    def setup_beets(self) -> None:
+        super().setup_beets()
+        self.iso = self.isodir_iso()
+
+    def isodir_iso(self) -> Path:
+        d = self.tmp_root / "isos"
+        d.mkdir(exist_ok=True)
+        path = d / "plain.iso"
+        frames = [bytes([0x69]) * (4704 * 2)] * (FRAMES * 3)
+        sacdgen.build_iso(path, [sacdgen.AreaSpec(2, frames, [FRAMES] * 3, dst=False, titles=["", "", ""])],
+                          info=sacdgen.DiscInfo(title="", artist=""))
+        return path
+
+    def catalogue(self, mnt: Path) -> list:
+        self.run_command("sacd-migrate", "--catalogue", "--apply", "--mount", str(mnt),
+                         "--source", str(self.iso.parent), str(self.iso))
+        return sorted(self.lib.items(), key=lambda i: i.track)
+
+    def test_follows_sacdfs_0_4_1(self):
+        items = self.catalogue(self.tmp_root / "mnt")
+        assert [i.sacdfs_path for i in items] == [f"plain/Stereo/0{n} - Track 0{n}.dsf" for n in (1, 2, 3)]
+        assert [i.title for i in items] == ["Track 01", "Track 02", "Track 03"]
+
+    def test_keeps_the_names_a_0_4_0_mount_shows(self):
+        mnt = self.tmp_root / "mnt"
+        (mnt / "plain" / "Stereo").mkdir(parents=True)
+        for n in (1, 2, 3):
+            (mnt / "plain" / "Stereo" / f"0{n}.dsf").write_bytes(b"")
+        items = self.catalogue(mnt)
+        assert [i.sacdfs_path for i in items] == [f"plain/Stereo/0{n}.dsf" for n in (1, 2, 3)]
+        assert all(os.path.exists(i.path) for i in items)
+
+    def test_prefers_the_new_name_when_the_mount_shows_both(self):
+        mnt = self.tmp_root / "mnt"
+        (mnt / "plain" / "Stereo").mkdir(parents=True)
+        for name in ("01.dsf", "01 - Track 01.dsf"):
+            (mnt / "plain" / "Stereo" / name).write_bytes(b"")
+        assert self.catalogue(mnt)[0].sacdfs_path == "plain/Stereo/01 - Track 01.dsf"

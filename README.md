@@ -108,8 +108,11 @@ gets the flexible attributes `sacd_iso` (the ISO), `sacd_track`, `sacd_area` and
 (`Folder/Stereo/NN - Title.dsf`, relative to the sacdfs mount; `--source` is sacdfs' SOURCE
 and `--flatten` matches its option). It writes only to the beets database: nothing is moved
 or deleted, and tags are not written to files. The check is of the TOC, not the audio; run
-`sacdfs verify` before deleting any extract. Item paths are not changed, and sacdfs' file
-names are derived from track titles, so `sacdfs_path` is a best-effort name.
+`sacdfs verify` before deleting any extract. Item paths are not changed. `sacdfs_path` follows
+sacdfs 0.4.1's naming, including `NN - Track NN.dsf` for a track with no title (sacdfs 0.4.0 showed
+`NN.dsf`; with `--catalogue --mount`, a mount that shows only that name gets it). It is derived from the
+TOC's titles, so an image served with a tags file that changes titles is untested. Checked against a mounted 0.4.0 and
+0.4.1-rc.2 on three real discs (two with text, one with none): every recorded path exists.
 
 **Only verified extracts.** `sacdfs verify` writes a tab-separated report (`-o report.tsv`) with a
 row for each extract. Give it to the migration and `--apply` records an album only when every
