@@ -321,7 +321,7 @@ pull requests from forks skip the upload). Changes to workflows are linted with
 
 The Linux jobs run in Red Hat-derived containers, pinned by digest: GitHub's hosted Linux runners
 are Ubuntu only, so the lint, the Linux test legs, the fuzzing and the live MusicBrainz check run in
-Fedora 44 (Python from Fedora's packages), and semgrep, zizmor and the privacy check in UBI 10,
+Fedora 44 (Python from Fedora's packages), as does the release build, and semgrep, zizmor and the privacy check in UBI 10,
 with semgrep and zizmor installed from PyPI by hash (`.github/requirements/`) instead of their
 vendors' images. The `sacdfs main` tags test stays on the runner, since it builds sacdfs's own
 image (UBI 10 and Fedora based) with the runner's Podman.
