@@ -19,20 +19,26 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      # Fedora 44, pinned by digest: the package is built and checked in Red Hat-derived userland.
+      image: registry.fedoraproject.org/fedora@sha256:b414c09be79dd1f32529b55b096b6bb30435d82ee16fbdbbabf8985eb5f86db0
+    defaults:
+      run:
+        shell: bash
     steps:
+      - name: Python 3.13 (Fedora)
+        run: |
+          dnf -y -q --setopt=install_weak_deps=False install git-core findutils python3.13
+          dnf clean all
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
-
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
-        with:
-          python-version: "3.13"
 
       # build and setuptools from the hash lock (scripts/lock.py, #19), without isolation, so
       # nothing unhashed is downloaded
       - name: Build
         run: |
-          python -m venv /tmp/build
+          python3.13 -m venv /tmp/build
           /tmp/build/bin/pip install -q --require-hashes --only-binary :all: -r locks/latest/requirements.txt
           /tmp/build/bin/python -m build --no-isolation
 
@@ -40,7 +46,7 @@ jobs:
       # anything else; pip check fails if the wheel declares a dependency the lock lacks.
       - name: The wheel installs and the plugin loads
         run: |
-          python -m venv /tmp/clean
+          python3.13 -m venv /tmp/clean
           /tmp/clean/bin/pip install -q --require-hashes --only-binary :all: -r locks/latest/requirements.txt
           /tmp/clean/bin/pip install -q --no-deps dist/*.whl
           /tmp/clean/bin/pip check

@@ -17,14 +17,25 @@ permissions:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    container:
+      # Fedora 44, pinned by digest: the plugin is linted and tested in Red Hat-derived userland;
+      # the runner (Ubuntu, GitHub's only hosted Linux) only hosts the container.
+      image: registry.fedoraproject.org/fedora@sha256:b414c09be79dd1f32529b55b096b6bb30435d82ee16fbdbbabf8985eb5f86db0
+    defaults:
+      run:
+        shell: bash
     steps:
+      - name: Python 3.13 (Fedora)
+        env:
+          PY: "3.13"
+        run: |
+          dnf -y -q --setopt=install_weak_deps=False install git-core findutils "/usr/bin/python$PY"
+          dnf clean all
+          "python$PY" -m venv "$RUNNER_TEMP/venv"
+          echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
-
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
-        with:
-          python-version: "3.13"
 
       # hash-locked dependencies (scripts/lock.py, #19), then the plugin itself
       - name: Install
@@ -41,6 +52,9 @@ jobs:
   test:
     name: tests (${{ matrix.os }}, Python ${{ matrix.python }}, beets ${{ matrix.beets }}, pysacd ${{ matrix.pysacd }})
     runs-on: ${{ matrix.os }}
+    # Linux legs: Fedora 44, pinned by digest (the runner, Ubuntu, only hosts it). macOS and
+    # Windows legs have no container.
+    container: ${{ matrix.container }}
     permissions:
       contents: read
       id-token: write   # Codecov upload with GitHub's OIDC token: no stored secret
@@ -48,22 +62,43 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {os: ubuntu-latest, python: "3.11", beets: oldest, pysacd: release}
-          - {os: ubuntu-latest, python: "3.11", beets: latest, pysacd: release}
-          - {os: ubuntu-latest, python: "3.12", beets: latest, pysacd: release}
+          - {os: ubuntu-latest, python: "3.11", beets: oldest, pysacd: release,
+             container: "registry.fedoraproject.org/fedora@sha256:b414c09be79dd1f32529b55b096b6bb30435d82ee16fbdbbabf8985eb5f86db0"}
+          - {os: ubuntu-latest, python: "3.11", beets: latest, pysacd: release,
+             container: "registry.fedoraproject.org/fedora@sha256:b414c09be79dd1f32529b55b096b6bb30435d82ee16fbdbbabf8985eb5f86db0"}
+          - {os: ubuntu-latest, python: "3.12", beets: latest, pysacd: release,
+             container: "registry.fedoraproject.org/fedora@sha256:b414c09be79dd1f32529b55b096b6bb30435d82ee16fbdbbabf8985eb5f86db0"}
           # this leg also measures coverage (job summary and the `coverage` artifact)
-          - {os: ubuntu-latest, python: "3.13", beets: latest, pysacd: release, coverage: true}
-          - {os: ubuntu-latest, python: "3.14", beets: latest, pysacd: release}
-          - {os: ubuntu-latest, python: "3.15", beets: latest, pysacd: release}
-          - {os: ubuntu-latest, python: "3.13", beets: latest, pysacd: master}
+          - {os: ubuntu-latest, python: "3.13", beets: latest, pysacd: release, coverage: true,
+             container: "registry.fedoraproject.org/fedora@sha256:b414c09be79dd1f32529b55b096b6bb30435d82ee16fbdbbabf8985eb5f86db0"}
+          - {os: ubuntu-latest, python: "3.14", beets: latest, pysacd: release,
+             container: "registry.fedoraproject.org/fedora@sha256:b414c09be79dd1f32529b55b096b6bb30435d82ee16fbdbbabf8985eb5f86db0"}
+          - {os: ubuntu-latest, python: "3.15", beets: latest, pysacd: release,
+             container: "registry.fedoraproject.org/fedora@sha256:b414c09be79dd1f32529b55b096b6bb30435d82ee16fbdbbabf8985eb5f86db0"}
+          - {os: ubuntu-latest, python: "3.13", beets: latest, pysacd: master,
+             container: "registry.fedoraproject.org/fedora@sha256:b414c09be79dd1f32529b55b096b6bb30435d82ee16fbdbbabf8985eb5f86db0"}
           - {os: macos-latest, python: "3.13", beets: latest, pysacd: release}
           - {os: windows-latest, python: "3.13", beets: latest, pysacd: release}
     steps:
+      # flac-devel, gcc and make for pysacd built from master; gcc and the headers for PyYAML's
+      # sdist on 3.15.
+      - name: Python ${{ matrix.python }} (Fedora)
+        if: matrix.container
+        shell: bash
+        env:
+          PY: ${{ matrix.python }}
+        run: |
+          dnf -y -q --setopt=install_weak_deps=False install git-core findutils gcc make flac-devel \
+            pkgconf-pkg-config "/usr/bin/python$PY" "/usr/include/python$PY/Python.h"
+          dnf clean all
+          "python$PY" -m venv "$RUNNER_TEMP/venv"
+          echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
 
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        if: ${{ !matrix.container }}
         with:
           python-version: ${{ matrix.python }}
 
@@ -127,9 +162,8 @@ jobs:
       # fetching anything; pip check fails if master needs a dependency the lock lacks.
       - name: Install pysacd from master
         if: matrix.pysacd == 'master'
+        shell: bash
         run: |
-          sudo apt-get update -q
-          sudo apt-get install -y -q --no-install-recommends libflac-dev
           # a literal *.whl path, which Scorecard recognises as a local wheel install
           pip wheel --no-deps --no-build-isolation -w pysacd-wheel ./pysacd-src
           pip install --no-deps --force-reinstall pysacd-wheel/*.whl
@@ -239,7 +273,15 @@ jobs:
     # they never appear in the repository themselves.
     name: no private details
     runs-on: ubuntu-latest
+    container:
+      # UBI 10 (ubi10/ubi 10.3), pinned by digest.
+      image: registry.access.redhat.com/ubi10/ubi@sha256:1e9193f051ac70582821c8a941325c5053488c54c75cd0c31b577d871ac29dba
+    defaults:
+      run:
+        shell: bash
     steps:
+      - name: Packages
+        run: dnf -y -q --setopt=install_weak_deps=False install git-core findutils && dnf clean all
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
@@ -249,4 +291,6 @@ jobs:
         env:
           PRIVATE_NAMES: ${{ vars.PRIVATE_NAMES }}
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: bash scripts/check-private-names.sh
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          bash scripts/check-private-names.sh
