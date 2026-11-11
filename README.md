@@ -316,8 +316,15 @@ the report in its job summary, with HTML and XML reports as the `coverage`
 artifact; the XML report also goes to [Codecov](https://codecov.io/gh/aclater/beets-pysacd)
 for the badge, authenticated with the job's GitHub OIDC token (no stored secret;
 pull requests from forks skip the upload). Changes to workflows are linted with
-[zizmor](https://docs.zizmor.sh) (`pipx run zizmor==1.30.1 --no-online-audits
+[zizmor](https://docs.zizmor.sh) (`pipx run zizmor==1.30.1 --offline
 .github/workflows`), and changes to this README get a link check (lychee).
+
+The Linux jobs run in Red Hat-derived containers, pinned by digest: GitHub's hosted Linux runners
+are Ubuntu only, so the lint, the Linux test legs, the fuzzing and the live MusicBrainz check run in
+Fedora 44 (Python from Fedora's packages), and semgrep, zizmor and the privacy check in UBI 10,
+with semgrep and zizmor installed from PyPI by hash (`.github/requirements/`) instead of their
+vendors' images. The `sacdfs main` tags test stays on the runner, since it builds sacdfs's own
+image (UBI 10 and Fedora based) with the runner's Podman.
 
 Changes to the DVD/Blu-ray identifier (`beetsplug/_sacd_discimage.py`) or the
 harness are fuzzed for 150 seconds with [Atheris](https://github.com/google/atheris)

@@ -8,6 +8,9 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## Unreleased
 
+- CI's Linux jobs run in Red Hat-derived containers: lint, the Linux test legs, fuzzing and the live
+  MusicBrainz check in Fedora 44, semgrep, zizmor and the privacy check in UBI 10, with semgrep and
+  zizmor installed from PyPI by hash instead of their vendors' images. CI only; the plugin is unchanged.
 - `sacdfs_path` now follows sacdfs 0.4.1's file names, so it matches a mount for a disc whose tracks have
   no title (`NN - Track NN.dsf`; control characters and long titles are handled as sacdfs does) (#55).
   Before, `sacd-migrate --catalogue --mount` recorded `NN.dsf` for such discs: the catalogued items
