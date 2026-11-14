@@ -8,6 +8,14 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## Unreleased
 
+## 0.2.1 (2026-11-14)
+
+A security release for users of `remove_iso` (off by default). **If you use `remove_iso: yes` or
+`--remove-iso`, upgrade.** Found in a private review asked for by the maintainer. Checked by hand
+before release, since CI doesn't run on private fixes: ruff, mypy and the test suite on the newest
+and the oldest supported beets (2.14.1 and 2.12.0; Python 3.13, pysacd 0.5.0, in a Fedora 44
+container): 121 passed, the 3 expected skips.
+
 ### Security
 
 - Advisory GHSA-mjx6-hpg7-mjqj (medium; only with `remove_iso: yes` or `--remove-iso`, which are
