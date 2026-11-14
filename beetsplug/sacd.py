@@ -71,6 +71,7 @@ class Job:
     iso: Path
     pins: list[Pin] = field(default_factory=list)
     skipped: list[str] = field(default_factory=list)     # areas already in the library
+    failed: list[str] = field(default_factory=list)      # areas whose conversion failed
 
 
 def fingerprint(img, disc) -> str:
@@ -642,6 +643,7 @@ class SacdPlugin(BeetsPlugin):
             self._log.info("{}: converting the {} area ({} tracks) to {}", shown, kind, len(area.tracks), fmt)
             if pysacd_convert(str(iso), opts) != 0:
                 self._log.error("{}: converting the {} area failed; it is not imported", shown, kind)
+                job.failed.append(kind)
                 continue
             pin = Pin(iso, fp, kind, len(area.tracks), out / "album")
             if match is not None:
@@ -779,8 +781,13 @@ class SacdPlugin(BeetsPlugin):
         album.store()
 
     def _verified(self, lib, job: Job) -> bool:
-        """Every wanted area is an album in the library with all its tracks on disk."""
-        if not job.pins and not job.skipped:
+        """Every wanted area was imported in this run and is an album in the library with all its
+        tracks on disk.
+
+        An area skipped as already in the library proves nothing about this image: the fingerprint
+        is the TOCs and the size, not the audio, so a damaged rip or a different image with the same
+        TOC and size matches it. Such an image is kept, and so is one with no area imported."""
+        if not job.pins or job.skipped or job.failed:
             return False
         for pin in job.pins:
             albums = list(lib.albums(f"sacd_iso_sha:{pin.fingerprint} sacd_area:{pin.area}"))
@@ -795,7 +802,10 @@ class SacdPlugin(BeetsPlugin):
         from pysacd import safetext
         for job in self._jobs:
             shown = safetext.for_terminal(displayable_path(str(job.iso)))
-            if self._verified(lib, job):
+            if job.skipped:
+                self._log.warning("{}: {} area{} already in the library; ISO kept", shown,
+                                  " and ".join(job.skipped), "s" if len(job.skipped) > 1 else "")
+            elif self._verified(lib, job):
                 os.remove(job.iso)
                 self._log.info("{}: imported and verified; ISO removed", shown)
             else:
