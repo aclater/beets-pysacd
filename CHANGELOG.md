@@ -8,6 +8,10 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## Unreleased
 
+### Build and release
+- The release workflow refuses a `v*` tag that isn't `v` plus the package version, or whose commit
+  isn't on `main` or a `release/*` branch, before anything is built or published (#65).
+
 ## 0.2.1 (2026-11-14)
 
 A security release for users of `remove_iso` (off by default). **If you use `remove_iso: yes` or
