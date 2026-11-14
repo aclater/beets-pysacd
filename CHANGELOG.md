@@ -17,7 +17,10 @@ behaviour, and a patch version only adds or fixes. Releases are on
   one imported earlier, or of another image with the same TOC and size, and the library kept the
   first one's audio. Now an image is removed only when every selected area was imported from it in
   that run and verified; an image with an area already in the library is kept, and the log names
-  that area. An area whose conversion fails also keeps the image. Upgrade to 0.2.1.
+  that area. An area whose conversion fails also keeps the image. Each image is now verified by the
+  album made from that image, not by any album with its fingerprint: when two images with one
+  fingerprint are imported together, beets imports one and skips the other as a duplicate, and the
+  skipped one is kept. Upgrade to 0.2.1.
 
 ### Other changes
 

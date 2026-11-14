@@ -205,9 +205,11 @@ disc gives the same tracks. It needs pysacd 0.2.1 or later.
 
 ISO images are kept by default, and never written to. With `remove_iso: yes`
 (or `--remove-iso`) an image is deleted only when every selected area was
-imported from it in this run and verified: an album with that disc's
-fingerprint and area exists in the library, with all of the area's tracks, and
-every file exists. An import you skip, or one that fails, keeps the image.
+imported from it in this run and verified: the album beets made from that
+image is in the library with all of the area's tracks, and every file exists.
+An import you skip, or one that fails, keeps the image. So does an import
+beets skips as a duplicate: if you import a good and a bad rip of one disc
+together, one becomes the album and the other is kept, with a line in the log.
 
 An image with an area that is already in the library is kept too, and the log
 says which area and that the ISO was kept. The fingerprint that says "already

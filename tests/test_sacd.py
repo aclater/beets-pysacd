@@ -416,6 +416,35 @@ class TestRemoveIso(Base):
         assert len(self.albums()) == 1
         assert "disc.iso: stereo area already in the library; ISO kept" in caplog.text
 
+    def _two_in_one_run(self, caplog, second_first: bool) -> None:
+        # A good and a bad rip of one disc, given together: both are converted (neither is in the
+        # library yet), beets imports the first and skips the other as a duplicate. Only the image
+        # whose own album was imported may go; the other one's audio is nowhere else.
+        second = self.same_toc_other_audio(self.isodir / "second.iso")
+        assert self.fingerprint(second) == self.fingerprint(self.iso)
+        order = [second, self.iso] if second_first else [self.iso, second]
+        with caplog.at_level(logging.INFO, logger="beets"):
+            self.run_command("sacd-import", "--remove-iso", *map(str, order))
+        assert len(self.albums()) == 1
+        assert not order[0].exists(), caplog.text       # imported and verified
+        assert order[1].exists(), caplog.text           # never imported: kept
+        assert f"{order[1].name}: its album was not imported" in caplog.text
+
+    def test_two_images_with_one_fingerprint_in_one_run(self, caplog):
+        self._two_in_one_run(caplog, second_first=False)
+
+    def test_two_images_with_one_fingerprint_in_one_run_other_order(self, caplog):
+        self._two_in_one_run(caplog, second_first=True)
+
+    def test_plain_import_of_a_folder_with_two_images_of_one_fingerprint(self, caplog):
+        second = self.same_toc_other_audio(self.isodir / "second.iso")
+        self.config["sacd"]["remove_iso"] = True
+        with caplog.at_level(logging.INFO, logger="beets"):
+            self.run_command("import", str(self.isodir))
+        assert len(self.albums()) == 1
+        assert sum(p.exists() for p in (self.iso, second)) == 1, caplog.text
+        assert "its album was not imported" in caplog.text
+
     def test_plain_import_removes_a_new_image_after_a_verified_import(self):
         self.config["sacd"]["remove_iso"] = True
         self.run_command("import", str(self.isodir))
