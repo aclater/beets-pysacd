@@ -8,6 +8,19 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## Unreleased
 
+### Security
+
+- Advisory GHSA-mjx6-hpg7-mjqj (medium; only with `remove_iso: yes` or `--remove-iso`, which are
+  off by default): an image whose areas were all already in the library was deleted without any
+  check of its own audio. "Already in the library" is decided by the disc fingerprint, which is the
+  TOCs and the image size, not the audio, so a good rip could be deleted as a duplicate of a damaged
+  one imported earlier, or of another image with the same TOC and size, and the library kept the
+  first one's audio. Now an image is removed only when every selected area was imported from it in
+  that run and verified; an image with an area already in the library is kept, and the log names
+  that area. An area whose conversion fails also keeps the image. Upgrade to 0.2.1.
+
+### Other changes
+
 - `sacdfs_path` now follows sacdfs 0.4.1's file names, so it matches a mount for a disc whose tracks have
   no title (`NN - Track NN.dsf`; control characters and long titles are handled as sacdfs does) (#55).
   Before, `sacd-migrate --catalogue --mount` recorded `NN.dsf` for such discs: the catalogued items

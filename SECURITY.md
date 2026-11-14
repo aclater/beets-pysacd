@@ -64,8 +64,8 @@ beets-pysacd treats these as attacker-controlled:
 Any of the following in the plugin's handling of those inputs is in scope:
 
 - a crash, a hang or unbounded memory or disk use;
-- an ISO deleted (`remove_iso: yes`) before its albums are verified in the library, or any
-  other loss of the user's files;
+- an ISO deleted (`remove_iso: yes`) unless every selected area was imported from it in that
+  run and verified in the library, or any other loss of the user's files;
 - a file written, moved or deleted outside the staging directory and the beets library;
 - disc or MusicBrainz text that reaches a shell, `subprocess` or `eval`, or drives the
   terminal;

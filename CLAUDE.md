@@ -22,7 +22,9 @@ catalogued, never converted. That handler is the plugin's own, not pysacd's.
 
 - **Never lose or damage user data.**
   - An ISO is deleted only with `remove_iso: yes`, and only after every
-    selected area's album is verified in the library.
+    selected area was imported from it in that run and its album verified in
+    the library. An area already in the library keeps the ISO: the
+    fingerprint is the TOCs and the size, not the audio.
   - Staging directories are removed on every path (`finally`).
   - The user's own import settings (copy, move, write, ...) still apply to
     their other files in the same session.
