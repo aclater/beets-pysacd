@@ -436,6 +436,34 @@ class TestRemoveIso(Base):
     def test_two_images_with_one_fingerprint_in_one_run_other_order(self, caplog):
         self._two_in_one_run(caplog, second_first=True)
 
+    def test_verified_needs_each_pin_s_own_complete_album(self, tmp_path):
+        # _verified() on its own: the album must be the pin's, complete, on disk, and not shared
+        from types import SimpleNamespace as NS
+
+        from beetsplug import sacd
+        present = tmp_path / "t.dsf"
+        present.write_bytes(b"x")
+
+        def album(n_items=3, sha="f", area="stereo", path=present):
+            return NS(get=lambda k: {"sacd_iso_sha": sha, "sacd_area": area}[k],
+                      items=lambda: [NS(path=os.fsencode(path))] * n_items)
+
+        def check(albums: dict, pins: list) -> bool:
+            job = sacd.Job(Path("x.iso"), pins=pins)
+            return sacd.SacdPlugin._verified(NS(_jobs=[job]), NS(get_album=albums.get), job)
+
+        def pin(album_id, area="stereo"):
+            return sacd.Pin(Path("x.iso"), "f", area, 3, Path("/staging"), album_id=album_id)
+
+        assert check({1: album()}, [pin(1)])
+        assert not check({1: album()}, [pin(None)])                         # its task was skipped
+        assert not check({}, [pin(1)])                                      # the album is gone
+        assert not check({1: album(n_items=2)}, [pin(1)])                   # a track is missing
+        assert not check({1: album(path=tmp_path / "gone.dsf")}, [pin(1)])  # a file is missing
+        assert not check({1: album(sha="other")}, [pin(1)])                 # another image's album
+        assert not check({1: album()}, [pin(1), pin(1, "multichannel")])    # one album, two pins
+        assert check({1: album(), 2: album(area="multichannel")}, [pin(1), pin(2, "multichannel")])
+
     def test_plain_import_of_a_folder_with_two_images_of_one_fingerprint(self, caplog):
         second = self.same_toc_other_audio(self.isodir / "second.iso")
         self.config["sacd"]["remove_iso"] = True
