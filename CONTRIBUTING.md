@@ -49,7 +49,8 @@ in aclater/sacd (the minor version's summary and release list).
 ## Rules
 
 - **Never lose user data.** An ISO is deleted only with `remove_iso: yes`, after every
-  area is verified in the library; staging directories are always removed.
+  area is imported from it in that run and verified in the library; staging directories are
+  always removed.
 - **beets compatibility.** Support every beets release from the floor in
   `pyproject.toml` to the latest 2.x; don't use newer APIs without raising the floor.
 - **Untrusted text.** Disc text, volume labels and MusicBrainz data are hostile: print
