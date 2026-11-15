@@ -132,6 +132,30 @@ albums have `sacd_catalogued: 1`. They have no MusicBrainz match: run beets' own
 the mounted files for that. Without `--apply` the command only reports; a second run
 adds nothing.
 
+**Upgrading the mount from sacdfs 0.4.0 to 0.4.1.** sacdfs 0.4.0 showed a track without a
+title as `NN.dsf`; 0.4.1 shows it as `NN - Track NN.dsf`. Albums catalogued on a 0.4.0 mount
+by beets-pysacd 0.2.0 or 0.2.1 point at the old names, and once the mount is upgraded
+`beet update` removes their items, with any fields you set on them. In this order:
+
+1. Back up the beets library database (`library.db`).
+2. Upgrade and remount sacdfs. Don't run `beet update` yet.
+3. `beet sacd-migrate --mount DIR --source SOURCE ISO...` (with `--flatten` if the mount uses
+   it) reports which catalogued items would move to the new names; add `--apply` to move them.
+   A plain `--catalogue --mount DIR --apply` run does the same.
+4. Then `beet update` keeps them.
+
+An item is moved only when its path is the 0.4.0 name under `--mount`, that file is gone, and
+the 0.4.1 name is the one file the mount shows for that track number; anything else is reported
+and left alone. Only the item's `path` and `sacdfs_path` change: its id, added date and other
+fields stay, nothing on the mount is touched and no item is removed. A second run changes
+nothing. If `beet update` already removed the items, `--catalogue` adds the album again with
+new ids and added dates and without the fields set by hand; restore the backup from step 1
+instead to keep them. Tested in a throwaway library on a directory laid out like each mount's
+names (synthetic disc, beets 2.12.0 and 2.14.1); not yet run against a real sacdfs mount.
+`beet update` reads a catalogued item's tags from the mounted file, so tag fields such as
+genre, year and title follow the file, on either sacdfs version; flexible fields stay. To keep
+your genres for the mounted files, export them with `sacd-tags-export`.
+
 ### Keeping your tags: `sacd-tags-export`
 
 sacdfs 0.3.0 can serve your own tags over an image's: a **tags directory** (`--tags DIR`,
