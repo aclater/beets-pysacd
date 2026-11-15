@@ -132,6 +132,21 @@ albums have `sacd_catalogued: 1`. They have no MusicBrainz match: run beets' own
 the mounted files for that. Without `--apply` the command only reports; a second run
 adds nothing.
 
+**Fields set by hand on catalogued items.** The mount is read-only, so `beet modify` can't
+write a tag to a catalogued item's file; the edit lives in the library. Each item records its
+file's mtime when it is catalogued, and again when a tag field is set on it, so `beet update`
+leaves its tag fields (genre, year, title, ...) alone until the file's mtime changes on the
+mount. That mtime comes from the ISO, so it stays the same when sacdfs is remounted; it moves
+when the ISO changes, when an sacdfs upgrade changes the files' bytes, or when the disc's tags
+file (`sacd-tags-export`) changes. `beet update` then reads the file's tags over the item's
+tag fields, as it does for any changed file; flexible fields stay. To keep a genre across
+that, export it with `sacd-tags-export`. Items catalogued by 0.2.1 or earlier have no recorded
+mtime, so every `beet update` reads their tags from the mount: `sacd-migrate --mount DIR`
+reports them and with `--apply` records each existing file's mtime, changing no other field.
+Tested in a throwaway library with DSF files from pysacd standing in for the mount (beets
+2.12.0 and 2.14.1); that sacdfs main keeps a track's mtime across remounts and moves it for a
+new tags file is checked in CI on a real mount; the rest is not yet run on a real mount.
+
 **Upgrading the mount from sacdfs 0.4.0 to 0.4.1.** sacdfs 0.4.0 showed a track without a
 title as `NN.dsf`; 0.4.1 shows it as `NN - Track NN.dsf`. Albums catalogued on a 0.4.0 mount
 by beets-pysacd 0.2.0 or 0.2.1 point at the old names, and once the mount is upgraded
@@ -146,15 +161,13 @@ by beets-pysacd 0.2.0 or 0.2.1 point at the old names, and once the mount is upg
 
 An item is moved only when its path is the 0.4.0 name under `--mount`, that file is gone, and
 the 0.4.1 name is the one file the mount shows for that track number; anything else is reported
-and left alone. Only the item's `path` and `sacdfs_path` change: its id, added date and other
+and left alone. Only the item's `path`, `sacdfs_path` and `mtime` (the new file's) change: its id, added date and other
 fields stay, nothing on the mount is touched and no item is removed. A second run changes
 nothing. If `beet update` already removed the items, `--catalogue` adds the album again with
 new ids and added dates and without the fields set by hand; restore the backup from step 1
 instead to keep them. Tested in a throwaway library on a directory laid out like each mount's
 names (synthetic disc, beets 2.12.0 and 2.14.1); not yet run against a real sacdfs mount.
-`beet update` reads a catalogued item's tags from the mounted file, so tag fields such as
-genre, year and title follow the file, on either sacdfs version; flexible fields stay. To keep
-your genres for the mounted files, export them with `sacd-tags-export`.
+The same run records the file's mtime for catalogued items that have none (see below).
 
 ### Keeping your tags: `sacd-tags-export`
 

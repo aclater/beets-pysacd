@@ -39,6 +39,7 @@ from beets.util import MoveOperation, bytestring_path, displayable_path, syspath
 
 from beetsplug import _sacd_tags
 from beetsplug._sacd_discimage import identify
+from beetsplug._sacd_edits import CatalogueEdits, file_mtime
 from beetsplug._sacd_migrate import durations_match, parse_verify_report, sacdfs_path
 
 AREAS = ("stereo", "multichannel")
@@ -92,6 +93,17 @@ def pysacd_has_pauses() -> bool:
 
     from pysacd.convert import Options
     return any(f.name == "pauses" for f in fields(Options))
+
+
+def audio_properties(path: bytes) -> dict:
+    """The sample rate, bit depth and bit rate of a mounted file, as `beet update` would read
+    them; empty when it can't be read."""
+    from mediafile import MediaFile, UnreadableFileError
+    try:
+        f = MediaFile(syspath(path))
+    except (UnreadableFileError, OSError):
+        return {}
+    return {k: v for k in ("samplerate", "bitdepth", "bitrate") if (v := getattr(f, k, None))}
 
 
 def is_iso(path: str | os.PathLike) -> bool:
@@ -222,6 +234,7 @@ class SacdPlugin(BeetsPlugin):
         self.register_listener("import_task_files", self.task_files)
         self.register_listener("import", self.import_done)
         self.register_listener("cli_exit", self.cli_exit)
+        self._edits = CatalogueEdits()          # database_change: keep edits to catalogued items (#68)
 
     # ------------------------------------------------------------ commands
 
@@ -260,7 +273,8 @@ class SacdPlugin(BeetsPlugin):
         mig.parser.add_option("--mount", metavar="DIR",
                               help="where sacdfs is mounted: the paths of catalogued items; catalogued "
                                    "items recorded with sacdfs 0.4.0 names that the mount no longer "
-                                   "shows are moved to its 0.4.1 names (with --apply)")
+                                   "shows are moved to its 0.4.1 names, and those with no recorded "
+                                   "mtime get their file's (with --apply)")
         mig.parser.usage = "%prog [options] ISO|DIRECTORY..."
         mig.func = self.sacd_migrate
 
@@ -352,7 +366,7 @@ class SacdPlugin(BeetsPlugin):
             except (OSError, ValueError) as e:
                 raise ui.UserError(f"cannot use the verify report: {e}") from e
         claimed: set[int] = set()
-        n_cat = n_held = n_moved = 0
+        n_cat = n_held = n_moved = n_stamped = 0
         n_albums = 0
         for iso in isos:
             shown = safetext.for_terminal(displayable_path(str(iso)))
@@ -385,8 +399,10 @@ class SacdPlugin(BeetsPlugin):
                     claimed.add(album.id)
                     n_albums += 1
                     if album.get("sacd_catalogued"):
-                        n_moved += self._repath_catalogued(lib, album, items, tracks, iso, fp, root, kind,
-                                                           shown, opts)
+                        moved, stamped = self._repath_catalogued(lib, album, items, tracks, iso, fp, root,
+                                                                 kind, shown, opts)
+                        n_moved += moved
+                        n_stamped += stamped
                         continue
                     bad = [] if verified is None else [i for i in items if not verified.get(i.path, False)]
                     if bad:
@@ -410,33 +426,40 @@ class SacdPlugin(BeetsPlugin):
                   + (f"; {n_cat} catalogued" if opts.catalogue else "")
                   + (f"; {n_moved} catalogued item path(s) {'moved' if opts.apply else 'to move'} to sacdfs "
                      f"0.4.1 names" if n_moved else "")
+                  + (f"; {n_stamped} catalogued item mtime(s) {'recorded' if opts.apply else 'to record'}"
+                     if n_stamped else "")
                   + ". Nothing was deleted: check them with sacdfs verify before removing any extract.")
 
     def _repath_catalogued(self, lib, album, items: list, tracks: list, iso: Path, fp: str, root: Path,
-                           kind: str, shown: str, opts) -> int:
+                           kind: str, shown: str, opts) -> tuple[int, int]:
         """Point a catalogued album's items at the file names sacdfs 0.4.1 shows (#57).
 
         beets-pysacd 0.2.0 catalogued a track without a title as `NN.dsf`, sacdfs 0.4.0's name; 0.4.1
         shows `NN - Track NN.dsf`, so after the mount is upgraded the item's file is gone and
         `beet update` removes the item. An item is moved only when its recorded path is the 0.4.0
         name under --mount, that file is missing, the 0.4.1 name exists and is the only file for
-        that track number, and no other item of the disc has it. Only `path` and `sacdfs_path`
-        change: the item keeps its id, added date and every other field. Nothing on disk is
-        touched, nothing is removed, and a second run changes nothing. Returns the items moved
-        (or, without --apply, to move)."""
+        that track number, and no other item of the disc has it. Only `path`, `sacdfs_path` and
+        `mtime` (the new file's) change: the item keeps its id, added date and every other field.
+
+        An item whose file exists but whose `mtime` is 0 (catalogued by 0.2.x, #68) gets its file's
+        mtime and nothing else, so `beet update` no longer reads the mount's tags over fields set
+        in the library. Nothing on disk is touched, nothing is removed, and a second run changes
+        nothing. Returns the items moved and the mtimes recorded (or, without --apply, to be)."""
         head = f"{shown}: {kind}: catalogued album {album.id}"           # `shown` is already safe text
         if not opts.mount:
             ui.print_(f"{head}: give --mount DIR to check its paths against the mount")
-            return 0
+            return 0, 0
         mount = Path(os.path.abspath(opts.mount))
         taken = {bytes(i.path) for i in lib.items(f"sacd_iso_sha:{fp}")}
-        moves, kept, refused = [], 0, []
+        moves, kept, refused, stamps = [], 0, [], []
         for item, t in zip(items, tracks, strict=True):
             path = bytes(item.path)
             new = sacdfs_path(iso, root, opts.flatten, kind, t.number, t.title)
             old = sacdfs_path(iso, root, opts.flatten, kind, t.number, t.title, legacy=True)
             if os.path.exists(path):
                 kept += 1
+                if not item.mtime and (mtime := file_mtime(path)):
+                    stamps.append((item, mtime))
                 continue
             if old == new:
                 refused.append(f"track {t.number}: its file is missing, and not because of the 0.4.1 rename")
@@ -465,14 +488,22 @@ class SacdPlugin(BeetsPlugin):
         if moves:
             ui.print_(f"{head}: {len(moves)} item path(s) {'moved' if opts.apply else 'would move'} from "
                       f"sacdfs 0.4.0 to 0.4.1 names" + (f"; {len(refused)} left as they are" if refused else ""))
-        elif not refused:
+        if stamps:
+            ui.print_(f"{head}: {len(stamps)} item(s) have no recorded mtime, so `beet update` would read "
+                      f"the mount's tags over their fields; {'recorded' if opts.apply else 'would record'} "
+                      f"their files' mtimes")
+        elif not refused and not moves:
             ui.print_(f"{head}: {kept} path(s) exist on the mount; nothing to change")
         if opts.apply:
             for item, target, new in moves:
                 item.path = os.fsencode(target)
                 item["sacdfs_path"] = new
+                item.mtime = file_mtime(item.path) or 0
                 item.store()
-        return len(moves)
+            for item, mtime in stamps:
+                item.mtime = mtime
+                item.store(fields=["mtime"])
+        return len(moves), len(stamps)
 
     def _has_extracts(self, lib, iso: Path, fp: str, kind: str, n_tracks: int) -> bool:
         """Does the library hold anything that could be extracts of this ISO area: an album it
@@ -485,7 +516,8 @@ class SacdPlugin(BeetsPlugin):
 
     def _catalogue(self, lib, iso: Path, fp: str, kind: str, disc, area, tracks, root: Path, opts) -> None:
         """Add the area as an album whose items are the files sacdfs shows: no extracts, no tags
-        written. Items carry the disc's text, track order, lengths and channels."""
+        written. Items carry the disc's text, track order, lengths and channels, and the mounted
+        file's mtime and audio properties when it can be read."""
         from beets.library import Item
         mount = Path(os.path.abspath(opts.mount))
         items = []
@@ -503,6 +535,10 @@ class SacdPlugin(BeetsPlugin):
                         length=t.duration.seconds_float, channels=area.channel_count, format="DSF",
                         sacd_iso=os.fsdecode(iso), sacd_track=t.number, sacd_area=kind,
                         sacd_iso_sha=fp, sacdfs_path=rel, sacd_catalogued=1)
+            # The file's mtime and audio properties, as `beet import` records them (#68): with
+            # mtime 0, `beet update` would read the mount's tags over this text and any later edit.
+            item.update(audio_properties(item.path))
+            item.mtime = file_mtime(item.path) or 0
             items.append(item)
         album = lib.add_album(items)
         album["sacd_iso_sha"] = fp
