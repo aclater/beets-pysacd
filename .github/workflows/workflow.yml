@@ -8,7 +8,8 @@ name: release
 
 on:
   pull_request:
-    paths: ["pyproject.toml", "beetsplug/**", "locks/**", ".github/workflows/workflow.yml"]
+    paths: ["pyproject.toml", "beetsplug/**", "locks/**", "scripts/check_release_tag.py",
+            ".github/workflows/workflow.yml"]
   push:
     tags: ["v*"]
   workflow_dispatch:
@@ -17,7 +18,39 @@ permissions:
   contents: read
 
 jobs:
+  tag:
+    # First, before anything is built: a v* tag must be "v" plus the version in pyproject.toml, on
+    # a commit of main or a release/* branch (#65). Tags can't be moved afterwards.
+    name: release tag
+    runs-on: ubuntu-latest
+    container:
+      # Fedora 44, pinned by digest, like the build below
+      image: registry.fedoraproject.org/fedora@sha256:b414c09be79dd1f32529b55b096b6bb30435d82ee16fbdbbabf8985eb5f86db0
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: git and Python (Fedora)
+        run: |
+          dnf -y -q --setopt=install_weak_deps=False install git-core python3
+          dnf clean all
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0  # every branch of origin, to see which ones hold the commit
+
+      # On a pull request too the script reads origin's branches, so this set-up (the container's
+      # git, the checkout's owner) is tested before a tag depends on it.
+      - name: The tag matches the version and its commit is on a release branch
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          python3 -I scripts/check_release_tag.py --ref "$GITHUB_REF" --sha "$GITHUB_SHA" \
+            --default-branch "$DEFAULT_BRANCH"
+
   build:
+    needs: [tag]
     runs-on: ubuntu-latest
     container:
       # Fedora 44, pinned by digest: the package is built and checked in Red Hat-derived userland.

@@ -63,6 +63,7 @@ class Pin:
     release_id: str | None = None   # pysacd's match, if any
     medium: int | None = None       # its position in the release
     media: str | None = None        # its format, e.g. "Hybrid SACD (SACD layer, 2 channels)"
+    album_id: int | None = None     # the library album beets made from this pin's own task
 
 
 @dataclass
@@ -71,6 +72,7 @@ class Job:
     iso: Path
     pins: list[Pin] = field(default_factory=list)
     skipped: list[str] = field(default_factory=list)     # areas already in the library
+    failed: list[str] = field(default_factory=list)      # areas whose conversion failed
 
 
 def fingerprint(img, disc) -> str:
@@ -642,6 +644,7 @@ class SacdPlugin(BeetsPlugin):
             self._log.info("{}: converting the {} area ({} tracks) to {}", shown, kind, len(area.tracks), fmt)
             if pysacd_convert(str(iso), opts) != 0:
                 self._log.error("{}: converting the {} area failed; it is not imported", shown, kind)
+                job.failed.append(kind)
                 continue
             pin = Pin(iso, fp, kind, len(area.tracks), out / "album")
             if match is not None:
@@ -777,16 +780,30 @@ class SacdPlugin(BeetsPlugin):
         album.sacd_iso_sha = pin.fingerprint
         album.sacd_area = pin.area
         album.store()
+        pin.album_id = album.id     # this image's own album: what _verified() checks
 
     def _verified(self, lib, job: Job) -> bool:
-        """Every wanted area is an album in the library with all its tracks on disk."""
-        if not job.pins and not job.skipped:
+        """Every wanted area was imported in this run and is an album in the library with all its
+        tracks on disk.
+
+        An area skipped as already in the library proves nothing about this image: the fingerprint
+        is the TOCs and the size, not the audio, so a damaged rip or a different image with the same
+        TOC and size matches it. Such an image is kept, and so is one with no area imported."""
+        if not job.pins or job.skipped or job.failed:
             return False
         for pin in job.pins:
-            albums = list(lib.albums(f"sacd_iso_sha:{pin.fingerprint} sacd_area:{pin.area}"))
-            if not any(len(items := list(a.items())) == pin.tracks
-                       and all(os.path.exists(syspath(i.path)) for i in items) for a in albums):
+            # The album made from this pin's own task, never "some album with this fingerprint":
+            # two images with one fingerprint in a run (a good and a bad rip of a disc) would
+            # otherwise vouch for each other, though beets imports one and skips the other as a
+            # duplicate.
+            album = lib.get_album(pin.album_id) if pin.album_id is not None else None
+            if album is None or album.get("sacd_iso_sha") != pin.fingerprint or album.get("sacd_area") != pin.area:
                 return False
+            items = list(album.items())
+            if len(items) != pin.tracks or not all(os.path.exists(syspath(i.path)) for i in items):
+                return False
+            if sum(p.album_id == pin.album_id for j in self._jobs for p in j.pins) != 1:
+                return False        # one album can't stand for two areas or two images
         return True
 
     def finish(self, lib) -> None:
@@ -795,9 +812,15 @@ class SacdPlugin(BeetsPlugin):
         from pysacd import safetext
         for job in self._jobs:
             shown = safetext.for_terminal(displayable_path(str(job.iso)))
-            if self._verified(lib, job):
+            if job.skipped:
+                self._log.warning("{}: {} area{} already in the library; ISO kept", shown,
+                                  " and ".join(job.skipped), "s" if len(job.skipped) > 1 else "")
+            elif self._verified(lib, job):
                 os.remove(job.iso)
                 self._log.info("{}: imported and verified; ISO removed", shown)
+            elif any(p.album_id is None for p in job.pins):
+                self._log.warning("{}: its album was not imported (skipped, or taken for a duplicate); ISO kept",
+                                  shown)
             else:
                 self._log.warning("{}: not every area was imported; ISO kept", shown)
 

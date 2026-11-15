@@ -43,13 +43,18 @@ discs and library in general terms; you don't need to share your collection.
 
 ## Releasing
 
+A release is a `v*` tag on a commit of `main` (or of a `release/*` branch, for a fix to an older
+version), named `v` plus the version in `pyproject.toml`. The release workflow's first job checks
+both (`scripts/check_release_tag.py`) and builds and publishes nothing when it fails (#65).
+
 When a version is released, update [RELEASES.md](https://github.com/aclater/sacd/blob/main/RELEASES.md)
 in aclater/sacd (the minor version's summary and release list).
 
 ## Rules
 
 - **Never lose user data.** An ISO is deleted only with `remove_iso: yes`, after every
-  area is verified in the library; staging directories are always removed.
+  area is imported from it in that run and verified in the library; staging directories are
+  always removed.
 - **beets compatibility.** Support every beets release from the floor in
   `pyproject.toml` to the latest 2.x; don't use newer APIs without raising the floor.
 - **Untrusted text.** Disc text, volume labels and MusicBrainz data are hostile: print

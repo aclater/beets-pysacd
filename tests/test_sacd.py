@@ -13,6 +13,7 @@ import hashlib
 import importlib.util
 import logging
 import os
+import shutil
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -337,6 +338,174 @@ class TestRemoveIso(Base):
             return job
         with patch.object(sacd.SacdPlugin, "convert", stereo_only):
             self.run_command("sacd-import", str(self.iso))
+        assert self.iso.exists()
+
+    @staticmethod
+    def fingerprint(path: Path) -> str:
+        from pysacd.toc import SACDImage
+
+        from beetsplug.sacd import fingerprint
+        with SACDImage(str(path)) as img:
+            return fingerprint(img, img.read_toc())
+
+    def same_toc_other_audio(self, path: Path) -> Path:
+        """A copy of self.iso whose audio sectors come from an image with other audio: the TOCs
+        and the size, so the fingerprint, are the same; the audio isn't."""
+        from pysacd.toc import SACDImage
+        other = self.tmp_root / "other-audio.iso"
+        sacdgen.build_iso(other, [
+            sacdgen.AreaSpec(2, [bytes([0x96]) * (4704 * 2)] * (FRAMES * 3), [FRAMES] * 3, dst=False,
+                             titles=mbfixture.TITLES),
+            sacdgen.AreaSpec(6, [bytes([0x96]) * (4704 * 6)] * (FRAMES * 3), [FRAMES] * 3, dst=False,
+                             titles=mbfixture.TITLES)],
+            info=sacdgen.DiscInfo(title=mbfixture.ALBUM, artist="Test Artist", album_catalog="PYSACD-TEST"))
+        data, audio = bytearray(self.iso.read_bytes()), other.read_bytes()
+        with SACDImage(str(self.iso)) as img:
+            areas = img.read_toc().areas
+        for a in areas:
+            lo, hi = a.track_start * 2048, (a.track_end + 1) * 2048
+            data[lo:hi] = audio[lo:hi]
+        path.write_bytes(data)
+        other.unlink()
+        return path
+
+    def test_an_image_with_the_same_toc_and_other_audio_is_kept(self, caplog):
+        self.run_command("sacd-import", str(self.iso))
+        second = self.same_toc_other_audio(self.isodir / "second.iso")
+        assert self.fingerprint(second) == self.fingerprint(self.iso)     # "already imported" by fingerprint
+        assert sha(second) != sha(self.iso)                               # but other audio
+        before = self.library_audio()
+        with caplog.at_level(logging.INFO, logger="beets"):
+            self.run_command("sacd-import", "--remove-iso", str(second))
+        assert second.exists()
+        assert len(self.albums()) == 1
+        assert self.library_audio() == before                             # still the first image's audio
+        assert "second.iso: stereo area already in the library; ISO kept" in caplog.text
+
+    def library_audio(self) -> list[bytes]:
+        [album] = self.albums()
+        return [Path(os.fsdecode(i.path)).read_bytes() for i in sorted(album.items(), key=lambda i: i.track)]
+
+    def test_a_copy_of_an_imported_image_is_kept(self, caplog):
+        self.run_command("sacd-import", str(self.iso))
+        copy = self.isodir / "copy.iso"
+        shutil.copy(self.iso, copy)
+        with caplog.at_level(logging.INFO, logger="beets"):
+            self.run_command("sacd-import", "--remove-iso", str(copy))
+        assert copy.exists()
+        assert len(self.albums()) == 1
+        assert "copy.iso: stereo area already in the library; ISO kept" in caplog.text
+
+    def test_a_copy_is_kept_when_the_library_album_lost_a_file(self):
+        self.run_command("sacd-import", str(self.iso))
+        [album] = self.albums()
+        gone = Path(os.fsdecode(min(album.items(), key=lambda i: i.track).path))
+        gone.unlink()
+        copy = self.isodir / "copy.iso"
+        shutil.copy(self.iso, copy)
+        self.run_command("sacd-import", "--remove-iso", str(copy))
+        assert copy.exists()
+
+    def test_plain_import_keeps_an_image_already_imported(self, caplog):
+        self.run_command("import", str(self.isodir))
+        assert len(self.albums()) == 1
+        self.config["sacd"]["remove_iso"] = True
+        with caplog.at_level(logging.INFO, logger="beets"):
+            self.run_command("import", str(self.isodir))                 # finish() through import_done
+        assert self.iso.exists()
+        assert len(self.albums()) == 1
+        assert "disc.iso: stereo area already in the library; ISO kept" in caplog.text
+
+    def _two_in_one_run(self, caplog, second_first: bool) -> None:
+        # A good and a bad rip of one disc, given together: both are converted (neither is in the
+        # library yet), beets imports the first and skips the other as a duplicate. Only the image
+        # whose own album was imported may go; the other one's audio is nowhere else.
+        second = self.same_toc_other_audio(self.isodir / "second.iso")
+        assert self.fingerprint(second) == self.fingerprint(self.iso)
+        order = [second, self.iso] if second_first else [self.iso, second]
+        with caplog.at_level(logging.INFO, logger="beets"):
+            self.run_command("sacd-import", "--remove-iso", *map(str, order))
+        assert len(self.albums()) == 1
+        assert not order[0].exists(), caplog.text       # imported and verified
+        assert order[1].exists(), caplog.text           # never imported: kept
+        assert f"{order[1].name}: its album was not imported" in caplog.text
+
+    def test_two_images_with_one_fingerprint_in_one_run(self, caplog):
+        self._two_in_one_run(caplog, second_first=False)
+
+    def test_two_images_with_one_fingerprint_in_one_run_other_order(self, caplog):
+        self._two_in_one_run(caplog, second_first=True)
+
+    def test_verified_needs_each_pin_s_own_complete_album(self, tmp_path):
+        # _verified() on its own: the album must be the pin's, complete, on disk, and not shared
+        from types import SimpleNamespace as NS
+
+        from beetsplug import sacd
+        present = tmp_path / "t.dsf"
+        present.write_bytes(b"x")
+
+        def album(n_items=3, sha="f", area="stereo", path=present):
+            return NS(get=lambda k: {"sacd_iso_sha": sha, "sacd_area": area}[k],
+                      items=lambda: [NS(path=os.fsencode(path))] * n_items)
+
+        def check(albums: dict, pins: list) -> bool:
+            job = sacd.Job(Path("x.iso"), pins=pins)
+            return sacd.SacdPlugin._verified(NS(_jobs=[job]), NS(get_album=albums.get), job)
+
+        def pin(album_id, area="stereo"):
+            return sacd.Pin(Path("x.iso"), "f", area, 3, Path("/staging"), album_id=album_id)
+
+        assert check({1: album()}, [pin(1)])
+        assert not check({1: album()}, [pin(None)])                         # its task was skipped
+        assert not check({}, [pin(1)])                                      # the album is gone
+        assert not check({1: album(n_items=2)}, [pin(1)])                   # a track is missing
+        assert not check({1: album(path=tmp_path / "gone.dsf")}, [pin(1)])  # a file is missing
+        assert not check({1: album(sha="other")}, [pin(1)])                 # another image's album
+        assert not check({1: album()}, [pin(1), pin(1, "multichannel")])    # one album, two pins
+        assert check({1: album(), 2: album(area="multichannel")}, [pin(1), pin(2, "multichannel")])
+
+    def test_plain_import_of_a_folder_with_two_images_of_one_fingerprint(self, caplog):
+        second = self.same_toc_other_audio(self.isodir / "second.iso")
+        self.config["sacd"]["remove_iso"] = True
+        with caplog.at_level(logging.INFO, logger="beets"):
+            self.run_command("import", str(self.isodir))
+        assert len(self.albums()) == 1
+        assert sum(p.exists() for p in (self.iso, second)) == 1, caplog.text
+        assert "its album was not imported" in caplog.text
+
+    def test_plain_import_removes_a_new_image_after_a_verified_import(self):
+        self.config["sacd"]["remove_iso"] = True
+        self.run_command("import", str(self.isodir))
+        assert len(self.albums()) == 1
+        assert not self.iso.exists()
+
+    def test_an_image_already_imported_is_kept(self, caplog):
+        self.run_command("sacd-import", str(self.iso))
+        with caplog.at_level(logging.INFO, logger="beets"):
+            self.run_command("sacd-import", "--remove-iso", str(self.iso))
+        assert self.iso.exists()
+        assert len(self.albums()) == 1
+        assert "disc.iso: stereo area already in the library; ISO kept" in caplog.text
+
+    def test_kept_when_one_area_was_already_in_the_library(self, caplog):
+        self.run_command("sacd-import", str(self.iso))                    # stereo only
+        self.config["sacd"]["areas"] = "both"
+        with caplog.at_level(logging.INFO, logger="beets"):
+            self.run_command("sacd-import", "--remove-iso", str(self.iso))
+        assert {a.sacd_area for a in self.albums()} == {"stereo", "multichannel"}    # both areas on the disc
+        assert self.iso.exists()
+        assert "disc.iso: stereo area already in the library; ISO kept" in caplog.text
+
+    def test_kept_when_an_area_fails_to_convert(self):
+        self.config["sacd"]["areas"] = "both"
+        import pysacd.convert
+        real = pysacd.convert.convert
+
+        def multichannel_fails(iso, opts):
+            return 1 if opts.areas == "multichannel" else real(iso, opts)
+        with patch.object(pysacd.convert, "convert", multichannel_fails):
+            self.run_command("sacd-import", "--remove-iso", str(self.iso))
+        assert {a.sacd_area for a in self.albums()} == {"stereo"}
         assert self.iso.exists()
 
 
