@@ -861,3 +861,116 @@ class TestCatalogueNoText(Base):
         for name in ("01.dsf", "01 - Track 01.dsf"):
             (mnt / "plain" / "Stereo" / name).write_bytes(b"")
         assert self.catalogue(mnt)[0].sacdfs_path == "plain/Stereo/01 - Track 01.dsf"
+
+
+class TestCatalogueUpgrade(TestCatalogueNoText):
+    """#57: albums catalogued on a sacdfs 0.4.0 mount keep `NN.dsf`; after the mount moves to 0.4.1, which
+    shows `NN - Track NN.dsf`, `sacd-migrate --mount` points them at the new names, keeping the items."""
+
+    def on_0_4_0(self) -> tuple[Path, Path]:
+        mnt = self.tmp_root / "mnt"
+        stereo = mnt / "plain" / "Stereo"
+        stereo.mkdir(parents=True)
+        for n in (1, 2, 3):
+            (stereo / f"0{n}.dsf").write_bytes(b"")
+        self.catalogue(mnt)
+        for item in self.lib.items():                          # fields set by hand
+            item["mynote"] = "keep"
+            item["rating"] = 5
+            item.title = f"Edited {item.track}"
+            item.store()
+        album = self.lib.albums()[0]
+        album["albumnote"] = "mine"
+        album.year = 1999
+        album.store()
+        return mnt, stereo
+
+    @staticmethod
+    def upgrade(stereo: Path) -> None:
+        for n in (1, 2, 3):
+            (stereo / f"0{n}.dsf").rename(stereo / f"0{n} - Track 0{n}.dsf")
+
+    def state(self) -> list:
+        return [(i.id, i.album_id, i.added, i.path, i.get("sacdfs_path"), i.title, i.get("mynote"), i.get("rating"))
+                for i in sorted(self.lib.items(), key=lambda i: i.track)]
+
+    def migrate(self, mnt: Path, *extra: str) -> None:
+        self.run_command("sacd-migrate", *extra, "--mount", str(mnt), "--source", str(self.iso.parent), str(self.iso))
+
+    def test_moves_the_paths_keeping_the_items_and_their_fields(self, capsys):
+        mnt, stereo = self.on_0_4_0()
+        self.upgrade(stereo)
+        before = self.state()
+        self.migrate(mnt)                                      # report only
+        assert "3 item path(s) would move from sacdfs 0.4.0 to 0.4.1 names" in capsys.readouterr().out
+        assert self.state() == before
+        self.migrate(mnt, "--apply")
+        assert "3 item path(s) moved" in capsys.readouterr().out
+        after = self.state()
+        assert [i[4] for i in after] == [f"plain/Stereo/0{n} - Track 0{n}.dsf" for n in (1, 2, 3)]
+        assert [i[3] for i in after] == [os.fsencode(mnt / i[4]) for i in after]
+        assert [(i[:3], i[5:]) for i in after] == [(i[:3], i[5:]) for i in before]
+        album = self.lib.albums()[0]
+        assert (album.albumnote, album.year, len(self.lib.albums())) == ("mine", 1999, 1)
+        assert sorted(p.name for p in stereo.iterdir()) == [f"0{n} - Track 0{n}.dsf" for n in (1, 2, 3)]
+        self.migrate(mnt, "--catalogue", "--apply")           # idempotent, and no second album
+        assert "3 path(s) exist on the mount; nothing to change" in capsys.readouterr().out
+        assert self.state() == after and len(self.lib.albums()) == 1
+        self.run_command("update")                             # the files exist: no item is removed
+        assert len(list(self.lib.items())) == 3
+
+    def test_without_the_upgrade_nothing_changes(self, capsys):
+        mnt, _ = self.on_0_4_0()
+        before = self.state()
+        self.migrate(mnt, "--apply")
+        assert "nothing to change" in capsys.readouterr().out and self.state() == before
+        self.run_command("sacd-migrate", "--apply", "--source", str(self.iso.parent), str(self.iso))
+        assert "give --mount DIR to check its paths" in capsys.readouterr().out and self.state() == before
+
+    def test_refuses_when_the_new_name_is_missing_or_ambiguous(self, capsys):
+        mnt, stereo = self.on_0_4_0()
+        (stereo / "01.dsf").rename(stereo / "01 - Track 01.dsf")
+        (stereo / "01 - Track 01 (2).dsf").write_bytes(b"")    # two files for track 1
+        (stereo / "02.dsf").unlink()                           # nothing for track 2
+        before = self.state()
+        self.migrate(mnt, "--apply")
+        out = capsys.readouterr().out
+        assert "track 1: the mount shows 2 files for this track number" in out
+        assert "track 2: neither the 0.4.0 nor the 0.4.1 name is on the mount" in out
+        assert "moved" not in out.replace("not moved", "")
+        assert self.state() == before
+
+    def test_refuses_a_path_not_under_the_mount_given(self, capsys):
+        mnt, stereo = self.on_0_4_0()
+        self.upgrade(stereo)
+        other = self.tmp_root / "other"
+        shutil.copytree(mnt, other)
+        before = self.state()
+        self.migrate(other, "--apply")
+        assert "its path is not the sacdfs 0.4.0 name under --mount" in capsys.readouterr().out
+        assert self.state() == before
+
+    def test_refuses_a_name_another_item_has(self, capsys):
+        mnt, stereo = self.on_0_4_0()
+        self.upgrade(stereo)
+        first = min(self.lib.items(), key=lambda i: i.track)
+        from beets.library import Item
+        self.lib.add(Item(path=os.fsencode(stereo / "01 - Track 01.dsf"), title="other",
+                          sacd_iso_sha=first.sacd_iso_sha))
+        self.migrate(mnt, "--apply")
+        out = capsys.readouterr().out
+        assert "track 1: another item of this disc already has the 0.4.1 name" in out
+        assert "2 item path(s) moved" in out and "1 left as they are" in out
+        assert self.lib.get_item(first.id).path == first.path
+
+    def test_refuses_when_the_mount_folder_cannot_be_listed(self, capsys, monkeypatch):
+        mnt, stereo = self.on_0_4_0()
+        self.upgrade(stereo)
+        before = self.state()
+
+        def unreadable(path):
+            raise PermissionError(path)
+        monkeypatch.setattr("beetsplug.sacd.os.listdir", unreadable)
+        self.migrate(mnt, "--apply")
+        assert "the mount shows 0 files for this track number" in capsys.readouterr().out
+        assert self.state() == before
