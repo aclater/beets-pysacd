@@ -258,7 +258,9 @@ class SacdPlugin(BeetsPlugin):
                               help="with --apply: add an album for each ISO area that has no extracts "
                                    "in the library (needs --mount)")
         mig.parser.add_option("--mount", metavar="DIR",
-                              help="where sacdfs is mounted: the paths of catalogued items")
+                              help="where sacdfs is mounted: the paths of catalogued items; catalogued "
+                                   "items recorded with sacdfs 0.4.0 names that the mount no longer "
+                                   "shows are moved to its 0.4.1 names (with --apply)")
         mig.parser.usage = "%prog [options] ISO|DIRECTORY..."
         mig.func = self.sacd_migrate
 
@@ -350,7 +352,7 @@ class SacdPlugin(BeetsPlugin):
             except (OSError, ValueError) as e:
                 raise ui.UserError(f"cannot use the verify report: {e}") from e
         claimed: set[int] = set()
-        n_cat = n_held = 0
+        n_cat = n_held = n_moved = 0
         n_albums = 0
         for iso in isos:
             shown = safetext.for_terminal(displayable_path(str(iso)))
@@ -382,6 +384,10 @@ class SacdPlugin(BeetsPlugin):
                 for album, items in found:
                     claimed.add(album.id)
                     n_albums += 1
+                    if album.get("sacd_catalogued"):
+                        n_moved += self._repath_catalogued(lib, album, items, tracks, iso, fp, root, kind,
+                                                           shown, opts)
+                        continue
                     bad = [] if verified is None else [i for i in items if not verified.get(i.path, False)]
                     if bad:
                         n_held += 1
@@ -402,7 +408,71 @@ class SacdPlugin(BeetsPlugin):
                             item.store()
         ui.print_(f"{n_albums} album(s) matched" + (f", {n_held} held back by the verify report" if n_held else "")
                   + (f"; {n_cat} catalogued" if opts.catalogue else "")
+                  + (f"; {n_moved} catalogued item path(s) {'moved' if opts.apply else 'to move'} to sacdfs "
+                     f"0.4.1 names" if n_moved else "")
                   + ". Nothing was deleted: check them with sacdfs verify before removing any extract.")
+
+    def _repath_catalogued(self, lib, album, items: list, tracks: list, iso: Path, fp: str, root: Path,
+                           kind: str, shown: str, opts) -> int:
+        """Point a catalogued album's items at the file names sacdfs 0.4.1 shows (#57).
+
+        beets-pysacd 0.2.0 catalogued a track without a title as `NN.dsf`, sacdfs 0.4.0's name; 0.4.1
+        shows `NN - Track NN.dsf`, so after the mount is upgraded the item's file is gone and
+        `beet update` removes the item. An item is moved only when its recorded path is the 0.4.0
+        name under --mount, that file is missing, the 0.4.1 name exists and is the only file for
+        that track number, and no other item of the disc has it. Only `path` and `sacdfs_path`
+        change: the item keeps its id, added date and every other field. Nothing on disk is
+        touched, nothing is removed, and a second run changes nothing. Returns the items moved
+        (or, without --apply, to move)."""
+        head = f"{shown}: {kind}: catalogued album {album.id}"           # `shown` is already safe text
+        if not opts.mount:
+            ui.print_(f"{head}: give --mount DIR to check its paths against the mount")
+            return 0
+        mount = Path(os.path.abspath(opts.mount))
+        taken = {bytes(i.path) for i in lib.items(f"sacd_iso_sha:{fp}")}
+        moves, kept, refused = [], 0, []
+        for item, t in zip(items, tracks, strict=True):
+            path = bytes(item.path)
+            new = sacdfs_path(iso, root, opts.flatten, kind, t.number, t.title)
+            old = sacdfs_path(iso, root, opts.flatten, kind, t.number, t.title, legacy=True)
+            if os.path.exists(path):
+                kept += 1
+                continue
+            if old == new:
+                refused.append(f"track {t.number}: its file is missing, and not because of the 0.4.1 rename")
+                continue
+            target = mount / new
+            if path != os.fsencode(mount / old):
+                refused.append(f"track {t.number}: its path is not the sacdfs 0.4.0 name under --mount")
+                continue
+            if not target.is_file():
+                refused.append(f"track {t.number}: neither the 0.4.0 nor the 0.4.1 name is on the mount")
+                continue
+            try:
+                same = [n for n in os.listdir(target.parent)
+                        if n.startswith(f"{t.number:02d} - ") and n.endswith(target.suffix)]
+            except OSError:
+                same = []
+            if same != [target.name]:
+                refused.append(f"track {t.number}: the mount shows {len(same)} files for this track number")
+                continue
+            if os.fsencode(target) in taken:
+                refused.append(f"track {t.number}: another item of this disc already has the 0.4.1 name")
+                continue
+            moves.append((item, target, new))
+        for r in refused:
+            ui.print_(f"{head}: not moved: {r}")
+        if moves:
+            ui.print_(f"{head}: {len(moves)} item path(s) {'moved' if opts.apply else 'would move'} from "
+                      f"sacdfs 0.4.0 to 0.4.1 names" + (f"; {len(refused)} left as they are" if refused else ""))
+        elif not refused:
+            ui.print_(f"{head}: {kept} path(s) exist on the mount; nothing to change")
+        if opts.apply:
+            for item, target, new in moves:
+                item.path = os.fsencode(target)
+                item["sacdfs_path"] = new
+                item.store()
+        return len(moves)
 
     def _has_extracts(self, lib, iso: Path, fp: str, kind: str, n_tracks: int) -> bool:
         """Does the library hold anything that could be extracts of this ISO area: an album it
