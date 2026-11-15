@@ -863,6 +863,9 @@ class TestCatalogueNoText(Base):
         assert self.catalogue(mnt)[0].sacdfs_path == "plain/Stereo/01 - Track 01.dsf"
 
 
+OLD_MTIME, NEW_MTIME = 1_000_000_000, 1_500_000_000      # whole seconds, as beets records them
+
+
 class TestCatalogueUpgrade(TestCatalogueNoText):
     """#57: albums catalogued on a sacdfs 0.4.0 mount keep `NN.dsf`; after the mount moves to 0.4.1, which
     shows `NN - Track NN.dsf`, `sacd-migrate --mount` points them at the new names, keeping the items."""
@@ -919,6 +922,14 @@ class TestCatalogueUpgrade(TestCatalogueNoText):
         self.run_command("update")                             # the files exist: no item is removed
         assert len(list(self.lib.items())) == 3
 
+    def test_moved_items_get_the_new_files_mtime(self):
+        mnt, stereo = self.on_0_4_0()
+        self.upgrade(stereo)
+        for f in stereo.iterdir():                             # the new names show another mtime (#68)
+            os.utime(f, (NEW_MTIME, NEW_MTIME))
+        self.migrate(mnt, "--apply")
+        assert [i.mtime for i in self.lib.items()] == [NEW_MTIME] * 3
+
     def test_without_the_upgrade_nothing_changes(self, capsys):
         mnt, _ = self.on_0_4_0()
         before = self.state()
@@ -974,3 +985,122 @@ class TestCatalogueUpgrade(TestCatalogueNoText):
         self.migrate(mnt, "--apply")
         assert "the mount shows 0 files for this track number" in capsys.readouterr().out
         assert self.state() == before
+
+
+class TestCatalogueEdits(TestCatalogueNoText):
+    """#68: tag fields set by hand on catalogued items survive `beet update`, which reads a file's tags
+    only when its mtime changed; a file that changed on the mount is still read. The mount is a
+    directory of the DSF files pysacd extracts from the disc, named as sacdfs 0.4.1 shows them."""
+
+    def mount(self) -> Path:
+        from pysacd.convert import Options, convert
+        out = self.tmp_root / "dsf"
+        opts = Options(format="dsf", output_dir=str(out), dir_template="album", jobs=2, musicbrainz=False,
+                       cover=False, cover_file="")
+        assert convert(str(self.iso), opts) == 0
+        files = sorted(out.rglob("*.dsf"))
+        assert len(files) == 3
+        self.stereo = self.tmp_root / "mnt" / "plain" / "Stereo"
+        self.stereo.mkdir(parents=True)
+        for n, f in enumerate(files, 1):
+            target = self.stereo / f"0{n} - Track 0{n}.dsf"
+            f.rename(target)
+            os.utime(target, (OLD_MTIME, OLD_MTIME))
+        return self.tmp_root / "mnt"
+
+    def edited(self, *write: str) -> Path:
+        """Catalogue the disc and set fields by hand, as `beet modify` does; the mount can't take the tags."""
+        mnt = self.mount()
+        self.catalogue(mnt)
+        self.run_command("modify", "--yes", *write, "genres=Jazz", "title=Mine", "mynote=keep")
+        self.run_command("modify", "--yes", "--album", *write, "year=1999")
+        return mnt
+
+    def snapshot(self, *drop: str) -> list:
+        items = [{k: i.get(k, with_album=False) for k in i.keys(with_album=False) if k not in drop}
+                 for i in sorted(self.lib.items(), key=lambda i: i.track)]
+        return items + [dict(a) for a in self.lib.albums()]
+
+    def zero_mtimes(self) -> None:
+        """As beets-pysacd 0.2.x left catalogued items (and beets leaves an item whose tags it couldn't write)."""
+        with self.lib.transaction() as tx:
+            tx.mutate("UPDATE items SET mtime = 0")
+
+    def migrate(self, *extra: str) -> None:
+        self.run_command("sacd-migrate", *extra, "--mount", str(self.tmp_root / "mnt"),
+                         "--source", str(self.iso.parent), str(self.iso))
+
+    def test_catalogue_records_the_files_mtime_and_audio_properties(self):
+        items = self.catalogue(self.mount())
+        assert [(i.mtime, i.samplerate, i.bitdepth) for i in items] == [(OLD_MTIME, 2822400, 1)] * 3
+        assert [i.title for i in items] == ["Track 01", "Track 02", "Track 03"]
+
+    @pytest.mark.parametrize("write", ["not asked", "fails"])
+    def test_hand_edits_survive_update(self, write, monkeypatch):
+        if write == "fails":                                  # as on the read-only mount
+            import mediafile
+
+            def read_only(self, *args, **kwargs):
+                raise mediafile.UnreadableFileError(self.filename, "read-only file system")
+            monkeypatch.setattr(mediafile.MediaFile, "save", read_only)
+        self.edited(*(["--nowrite"] if write == "not asked" else []))
+        before = self.snapshot()
+        items = self.lib.items()
+        assert {(i.title, i.year, i.mynote, i.mtime) for i in items} == {("Mine", 1999, "keep", OLD_MTIME)}
+        assert all("Jazz" in str(i.genres) for i in items)
+        self.run_command("update")
+        assert self.snapshot() == before
+
+    def test_with_mtime_0_update_reads_the_files_tags_over_the_edits(self):
+        """What 0.2.x left: the control for the two tests below."""
+        self.edited("--nowrite")
+        self.zero_mtimes()
+        self.run_command("update")
+        items = self.lib.items()
+        assert {i.mynote for i in items} == {"keep"}                      # flexible fields stay
+        assert not any(i.title == "Mine" or i.year == 1999 for i in items)
+
+    def test_a_file_changed_on_the_mount_is_read_again(self):
+        self.edited("--nowrite")
+        for f in self.stereo.iterdir():
+            os.utime(f, (NEW_MTIME, NEW_MTIME))
+        self.run_command("update")
+        items = self.lib.items()
+        assert {i.mynote for i in items} == {"keep"} and not any(i.title == "Mine" for i in items)
+        # beets' update stores only the tag fields, not the mtime it read: a new edit records it
+        self.run_command("modify", "--yes", "--nowrite", "title=Again")
+        assert [i.mtime for i in self.lib.items()] == [NEW_MTIME] * 3
+        self.run_command("update")
+        assert {i.title for i in self.lib.items()} == {"Again"}
+
+    def test_migrate_records_missing_mtimes_and_nothing_else(self, capsys):
+        self.edited("--nowrite")
+        self.zero_mtimes()
+        before = self.snapshot()
+        self.migrate()                                         # report only
+        assert "3 item(s) have no recorded mtime" in capsys.readouterr().out
+        assert self.snapshot() == before
+        self.migrate("--apply")
+        assert "3 catalogued item mtime(s) recorded" in capsys.readouterr().out
+        assert self.snapshot("mtime") == [{k: v for k, v in d.items() if k != "mtime"} for d in before]
+        assert [i.mtime for i in self.lib.items()] == [OLD_MTIME] * 3
+        after = self.snapshot()
+        self.migrate("--apply")                                # a second run changes nothing
+        assert "nothing to change" in capsys.readouterr().out and self.snapshot() == after
+        self.run_command("update")
+        assert self.snapshot() == after
+
+    def test_missing_files_and_other_items_are_left_to_beets(self):
+        from beets.library import Item
+        self.edited("--nowrite")
+        self.zero_mtimes()
+        (self.stereo / "01 - Track 01.dsf").unlink()
+        first = min(self.lib.items(), key=lambda i: i.track)
+        first.title = "Again"
+        first.store()                                          # its file is gone: nothing to record
+        assert self.lib.get_item(first.id).mtime == 0
+        other = Item(path=os.fsencode(self.stereo / "02 - Track 02.dsf"), title="x")
+        self.lib.add(other)                                    # not catalogued
+        other.title = "y"
+        other.store()
+        assert self.lib.get_item(other.id).mtime == 0

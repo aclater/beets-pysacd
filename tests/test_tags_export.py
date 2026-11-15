@@ -4,6 +4,7 @@ tags it serves."""
 
 from __future__ import annotations
 
+import contextlib
 import os
 import shutil
 import subprocess
@@ -181,6 +182,42 @@ class TestServedByRealSacdfs(TagsBase):
         assert proc.returncode == 0, proc.stderr
         keyed = proc.stdout.split()[0]
         assert keyed == self.key()                              # the key is the one sacdfs computes
+        with self.mounted() as (name, served):
+            out = self.tmp_root / "served.dsf"
+            with out.open("wb") as fh:
+                subprocess.run(["podman", "exec", name, "cat", f"/mnt/{served}"], check=True, stdout=fh, env=ENV)
+            tags = DSF(str(out)).tags
+            assert [str(g) for g in tags["TCON"].text] == ["Jazz"]
+            assert tags["TXXX:MusicBrainz Album Id"].text == [album.mb_albumid]
+            assert tags["TXXX:MusicBrainz Release Track Id"].text
+
+    def test_track_mtimes_do_not_move_on_remount(self):
+        """#68: `beet update` reads a catalogued file's tags again only when its mtime moves. The mtime
+        sacdfs shows comes from the image (and a tags file), not from the mount: the same on a second
+        mount, long before now for an old image, and moved by a tags file written later."""
+        os.utime(self.iso, (1_000_000_000, 1_000_000_000))
+        shown = []
+        for _ in range(2):
+            with self.mounted() as (name, served):
+                shown.append(self.mtime(name, served))
+        assert shown[0] == shown[1] < time.time() - 86400
+        self.migrated()
+        self.run_command("sacd-tags-export", "--tags", str(self.tags))
+        with self.mounted() as (name, served):
+            assert self.mtime(name, served) > shown[0]
+
+    @staticmethod
+    def mtime(name: str, served: str) -> int:
+        proc = subprocess.run(["podman", "exec", name, "stat", "-c", "%Y", f"/mnt/{served}"],
+                              capture_output=True, text=True, env=ENV)
+        assert proc.returncode == 0, proc.stderr
+        return int(proc.stdout)
+
+    @contextlib.contextmanager
+    def mounted(self):
+        """sacdfs main in a container, serving the images and the tags directory at /mnt in it;
+        yields the container's name and the path of the first stereo track under /mnt."""
+        image = os.environ["SACDFS_IMAGE"]
         name = f"sacdtest-{os.getpid()}"
         subprocess.run(["podman", "run", "-d", "--name", name, "--device", "/dev/fuse", "--cap-add", "SYS_ADMIN",
                         "--security-opt", "label=disable", "--entrypoint", "/usr/local/bin/sacdfs",
@@ -196,12 +233,6 @@ class TestServedByRealSacdfs(TagsBase):
                     break
                 time.sleep(1)
             assert served, subprocess.run(["podman", "logs", name], capture_output=True, text=True, env=ENV).stdout
-            out = self.tmp_root / "served.dsf"
-            with out.open("wb") as fh:
-                subprocess.run(["podman", "exec", name, "cat", f"/mnt/{served}"], check=True, stdout=fh, env=ENV)
-            tags = DSF(str(out)).tags
-            assert [str(g) for g in tags["TCON"].text] == ["Jazz"]
-            assert tags["TXXX:MusicBrainz Album Id"].text == [album.mb_albumid]
-            assert tags["TXXX:MusicBrainz Release Track Id"].text
+            yield name, served
         finally:
             subprocess.run(["podman", "rm", "-f", name], capture_output=True, env=ENV)

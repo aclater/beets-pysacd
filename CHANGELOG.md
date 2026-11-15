@@ -21,6 +21,18 @@ behaviour, and a patch version only adds or fixes. Releases are on
   catalogued album, and cataloguing it again gave new items without the fields set by hand; with
   this change, the items keep those fields.
 
+- Tag fields set by hand on catalogued items (genre, year, title, ...) are no longer replaced by
+  the mounted file's tags at the next `beet update` (#68). The mount is read-only, so beets
+  couldn't write the edit to the file and left the item's mtime at 0; `--catalogue` never set
+  it either. Catalogued items now record their file's mtime when they are catalogued and when a
+  tag field is set, so `beet update` reads a file again only when its mtime changes on the mount
+  (a changed ISO, an sacdfs upgrade that changes the files, a new tags file). Catalogued items
+  also get the file's sample rate, bit depth and bit rate. `sacd-migrate --mount DIR` reports
+  catalogued items with no recorded mtime and with `--apply` records it, changing no other field;
+  items it moves to sacdfs 0.4.1 names get the new file's mtime. Tested on a throwaway library
+  with DSF files from pysacd standing in for the mount, on the oldest and newest beets; CI checks
+  on a real sacdfs main mount that a track's mtime stays the same across remounts.
+
 ### Build and release
 - The release workflow refuses a `v*` tag that isn't `v` plus the package version, or whose commit
   isn't on `main` or a `release/*` branch, before anything is built or published (#65).
