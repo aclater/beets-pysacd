@@ -11,6 +11,9 @@ behaviour, and a patch version only adds or fixes. Releases are on
 ### Build and release
 - The release workflow refuses a `v*` tag that isn't `v` plus the package version, or whose commit
   isn't on `main` or a `release/*` branch, before anything is built or published (#65).
+- CI's Linux jobs run in Red Hat-derived containers: lint, the Linux test legs, fuzzing and the live
+  MusicBrainz check and the release build in Fedora 44, semgrep, zizmor and the privacy check in UBI 10, with semgrep and
+  zizmor installed from PyPI by hash instead of their vendors' images. CI only; the plugin is unchanged. (#58)
 
 ## 0.2.1 (2026-11-14)
 
