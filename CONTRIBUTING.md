@@ -43,6 +43,10 @@ discs and library in general terms; you don't need to share your collection.
 
 ## Releasing
 
+A release is a `v*` tag on a commit of `main` (or of a `release/*` branch, for a fix to an older
+version), named `v` plus the version in `pyproject.toml`. The release workflow's first job checks
+both (`scripts/check_release_tag.py`) and builds and publishes nothing when it fails (#65).
+
 When a version is released, update [RELEASES.md](https://github.com/aclater/sacd/blob/main/RELEASES.md)
 in aclater/sacd (the minor version's summary and release list).
 
