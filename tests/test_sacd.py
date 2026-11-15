@@ -962,3 +962,15 @@ class TestCatalogueUpgrade(TestCatalogueNoText):
         assert "track 1: another item of this disc already has the 0.4.1 name" in out
         assert "2 item path(s) moved" in out and "1 left as they are" in out
         assert self.lib.get_item(first.id).path == first.path
+
+    def test_refuses_when_the_mount_folder_cannot_be_listed(self, capsys, monkeypatch):
+        mnt, stereo = self.on_0_4_0()
+        self.upgrade(stereo)
+        before = self.state()
+
+        def unreadable(path):
+            raise PermissionError(path)
+        monkeypatch.setattr("beetsplug.sacd.os.listdir", unreadable)
+        self.migrate(mnt, "--apply")
+        assert "the mount shows 0 files for this track number" in capsys.readouterr().out
+        assert self.state() == before
