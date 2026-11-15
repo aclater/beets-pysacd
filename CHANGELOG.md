@@ -8,6 +8,19 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## Unreleased
 
+### Fixes
+- `sacd-migrate --mount DIR` moves albums catalogued on a sacdfs 0.4.0 mount to the names
+  sacdfs 0.4.1 shows (`NN.dsf` to `NN - Track NN.dsf` for a track with no title), so `beet update`
+  no longer removes their items after the mount is upgraded (#57). Without `--apply` it only
+  reports. An item moves only when its old file is gone and the new name is the one file the
+  mount shows for that track number; it keeps its id, added date and every other field. Nothing
+  on the mount is touched and no item is removed. The upgrade order is in the README ("Upgrading
+  the mount from sacdfs 0.4.0 to 0.4.1"). Tested on a throwaway library with directories laid
+  out like each version's names, on the oldest and newest beets; not yet against a real mount.
+  Measured on such a library: `beet update` after the upgrade removed all 3 items of a
+  catalogued album, and cataloguing it again gave new items without the fields set by hand; with
+  this change, the items keep those fields.
+
 ### Build and release
 - The release workflow refuses a `v*` tag that isn't `v` plus the package version, or whose commit
   isn't on `main` or a `release/*` branch, before anything is built or published (#65).
