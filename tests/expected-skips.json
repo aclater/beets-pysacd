@@ -15,6 +15,7 @@
     "why": "Needs a container image of sacdfs main, which only the 'tags served by sacdfs main' job builds, where it runs (and must not skip).",
     "reason": "SACDFS_IMAGE not set",
     "jobs": ["tests"],
-    "tests": ["tests.test_tags_export.TestServedByRealSacdfs.test_mounted_sacdfs_serves_the_exported_tags"]
+    "tests": ["tests.test_tags_export.TestServedByRealSacdfs.test_mounted_sacdfs_serves_the_exported_tags",
+            "tests.test_tags_export.TestServedByRealSacdfs.test_track_mtimes_do_not_move_on_remount"]
   }
 ]
