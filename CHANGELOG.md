@@ -8,6 +8,8 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## Unreleased
 
+## 0.2.2 (2026-11-15)
+
 ### Fixes
 - `sacd-migrate --mount DIR` moves albums catalogued on a sacdfs 0.4.0 mount to the names
   sacdfs 0.4.1 shows (`NN.dsf` to `NN - Track NN.dsf` for a track with no title), so `beet update`
