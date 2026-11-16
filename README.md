@@ -25,6 +25,50 @@ layer) that the disc is, converts each selected area to DSF or FLAC in a
 staging directory, and imports that through beets' normal importer. Each area
 becomes an album of its own, on its own medium of the release.
 
+## Quick start
+
+You need Python 3.11 to 3.14 on Linux or macOS, and an SACD disc image. The commands use
+`album.iso` in the current folder; type your image's name instead. They install beets with the
+plugin, so start here if you don't use beets yet; if you do, see [Install](#install).
+
+1. Install beets and the plugin in a virtual environment of their own:
+
+   ```sh
+   python3 -m venv beets-env
+   . beets-env/bin/activate
+   pip install beets beets-pysacd
+   ```
+
+2. Turn the plugin on, with beets' MusicBrainz plugin, and keep the library in `~/Music`:
+
+   ```sh
+   mkdir -p ~/.config/beets
+   cat > ~/.config/beets/config.yaml <<'EOF'
+   directory: ~/Music
+   plugins: musicbrainz sacd
+   EOF
+   ```
+
+3. Check that the plugin reads the disc:
+
+   ```sh
+   beet sacd-info album.iso
+   ```
+
+   *You should see* the album, then each area with its tracks.
+
+4. Import it:
+
+   ```sh
+   beet sacd-import album.iso
+   ```
+
+   The plugin converts the stereo area to DSF and hands it to the beets importer, which shows the
+   MusicBrainz release it found. Accept it, or pick another, as in any beets import. The tracks
+   land in `~/Music`; `beet ls -a` lists the album.
+
+[Use](#use) has the other commands and options, [Configuration](#configuration) the settings.
+
 ## Install
 
 ```sh
