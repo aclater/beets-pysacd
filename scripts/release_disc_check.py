@@ -327,7 +327,7 @@ def main(argv: list[str] | None = None) -> int:
     installs = []
     for spec in args.install:
         name, sep, venv = spec.partition("=")
-        if not sep or not re.fullmatch(r"[A-Za-z0-9_.-]+", name):
+        if not sep or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", name):
             ap.error(f"--install wants NAME=VENV, got {spec!r}")
         installs.append((name, Path(venv).resolve()))
     if len(installs) != 2:
