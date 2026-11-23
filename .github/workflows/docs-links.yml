@@ -1,11 +1,11 @@
-# Check the links in README.md with lychee, weekly (links rot without a code
-# change) and on pull requests that touch it.
+# Check the links in README.md and docs/ with lychee, weekly (links rot without a code
+# change) and on pull requests that touch them.
 
 name: docs-links
 
 on:
   pull_request:
-    paths: ["README.md", ".github/workflows/docs-links.yml"]
+    paths: ["README.md", "docs/**", ".github/workflows/docs-links.yml"]
   schedule:
     - cron: "11 7 * * 1"  # weekly
   workflow_dispatch:
@@ -30,5 +30,5 @@ jobs:
             --no-progress --max-concurrency 4 --max-retries 3
             --exclude '^https://api\.scorecard\.dev/'
             --exclude '^https://img\.shields\.io/'
-            README.md
+            README.md 'docs/**/*.md'
           fail: true
