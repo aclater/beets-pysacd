@@ -32,6 +32,8 @@ Start with the [quick start](../README.md#quick-start) if you are new to it.
 
 - [Releasing](../CONTRIBUTING.md#releasing): the `v*` tag, the checks the release workflow runs, and the
   release summary in the DSD Toolbox
+- [Release test plan](release-test-plan.md): every check a release runs, on which platforms and
+  discs, and the sign-off table for the release issue
 
 ## Project
 
