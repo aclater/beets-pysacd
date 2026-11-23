@@ -17,7 +17,7 @@ beet sacd-info Album.iso                # print the TOC; changes nothing
 beet sacd-info ~/rips/                  # ...of every image under a directory
 ```
 
-Plain `beet import` also converts the ISO images it finds (an `.iso` given on
+Plain `beet import` also converts the SACD images it finds (an `.iso` given on
 the command line, or inside a directory being imported) before importing them.
 Your other files in the same run are imported exactly as your settings say.
 Turn this off with `auto: no`.
@@ -136,7 +136,7 @@ It covers the albums whose items have `sacd_iso`, `sacd_area` and `sacd_track` (
 (`sacdfs tags key`: a hash of the disc's table of contents, read from the ISO, which is only
 read) and writes, for the album's area (`[stereo.*]` or `[multichannel.*]`): `genre`,
 `publisher` (the label), `MusicBrainz Album Id`, `Release Group Id` and `Album Artist Id`, and
-the album's cover as `<key>-<area>.jpg` or `.png` (JPEG or PNG up to 960 KiB) named by `art`;
+the album's cover as a `.jpg` or `.png` file (JPEG or PNG up to 960 KiB) named by `art`, whose name is the file name's key, a hyphen and the area;
 per track, the recording (`UFID`), release track and artist IDs. It leaves everything else in
 an existing file alone, so your own edits stay, and rewrites the file atomically, only when
 something changed (comments in it are not kept). A beets value replaces the same field in the
