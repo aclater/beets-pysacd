@@ -47,7 +47,22 @@ artifact; the XML report also goes to [Codecov](https://codecov.io/gh/aclater/be
 for the badge, authenticated with the job's GitHub OIDC token (no stored secret;
 pull requests from forks skip the upload). Changes to workflows are linted with
 [zizmor](https://docs.zizmor.sh) (`pipx run zizmor==1.32.0 --offline
-.github/workflows`), and changes to the README or docs/ get a link check (lychee).
+.github/workflows`), and changes to the README or `docs/` get a link check (lychee, `#fragment`
+links to headings included).
+
+Two more checks keep the docs true. The `quickstart` workflow (also weekly) runs the README's
+Quick start as written (`scripts/readme_quickstart.py`): it builds the wheel as the release does,
+writes the fixture's album as `album.iso` with pysacd's test generator, and runs the README's own
+`sh` blocks in order in one shell, as a normal user with a throwaway HOME. The one change: `pip
+install beets beets-pysacd` installs beets and the built wheel. beets and pysacd come from PyPI,
+as for a user, but MusicBrainz doesn't: from step 2 on, a `sitecustomize.py` answers pysacd's and
+beets' MusicBrainz requests from `tests/mbfixture.py`, as the tests do, and a dead proxy fails any
+other request. It checks that `sacd-info` shows the album and tracks, that `beet ls -a` lists the
+imported album and that `~/Music` holds its DSF files. To see the steps:
+`python3 -I scripts/readme_quickstart.py print`. The lint job checks the version claims in README.md
+and `docs/` (`scripts/check_doc_versions.py`): the Python badge, "Python 3.N to 3.M", "beets X.Y or
+later (N.x)", the pysacd floor and the install requirements table must match `pyproject.toml`; a
+reworded sentence fails until the pattern there follows it.
 
 The Linux jobs run in Red Hat-derived containers, pinned by digest: GitHub's hosted Linux runners
 are Ubuntu only, so the lint, the Linux test legs, the fuzzing and the live MusicBrainz check run in

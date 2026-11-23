@@ -48,10 +48,10 @@ CHECKS = [
     ("minimum pysacd", r"(?:Requirements:|wheel on PyPI)[^\n]*?pysacd (\d+\.\d+(?:\.\d+)?) or\s+later",
      "{pysacd_min}", True),
     # the requirements table in the install docs
-    ("Python (requirements table)", r"(?m)^\| Python \| (3\.\d+) to (3\.\d+) \|", "{python_min} to {python_max}", False),
-    ("beets (requirements table)", r"(?m)^\| beets \| (\d+\.\d+) or later \((\d+)\.x\) \|", "{beets_min} to {beets_major}",
-     False),
-    ("pysacd (requirements table)", r"(?m)^\| pysacd \| (\d+\.\d+(?:\.\d+)?) or later", "{pysacd_min}", False),
+    ("Python (requirements table)", r"(?m)^\| Python \| (3\.\d+) to (3\.\d+) \|", "{python_min} to {python_max}", True),
+    ("beets (requirements table)", r"(?m)^\| beets \| (\d+\.\d+) or later \((\d+)\.x\) \|",
+     "{beets_min} to {beets_major}", True),
+    ("pysacd (requirements table)", r"(?m)^\| pysacd \| (\d+\.\d+(?:\.\d+)?) or later", "{pysacd_min}", True),
     ("pinned plugin release", r"beets-pysacd==(\d+\.\d+\.\d+)", "{version}", False),
 ]
 
