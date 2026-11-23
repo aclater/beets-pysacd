@@ -9,6 +9,14 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## [Unreleased]
 
+### Fixed
+- `sacd-migrate --catalogue` without `--apply` ends with "N to catalogue", not "N catalogued" (#86).
+- `sacd-tags-export` writes no tags file for a disc with nothing to export (no genre, label, IDs or
+  cover); it wrote one holding only the header comment (#86).
+
+### Changed
+- The user guide's commands use one set of example folders, named at the top of the guide (#91).
+
 ## [0.2.2] - 2026-11-15
 
 ### Fixes

@@ -46,8 +46,9 @@ the report in its job summary, with HTML and XML reports as the `coverage`
 artifact; the XML report also goes to [Codecov](https://codecov.io/gh/aclater/beets-pysacd)
 for the badge, authenticated with the job's GitHub OIDC token (no stored secret;
 pull requests from forks skip the upload). Changes to workflows are linted with
-[zizmor](https://docs.zizmor.sh) (`pipx run zizmor==1.32.0 --offline
-.github/workflows`), and changes to the README or `docs/` get a link check (lychee, `#fragment`
+[zizmor](https://docs.zizmor.sh), at the version pinned in `.github/requirements/zizmor.txt`
+(`pip install --require-hashes -r .github/requirements/zizmor.txt`, then
+`zizmor --offline .github/workflows`), and changes to the README or `docs/` get a link check (lychee, `#fragment`
 links to headings included).
 
 Two more checks keep the docs true. The `quickstart` workflow (also weekly) runs the README's
@@ -87,8 +88,8 @@ from two lock files written by `python3 -I scripts/lock.py` (needs
 [uv](https://docs.astral.sh/uv/)): `locks/latest/requirements.txt` with the newest
 beets and `locks/oldest/requirements.txt` with beets held at the floor in
 `pyproject.toml` (plus `locks/fuzz/requirements.txt`, Atheris). Both cover Python 3.11 to 3.14 on Linux (3.15 too, see [install](install/README.md)), macOS and Windows, and
-leave out releases younger than two weeks, except pysacd's, security fixes and the lap
-release with Python 3.15 wheels listed in the script. The plugin, and pysacd's master branch on that leg, are installed on
+leave out releases younger than two weeks, except pysacd's and the security fixes listed in
+the script. The plugin, and pysacd's master branch on that leg, are installed on
 top with `--no-deps`, so nothing unhashed is downloaded. Dependabot keeps both locks
 current (beets stays on the floor in the oldest); when a new release brings a new
 dependency, the locked install fails on Dependabot's PR, and rerunning
