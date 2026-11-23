@@ -17,7 +17,7 @@ beet sacd-info Album.iso                # print the TOC; changes nothing
 beet sacd-info ~/rips/                  # ...of every image under a directory
 ```
 
-Plain `beet import` also converts the ISO images it finds (an `.iso` given on
+Plain `beet import` also converts the SACD images it finds (an `.iso` given on
 the command line, or inside a directory being imported) before importing them.
 Your other files in the same run are imported exactly as your settings say.
 Turn this off with `auto: no`.

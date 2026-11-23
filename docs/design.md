@@ -29,7 +29,7 @@ This plugin keeps each area on its own medium:
 
 ## Importing an SACD image
 
-For each ISO image, and each selected area of it:
+For each SACD image, and each selected area of it:
 
 1. pysacd reads the TOC (read-only), and the plugin fingerprints the disc from its TOCs and
    the image size.

@@ -5,7 +5,7 @@
 How to install the plugin with pip, what it needs, and how to check a release download. With
 beets from a Linux distribution's package, see [beets from a distribution package](packages.md).
 
-## With pip
+## From PyPI
 
 ```sh
 pip install beets-pysacd
