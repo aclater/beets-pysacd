@@ -28,6 +28,11 @@ Start with the [quick start](../README.md#quick-start) if you are new to it.
 - [Design](design.md): hybrid SACDs and the import steps
 - [Development](development.md): tests and CI
 
+## Release
+
+- [Releasing](../CONTRIBUTING.md#releasing): the `v*` tag, the checks the release workflow runs, and the
+  release summary in the DSD Toolbox
+
 ## Project
 
 - [Changelog](../CHANGELOG.md)
