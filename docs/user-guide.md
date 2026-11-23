@@ -1,10 +1,18 @@
-# Using the plugin
+[beets-pysacd](../README.md) › [Documentation](README.md) › User guide
+
+# User guide
+
+How to import SACD images into beets, move a library from extracts to images served by
+[sacdfs](https://github.com/aclater/sacdfs), keep your tags, and what happens to DVD and Blu-ray
+images. Every option and setting is in [options and configuration](options.md).
+
+## Importing SACD images
 
 ```sh
 beet sacd-import Album.iso              # one image
 beet sacd-import ~/rips/                # every .iso under a directory
 beet sacd-import -a both -f flac Album.iso
-beet sacd-import --release 1d1f0a6e-... Album.iso   # use this MusicBrainz release
+beet sacd-import --release 1a2a37a4-2ee5-3aa8-b1bf-4976dbb8007c Album.iso   # use this MusicBrainz release
 beet sacd-info Album.iso                # print the TOC; changes nothing
 beet sacd-info ~/rips/                  # ...of every image under a directory
 ```
@@ -19,7 +27,7 @@ flexible attributes, `sacd_iso_sha` (a fingerprint of the disc's TOCs) and
 `sacd_area` (`stereo` or `multichannel`), so `beet ls sacd_area:multichannel`
 lists the multichannel albums.
 
-## Moving a library from extracts to ISOs (sacdfs)
+## Moving a library from extracts to SACD images (sacdfs)
 
 If you serve your ISOs with [sacdfs](https://github.com/aclater/sacdfs) and delete the extracted
 files, the beets items for those extracts would dangle. `beet sacd-migrate` finds the albums that
@@ -61,7 +69,12 @@ the area's track count). Its items carry the disc's text, track order, length, c
 and `sacdfs_path`, and their `path` is that file under `DIR`, where sacdfs is mounted; the
 albums have `sacd_catalogued: 1`. They have no MusicBrainz match: run beets' own tools on
 the mounted files for that. Without `--apply` the command only reports; a second run
-adds nothing.
+adds nothing. With sacdfs mounted at `~/sacd` from the images in `~/isos`:
+
+```sh
+beet sacd-migrate --catalogue --mount ~/sacd --source ~/isos ~/isos/            # report
+beet sacd-migrate --catalogue --mount ~/sacd --source ~/isos --apply ~/isos/    # add the albums
+```
 
 **Fields set by hand on catalogued items.** The mount is read-only, so `beet modify` can't
 write a tag to a catalogued item's file; the edit lives in the library. Each item records its
@@ -85,9 +98,15 @@ by beets-pysacd 0.2.0 or 0.2.1 point at the old names, and once the mount is upg
 
 1. Back up the beets library database (`library.db`).
 2. Upgrade and remount sacdfs. Don't run `beet update` yet.
-3. `beet sacd-migrate --mount DIR --source SOURCE ISO...` (with `--flatten` if the mount uses
-   it) reports which catalogued items would move to the new names; add `--apply` to move them.
-   A plain `--catalogue --mount DIR --apply` run does the same.
+3. Run `sacd-migrate` with `--mount` (and `--flatten` if the mount uses it). With sacdfs mounted
+   at `~/sacd` from the images in `~/isos`, this reports which catalogued items would move to the
+   new names:
+
+   ```sh
+   beet sacd-migrate --mount ~/sacd --source ~/isos ~/isos/
+   ```
+
+   Add `--apply` to move them. A `--catalogue --mount ~/sacd --apply` run does the same.
 4. Then `beet update` keeps them.
 
 An item is moved only when its path is the 0.4.0 name under `--mount`, that file is gone, and
@@ -98,7 +117,7 @@ nothing. If `beet update` already removed the items, `--catalogue` adds the albu
 new ids and added dates and without the fields set by hand; restore the backup from step 1
 instead to keep them. Tested in a throwaway library on a directory laid out like each mount's
 names (synthetic disc, beets 2.12.0 and 2.14.1); not yet run against a real sacdfs mount.
-The same run records the file's mtime for catalogued items that have none (see below).
+The same run records the file's mtime for catalogued items that have none (see above).
 
 ## Keeping your tags: `sacd-tags-export`
 
@@ -139,7 +158,16 @@ prints one line for each, and imports log why each was left alone.
 
 It reads the image's file system (UDF, including the UDF 2.50 metadata
 partition that Blu-ray uses, or ISO 9660) and looks for the standard folders:
-`AUDIO_TS` with `AUDIO_TS.IFO` for DVD-Audio, `VIDEO_TS` for DVD-Video and
-`BDMV` for Blu-ray. The count is of DVD title sets or Blu-ray playlists.
+`AUDIO_TS` with `AUDIO_TS.IFO` for DVD-Audio, `VIDEO_TS` with `VIDEO_TS.IFO` for
+DVD-Video and `BDMV` with `index.bdmv` for Blu-ray. The count is of DVD title sets or Blu-ray playlists.
 This lives in the plugin (`beetsplug/_sacd_discimage.py`), not in pysacd, and
 reads only directory structures, never the audio.
+
+## See also
+
+- [Options and configuration](options.md)
+- [Design](design.md): hybrid SACDs and the import steps
+- [Install](install/README.md)
+- [sacdfs](https://github.com/aclater/sacdfs)
+
+Part of the [DSD Toolbox](https://github.com/aclater/dsd-toolbox).

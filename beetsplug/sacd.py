@@ -10,7 +10,7 @@ one release with the same recordings, and beets puts the tracks of every medium 
 candidate. It then maps the SACD files to the CD layer (medium 1), and sets album `media` to
 "Media". This plugin pins each area to its own medium: candidates for that release are cut
 down to the medium before matching, and a guard fixes a chosen match that still points
-elsewhere. See README.md, "Hybrid SACDs".
+elsewhere. See docs/design.md, "Hybrid SACDs".
 
 Commands: `beet sacd-import <iso|dir>...` and `beet sacd-info <iso|dir>...`. Plain `beet import`
 converts the ISOs it finds first (config `auto`). Imported albums carry the flexible attributes

@@ -22,13 +22,15 @@ discs and library in general terms; you don't need to share your collection.
 3. **Run the checks before you push:**
 
    ```sh
+   git clone https://github.com/aclater/pysacd ../pysacd
    pip install -e '.[dev]'
    ruff check . && mypy beetsplug
-   PYSACD_TESTS=/path/to/pysacd/tests pytest -q
+   pytest -q
    ```
 
-   CI runs the tests on Python 3.11 to 3.14 (and 3.15 as an early warning), against the oldest and newest supported
-   beets, on Linux, macOS and Windows, with pysacd's release and master branch, plus
+   The tests find pysacd's test generator in `../pysacd/tests` (or `PYSACD_TESTS`). CI runs the
+   tests on Python 3.11 to 3.14 (and 3.15 as an early warning), against the oldest and newest
+   supported beets on Linux and the newest on macOS and Windows, with pysacd's release and master branch, plus
    CodeQL, semgrep and a privacy check (see [development](docs/development.md)). The test jobs also fail if
    a test starts skipping, stops skipping or changes its skip reason: list a legitimate new skip,
    with why, in `tests/expected-skips.json`. `pytest -q -rs` names every skip locally.
@@ -47,8 +49,8 @@ A release is a `v*` tag on a commit of `main` (or of a `release/*` branch, for a
 version), named `v` plus the version in `pyproject.toml`. The release workflow's first job checks
 both (`scripts/check_release_tag.py`) and builds and publishes nothing when it fails (#65).
 
-When a version is released, update [RELEASES.md](https://github.com/aclater/sacd/blob/main/RELEASES.md)
-in aclater/sacd (the minor version's summary and release list).
+When a version is released, update [RELEASES.md](https://github.com/aclater/dsd-toolbox/blob/main/RELEASES.md)
+in aclater/dsd-toolbox (the minor version's summary and release list).
 
 ## Rules
 

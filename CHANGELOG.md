@@ -16,7 +16,7 @@ behaviour, and a patch version only adds or fixes. Releases are on
   no longer removes their items after the mount is upgraded (#57). Without `--apply` it only
   reports. An item moves only when its old file is gone and the new name is the one file the
   mount shows for that track number; it keeps its id, added date and every other field. Nothing
-  on the mount is touched and no item is removed. The upgrade order is in the README ("Upgrading
+  on the mount is touched and no item is removed. The upgrade order is in the [user guide](docs/user-guide.md) ("Upgrading
   the mount from sacdfs 0.4.0 to 0.4.1"). Tested on a throwaway library with directories laid
   out like each version's names, on the oldest and newest beets; not yet against a real mount.
   Measured on such a library: `beet update` after the upgrade removed all 3 items of a
@@ -75,7 +75,7 @@ container): 122 passed, the 3 expected skips.
   Albums already catalogued by 0.2.0 on a no-text disc keep their old paths; this change does not rewrite them.
   Tested with sacdfs's own naming cases and against a real no-text disc on both sacdfs versions.
 - CI tests on Python 3.15 ahead of beets' own support (#50). Not claimed as supported: beets doesn't
-  yet install on 3.15 without `--ignore-requires-python`. See the README.
+  yet install on 3.15 without `--ignore-requires-python`. See [install](docs/install/README.md).
 - CI names every skipped test and fails if a skip is new, has stopped or has a different reason
   (`tests/expected-skips.json`), so a test job can't go quiet the way pysacd's comparison did (#51).
   The three skips today: the live MusicBrainz test, the fuzz-regression replay (no regression files
