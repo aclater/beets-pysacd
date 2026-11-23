@@ -1,4 +1,9 @@
-# How it works
+[beets-pysacd](../README.md) › [Documentation](README.md) › Design
+
+# Design
+
+How the plugin imports an SACD image, and why it keeps each SACD layer on its own medium of the
+MusicBrainz release.
 
 ## Hybrid SACDs
 
@@ -22,11 +27,12 @@ This plugin keeps each area on its own medium:
 - A final check after you choose a match maps the files to the medium if
   they still point elsewhere, and logs it.
 
-## Importing an image
+## Importing an SACD image
 
 For each ISO image, and each selected area of it:
 
-1. pysacd reads the TOC (read-only) and fingerprints the disc from its TOCs.
+1. pysacd reads the TOC (read-only), and the plugin fingerprints the disc from its TOCs and
+   the image size.
    An area whose fingerprint and area are already in the library is skipped.
 2. pysacd matches the MusicBrainz release and medium, and converts the area
    into the staging directory, writing the release's IDs into the files.
@@ -56,8 +62,16 @@ For each ISO image, and each selected area of it:
      (and a CD rip of the same release) share: without this, importing the
      multichannel area after the stereo one would be skipped as a duplicate.
      Another copy of the same layer is still a duplicate;
-   - **moves the files** into the library (see [Files and staging](configuration.md#files-and-staging)).
+   - **moves the files** into the library (see [Files and staging](options.md#files-and-staging)).
 4. The album gets `sacd_iso_sha` and `sacd_area`; with `remove_iso`, the ISO is
    deleted once every area is imported in this run and verified. The staging directory is removed.
 
 Nothing here changes how beets treats your other files in the same import.
+
+## See also
+
+- [User guide](user-guide.md)
+- [Options and configuration](options.md)
+- [Development](development.md)
+
+Part of the [DSD Toolbox](https://github.com/aclater/dsd-toolbox).

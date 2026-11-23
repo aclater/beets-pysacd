@@ -2,7 +2,7 @@
 
 Like a real hybrid SACD on MusicBrainz, the release lists the CD layer, the SACD stereo layer
 and the SACD multichannel layer as three media with the same recordings. That is what makes
-beets 2.14 map SACD files to the CD layer (docs/how-it-works.md, "Hybrid SACDs")."""
+beets 2.14 map SACD files to the CD layer (docs/design.md, "Hybrid SACDs")."""
 ALBUM = "pysacd sacd plugin test"
 RID = "11111111-2222-3333-4444-555555555555"
 CD_RID = "11111111-2222-3333-4444-666666666666"     # the same album's CD edition (#9)

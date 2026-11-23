@@ -20,18 +20,18 @@ release, so stereo and multichannel layers stay apart in your library.
 
 | System | How | Guide |
 |---|---|---|
-| Linux, macOS, Windows | A pure-Python wheel on PyPI, for Python 3.11 to 3.14 with beets 2.12 or later (2.x). It needs pysacd 0.2 or later, whose wheels carry the engine for Linux (x86-64, aarch64), macOS and Windows. CI tests the oldest and newest beets on Linux, macOS and Windows | [install](docs/install.md) |
+| Linux, macOS, Windows | A pure-Python wheel on PyPI, for Python 3.11 to 3.14 with beets 2.12 or later (2.x). It needs pysacd 0.2 or later, whose wheels carry the engine for Linux (x86-64, aarch64), macOS and Windows. CI tests the oldest and newest beets on Linux, and the newest on macOS and Windows | [install](docs/install/README.md) |
 
 Each [GitHub release](https://github.com/aclater/beets-pysacd/releases) has the wheel and the
 sdist with a build provenance attestation, checkable with `gh attestation verify`. They are not
 otherwise signed. With beets from a Linux distribution's package, see
-[install](docs/install.md) for making the plugin importable.
+[beets from a distribution package](docs/install/packages.md) for making the plugin importable.
 
 ## Quick start
 
 You need Python 3.11 to 3.14 on Linux or macOS, and an SACD disc image. The commands use
 `album.iso` in the current folder; type your image's name instead. They install beets with the
-plugin, so start here if you don't use beets yet; if you do, see [install](docs/install.md).
+plugin, so start here if you don't use beets yet; if you do, see [install](docs/install/README.md).
 
 1. Install beets and the plugin in a virtual environment of their own:
 
@@ -69,18 +69,20 @@ plugin, so start here if you don't use beets yet; if you do, see [install](docs/
    MusicBrainz release it found. Accept it, or pick another, as in any beets import. The tracks
    land in `~/Music`; `beet ls -a` lists the album.
 
-[Using the plugin](docs/usage.md) has the other commands and options,
-[configuration](docs/configuration.md) the settings, and [install](docs/install.md) the other
-ways to install.
+The [user guide](docs/user-guide.md) has the other commands, [options and
+configuration](docs/options.md) every option and setting, and [install](docs/install/README.md)
+the other ways to install.
 
 ## Documentation
 
-- [Install](docs/install.md): requirements, attestations, beets from a Linux distribution
-- [Using the plugin](docs/usage.md): `sacd-import`, `sacd-info`, moving a library from extracts
-  to ISOs with [sacdfs](https://github.com/aclater/sacdfs) (`sacd-migrate`), keeping your tags
-  (`sacd-tags-export`), DVD and Blu-ray images
-- [Configuration](docs/configuration.md): settings, keeping or removing ISO images, staging
-- [How it works](docs/how-it-works.md): hybrid SACDs and the import steps
+- [Documentation index](docs/README.md)
+- [Install](docs/install/README.md): requirements, attestations, beets from a Linux distribution
+- [User guide](docs/user-guide.md): `sacd-import`, `sacd-info`, moving a library from extracts
+  to SACD images with [sacdfs](https://github.com/aclater/sacdfs) (`sacd-migrate`), keeping your
+  tags (`sacd-tags-export`), DVD and Blu-ray images
+- [Options and configuration](docs/options.md): every option and setting, keeping or removing
+  SACD images, staging
+- [Design](docs/design.md): hybrid SACDs and the import steps
 - [Development](docs/development.md): tests and CI
 - [Changelog](CHANGELOG.md) · [releases](https://github.com/aclater/beets-pysacd/releases) ·
   [contributing](CONTRIBUTING.md) · [security](SECURITY.md) ·
