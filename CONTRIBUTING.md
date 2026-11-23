@@ -29,14 +29,14 @@ discs and library in general terms; you don't need to share your collection.
 
    CI runs the tests on Python 3.11 to 3.14 (and 3.15 as an early warning), against the oldest and newest supported
    beets, on Linux, macOS and Windows, with pysacd's release and master branch, plus
-   CodeQL, semgrep and a privacy check (see the README, "Development"). The test jobs also fail if
+   CodeQL, semgrep and a privacy check (see [development](docs/development.md)). The test jobs also fail if
    a test starts skipping, stops skipping or changes its skip reason: list a legitimate new skip,
    with why, in `tests/expected-skips.json`. `pytest -q -rs` names every skip locally.
 4. **Add tests with every change.** Anything that touches matching needs a test with a
    release whose media share recordings, like a real hybrid SACD (`tests/mbfixture.py`).
    Tests never touch a real library or music collection: they use a throwaway beets
    directory and synthetic images.
-5. **Update the README in the same pull request,** and add an entry to the
+5. **Update the README and docs/ in the same pull request,** and add an entry to the
    [changelog](CHANGELOG.md) for anything a user would notice.
 6. **Answer the review.** An AI reviewer comments on every pull request; reply to each
    finding (fix it, or say why not).

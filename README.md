@@ -1,35 +1,35 @@
 # beets-pysacd
 
-[![PyPI](https://img.shields.io/pypi/v/beets-pysacd)](https://pypi.org/project/beets-pysacd/)
-[![Python](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Faclater%2Fbeets-pysacd%2Fmain%2Fpyproject.toml)](pyproject.toml)
-[![Wheel](https://img.shields.io/pypi/wheel/beets-pysacd)](https://pypi.org/project/beets-pysacd/#files)
-[![Implementation](https://img.shields.io/pypi/implementation/beets-pysacd)](https://pypi.org/project/beets-pysacd/)
-[![Downloads](https://static.pepy.tech/badge/beets-pysacd/month)](https://pepy.tech/projects/beets-pysacd)
-[![License](https://img.shields.io/pypi/l/beets-pysacd)](LICENSE)
-
 [![CI](https://github.com/aclater/beets-pysacd/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aclater/beets-pysacd/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/aclater/beets-pysacd/branch/main/graph/badge.svg)](https://codecov.io/gh/aclater/beets-pysacd)
 [![CodeQL](https://github.com/aclater/beets-pysacd/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/aclater/beets-pysacd/actions/workflows/codeql.yml)
-[![Fuzzing](https://github.com/aclater/beets-pysacd/actions/workflows/fuzz.yml/badge.svg)](https://github.com/aclater/beets-pysacd/actions/workflows/fuzz.yml)
-[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![License: GPL-2.0-or-later](https://img.shields.io/badge/license-GPL--2.0--or--later-blue)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](pyproject.toml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/aclater/beets-pysacd/badge)](https://scorecard.dev/viewer/?uri=github.com/aclater/beets-pysacd)
-[![SLSA Build L2](https://slsa.dev/images/gh-badge-level2.svg)](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations)
+[![PyPI](https://img.shields.io/pypi/v/beets-pysacd)](https://pypi.org/project/beets-pysacd/)
 
-A [beets](https://beets.io) plugin that imports SACD ISO images, using
-[pysacd](https://github.com/aclater/pysacd).
+beets-pysacd is a [beets](https://beets.io) plugin that imports SACD ISO images, which beets
+can't tag on its own: it reads each disc with [pysacd](https://github.com/aclater/pysacd), finds
+the MusicBrainz release and the SACD layer the disc is, and imports each area as DSF or FLAC
+through beets' normal importer. Each area becomes an album of its own, on its own medium of the
+release, so stereo and multichannel layers stay apart in your library.
 
-beets can't tag an `.iso`. For each disc image this plugin reads the TOC,
-finds the MusicBrainz release and the medium (the SACD stereo or multichannel
-layer) that the disc is, converts each selected area to DSF or FLAC in a
-staging directory, and imports that through beets' normal importer. Each area
-becomes an album of its own, on its own medium of the release.
+## Platforms
+
+| System | How | Guide |
+|---|---|---|
+| Linux, macOS, Windows | A pure-Python wheel on PyPI, for Python 3.11 to 3.14 with beets 2.12 or later (2.x). It needs pysacd 0.2 or later, whose wheels carry the engine for Linux (x86-64, aarch64), macOS and Windows. CI tests the oldest and newest beets on Linux, macOS and Windows | [install](docs/install.md) |
+
+Each [GitHub release](https://github.com/aclater/beets-pysacd/releases) has the wheel and the
+sdist with a build provenance attestation, checkable with `gh attestation verify`. They are not
+otherwise signed. With beets from a Linux distribution's package, see
+[install](docs/install.md) for making the plugin importable.
 
 ## Quick start
 
 You need Python 3.11 to 3.14 on Linux or macOS, and an SACD disc image. The commands use
 `album.iso` in the current folder; type your image's name instead. They install beets with the
-plugin, so start here if you don't use beets yet; if you do, see [Install](#install).
+plugin, so start here if you don't use beets yet; if you do, see [install](docs/install.md).
 
 1. Install beets and the plugin in a virtual environment of their own:
 
@@ -67,385 +67,32 @@ plugin, so start here if you don't use beets yet; if you do, see [Install](#inst
    MusicBrainz release it found. Accept it, or pick another, as in any beets import. The tracks
    land in `~/Music`; `beet ls -a` lists the album.
 
-[Use](#use) has the other commands and options, [Configuration](#configuration) the settings.
-
-## Install
-
-```sh
-pip install beets-pysacd
-```
-
-Then enable the plugin, with beets' MusicBrainz plugin, in your beets config:
-
-```yaml
-plugins: musicbrainz sacd
-```
-
-Requirements: Python 3.11 or later, beets 2.12 or later (2.x), pysacd 0.2 or
-later (its engine, and libFLAC for `format: flac`).
-
-Python 3.15 is tested in CI ahead of beets' own support: beets itself doesn't yet install on
-Python 3.15 without `--ignore-requires-python` (beets 2.9 to 2.14.1, the latest, declare
-`Requires-Python <3.15`), and PyYAML has no 3.15 wheel, so CI builds it from its sdist. The suite
-passes there. Until beets supports 3.15, use Python 3.11 to 3.14.
-
-Each [GitHub release](https://github.com/aclater/beets-pysacd/releases) has the wheel
-and the sdist, each with its build provenance attestation beside it as
-`<file>.intoto.jsonl`. Check a download with
-`gh attestation verify <file> --repo aclater/beets-pysacd`, or offline against the
-attached bundle by adding `--bundle <file>.intoto.jsonl`.
-
-The plugin must be importable by the Python that runs `beet`. With beets from a
-Linux distribution's package, that is the system Python, and it may not look
-where `pip` installed the plugin. Fedora's `/usr/bin/beet`, for example, runs
-`python3 -sP`, which leaves out both `~/.local` and `/usr/local`, so beets
-reports that it can't load the `sacd` plugin. Either install beets and the
-plugin into one environment of their own:
-
-```sh
-pipx install beets
-pipx inject beets beets-pysacd
-```
-
-or keep the packaged beets and add pip's directory to its path, for example
-`PYTHONPATH=/usr/local/lib/python3.14/site-packages:/usr/local/lib64/python3.14/site-packages beet ...`
-(pysacd's engine is under `lib64`).
-
-## Use
-
-```sh
-beet sacd-import Album.iso              # one image
-beet sacd-import ~/rips/                # every .iso under a directory
-beet sacd-import -a both -f flac Album.iso
-beet sacd-import --release 1d1f0a6e-... Album.iso   # use this MusicBrainz release
-beet sacd-info Album.iso                # print the TOC; changes nothing
-beet sacd-info ~/rips/                  # ...of every image under a directory
-```
-
-Plain `beet import` also converts the ISO images it finds (an `.iso` given on
-the command line, or inside a directory being imported) before importing them.
-Your other files in the same run are imported exactly as your settings say.
-Turn this off with `auto: no`.
-
-An area that is already in the library is skipped. Imported albums carry two
-flexible attributes, `sacd_iso_sha` (a fingerprint of the disc's TOCs) and
-`sacd_area` (`stereo` or `multichannel`), so `beet ls sacd_area:multichannel`
-lists the multichannel albums.
-
-### Moving a library from extracts to ISOs (sacdfs)
-
-If you serve your ISOs with [sacdfs](https://github.com/aclater/sacdfs) and delete the extracted
-files, the beets items for those extracts would dangle. `beet sacd-migrate` finds the albums that
-are extracts of an ISO and records where the ISO and sacdfs hold each track, keeping their
-MusicBrainz IDs and your other beets data:
-
-```sh
-beet sacd-migrate ~/rips/                  # report which albums are extracts of which ISO area
-beet sacd-migrate --apply --source ~/rips --flatten ~/rips/    # record it
-beet ls -f '$path $sacdfs_path' sacd_area:stereo
-```
-
-An album is an extract of an ISO area when it carries that disc's `sacd_iso_sha` and
-`sacd_area` (imported with this plugin), or when it lives under the ISO's folder and its
-tracks agree with the area's in number and length (within 2 seconds). With `--apply` each item
-gets the flexible attributes `sacd_iso` (the ISO), `sacd_track`, `sacd_area` and `sacdfs_path`
-(`Folder/Stereo/NN - Title.dsf`, relative to the sacdfs mount; `--source` is sacdfs' SOURCE
-and `--flatten` matches its option). It writes only to the beets database: nothing is moved
-or deleted, and tags are not written to files. The check is of the TOC, not the audio; run
-`sacdfs verify` before deleting any extract. Item paths are not changed. `sacdfs_path` follows
-sacdfs 0.4.1's naming, including `NN - Track NN.dsf` for a track with no title (sacdfs 0.4.0 showed
-`NN.dsf`; with `--catalogue --mount`, a mount that shows only that name gets it). It is derived from the
-TOC's titles, so an image served with a tags file that changes titles is untested. Checked against a mounted 0.4.0 and
-0.4.1-rc.2 on three real discs (two with text, one with none): every recorded path exists.
-
-**Only verified extracts.** `sacdfs verify` writes a tab-separated report (`-o report.tsv`) with a
-row for each extract. Give it to the migration and `--apply` records an album only when every
-one of its items is `IDENTICAL` or `IDENTICAL-PAUSE` in it (matched by file path); any other
-status, or a missing row, holds the whole album back and says so:
-
-```sh
-sacdfs verify -o report.tsv --map ~/dsf ~/isos ~/isos ~/dsf
-beet sacd-migrate --apply --verify report.tsv --source ~/isos ~/isos/
-```
-
-**ISOs with no extracts.** `--catalogue --mount DIR --apply` adds an album for each ISO area
-that has no extracts in the library (no album imported from it, none under its folder with
-the area's track count). Its items carry the disc's text, track order, length, channel count
-and `sacdfs_path`, and their `path` is that file under `DIR`, where sacdfs is mounted; the
-albums have `sacd_catalogued: 1`. They have no MusicBrainz match: run beets' own tools on
-the mounted files for that. Without `--apply` the command only reports; a second run
-adds nothing.
-
-**Fields set by hand on catalogued items.** The mount is read-only, so `beet modify` can't
-write a tag to a catalogued item's file; the edit lives in the library. Each item records its
-file's mtime when it is catalogued, and again when a tag field is set on it, so `beet update`
-leaves its tag fields (genre, year, title, ...) alone until the file's mtime changes on the
-mount. That mtime comes from the ISO, so it stays the same when sacdfs is remounted; it moves
-when the ISO changes, when an sacdfs upgrade changes the files' bytes, or when the disc's tags
-file (`sacd-tags-export`) changes. `beet update` then reads the file's tags over the item's
-tag fields, as it does for any changed file; flexible fields stay. To keep a genre across
-that, export it with `sacd-tags-export`. Items catalogued by 0.2.1 or earlier have no recorded
-mtime, so every `beet update` reads their tags from the mount: `sacd-migrate --mount DIR`
-reports them and with `--apply` records each existing file's mtime, changing no other field.
-Tested in a throwaway library with DSF files from pysacd standing in for the mount (beets
-2.12.0 and 2.14.1); that sacdfs main keeps a track's mtime across remounts and moves it for a
-new tags file is checked in CI on a real mount; the rest is not yet run on a real mount.
-
-**Upgrading the mount from sacdfs 0.4.0 to 0.4.1.** sacdfs 0.4.0 showed a track without a
-title as `NN.dsf`; 0.4.1 shows it as `NN - Track NN.dsf`. Albums catalogued on a 0.4.0 mount
-by beets-pysacd 0.2.0 or 0.2.1 point at the old names, and once the mount is upgraded
-`beet update` removes their items, with any fields you set on them. In this order:
-
-1. Back up the beets library database (`library.db`).
-2. Upgrade and remount sacdfs. Don't run `beet update` yet.
-3. `beet sacd-migrate --mount DIR --source SOURCE ISO...` (with `--flatten` if the mount uses
-   it) reports which catalogued items would move to the new names; add `--apply` to move them.
-   A plain `--catalogue --mount DIR --apply` run does the same.
-4. Then `beet update` keeps them.
-
-An item is moved only when its path is the 0.4.0 name under `--mount`, that file is gone, and
-the 0.4.1 name is the one file the mount shows for that track number; anything else is reported
-and left alone. Only the item's `path`, `sacdfs_path` and `mtime` (the new file's) change: its id, added date and other
-fields stay, nothing on the mount is touched and no item is removed. A second run changes
-nothing. If `beet update` already removed the items, `--catalogue` adds the album again with
-new ids and added dates and without the fields set by hand; restore the backup from step 1
-instead to keep them. Tested in a throwaway library on a directory laid out like each mount's
-names (synthetic disc, beets 2.12.0 and 2.14.1); not yet run against a real sacdfs mount.
-The same run records the file's mtime for catalogued items that have none (see below).
-
-### Keeping your tags: `sacd-tags-export`
-
-sacdfs 0.3.0 can serve your own tags over an image's: a **tags directory** (`--tags DIR`,
-`SACDFS_TAGS` in the container) holds one TOML file per disc. `beet sacd-tags-export` writes
-those files from beets, so the genres, MusicBrainz IDs and cover art you have in beets survive
-deleting the extracts:
-
-```sh
-beet sacd-tags-export --tags ~/music/sacd-tags            # every SACD album
-beet sacd-tags-export --tags ~/music/sacd-tags -n genre:jazz   # a query; -n only reports
-```
-
-It covers the albums whose items have `sacd_iso`, `sacd_area` and `sacd_track` (from
-`sacd-migrate` or `--catalogue`). For each disc it works out the file name the way sacdfs does
-(`sacdfs tags key`: a hash of the disc's table of contents, read from the ISO, which is only
-read) and writes, for the album's area (`[stereo.*]` or `[multichannel.*]`): `genre`,
-`publisher` (the label), `MusicBrainz Album Id`, `Release Group Id` and `Album Artist Id`, and
-the album's cover as `<key>-<area>.jpg` or `.png` (JPEG or PNG up to 960 KiB) named by `art`;
-per track, the recording (`UFID`), release track and artist IDs. It leaves everything else in
-an existing file alone, so your own edits stay, and rewrites the file atomically, only when
-something changed (comments in it are not kept). A beets value replaces the same field in the
-area's section; a field beets has no value for is not touched. A file that is not valid TOML is
-left as it is. sacdfs shows the change within a few seconds.
-
-### DVD-Audio, DVD-Video and Blu-ray images
-
-Disc-image folders often hold DVD and Blu-ray images next to SACDs. The plugin
-identifies them and lists them, but doesn't convert them: `beet sacd-info`
-prints one line for each, and imports log why each was left alone.
-
-```text
-== .../Bluray/LIVE_CONCERT.iso
-  Blu-ray image, volume 'LIVE_CONCERT', 4 playlists: catalogued, not converted
-== .../DVDA/SURROUND_MIX.iso
-  DVD-Audio + DVD-Video image, volume 'SURROUND_MIX', 5 title sets: catalogued, not converted
-```
-
-It reads the image's file system (UDF, including the UDF 2.50 metadata
-partition that Blu-ray uses, or ISO 9660) and looks for the standard folders:
-`AUDIO_TS` with `AUDIO_TS.IFO` for DVD-Audio, `VIDEO_TS` for DVD-Video and
-`BDMV` for Blu-ray. The count is of DVD title sets or Blu-ray playlists.
-This lives in the plugin (`beetsplug/_sacd_discimage.py`), not in pysacd, and
-reads only directory structures, never the audio.
-
-## Configuration
-
-```yaml
-sacd:
-    areas: stereo        # stereo | multichannel | both
-    format: dsf          # dsf | flac (24-bit PCM)
-    pcm_rate: 88200      # flac: 88200 | 176400
-    pauses: no           # include the pauses between tracks (pysacd 0.2.1 or later)
-    auto: yes            # convert ISOs found by plain `beet import`
-    remove_iso: no       # delete an ISO once every area is imported in this run and verified
-    staging: ''          # where to convert; default: a hidden directory in the library directory
-    musicbrainz: yes     # let pysacd find the release (barcode, catalogue number, ISRCs)
-    contact: ''          # contact (e.g. an e-mail address) for pysacd's MusicBrainz User-Agent
-    threads: 0           # conversion threads; 0 = one per CPU
-```
-
-`sacd-import` options override `areas`, `format`, `pcm_rate`, `pauses` and
-`remove_iso` for one run.
-
-Tracks are cut at their timecodes, without the pauses between them, like
-`pysacd convert`. With `pauses: yes` (or `--pauses`) each pause goes with the
-track before it, exactly as `pysacd-extract -b` and `sacd_extract -b` cut them:
-use it when your library already holds extracts made that way, so the same
-disc gives the same tracks. It needs pysacd 0.2.1 or later.
-
-### Keeping or removing ISO images
-
-ISO images are kept by default, and never written to. With `remove_iso: yes`
-(or `--remove-iso`) an image is deleted only when every selected area was
-imported from it in this run and verified: the album beets made from that
-image is in the library with all of the area's tracks, and every file exists.
-An import you skip, or one that fails, keeps the image. So does an import
-beets skips as a duplicate: if you import a good and a bad rip of one disc
-together, one becomes the album and the other is kept, with a line in the log.
-
-An image with an area that is already in the library is kept too, and the log
-says which area and that the ISO was kept. The fingerprint that says "already
-imported" is the disc's TOCs and the image size, not its audio, so it doesn't
-prove that this image holds the same audio as the album in the library: a good
-rip and a damaged rip of one disc, or an image that copies another's TOC, have
-the same fingerprint. Delete such an image yourself once you have compared it.
-
-### Files and staging
-
-Converted files always move from the staging directory into your library,
-whatever `copy`, `move` or in-place settings you use for other files: the
-staging directory is temporary and is deleted afterwards, also after an error.
-By default it is created inside the library directory, so the move is a
-rename on the same filesystem; set `staging` to put it elsewhere.
-
-## Hybrid SACDs
-
-MusicBrainz lists a hybrid SACD as one release with several media: the CD
-layer, the SACD stereo layer and sometimes the SACD multichannel layer, all
-with the same recordings. beets puts the tracks of every medium into one
-candidate and then matches files to tracks. With the same recordings on every
-layer, it maps the SACD files to the CD layer (medium 1), overwrites their
-release track IDs, and writes the album-level `media` as "Media". See the
-[beets discussion](https://github.com/beetbox/beets/discussions/6614).
-
-This plugin keeps each area on its own medium:
-
-- When pysacd matched the release, it knows the medium: that release's
-  candidates are cut down to that medium before beets compares them, and the
-  album's `media` is that medium's format, e.g. "Hybrid SACD (SACD layer,
-  2 channels)".
-- Without pysacd's match, the medium is the one SACD-layer medium of the
-  candidate with the area's track count and channel type. If that is
-  ambiguous (a set of two SACDs, say), the candidate is left as beets made it.
-- A final check after you choose a match maps the files to the medium if
-  they still point elsewhere, and logs it.
-
-## How it works
-
-For each ISO image, and each selected area of it:
-
-1. pysacd reads the TOC (read-only) and fingerprints the disc from its TOCs.
-   An area whose fingerprint and area are already in the library is skipped.
-2. pysacd matches the MusicBrainz release and medium, and converts the area
-   into the staging directory, writing the release's IDs into the files.
-   A match on a medium that isn't an SACD layer (a vinyl, CD or digital
-   edition sharing the catalogue number or barcode) isn't used: the area is
-   converted without IDs and beets matches it the normal way, preferring
-   an SACD edition (see below). A match on the
-   CD layer of a hybrid release keeps the release; the area goes to that
-   release's SACD layer with its track count and channels.
-3. beets imports the staging directory. Because the files agree on the
-   release ID, beets looks that release up directly. For this one import task
-   only, the plugin then:
-   - **hides the physical-disc tags from matching.** pysacd tags the physical
-     disc ("disc 1 of 1", media "Hybrid SACD"), but MusicBrainz counts each
-     layer as a medium ("disc 2 of 3", "Hybrid SACD (SACD layer, 2
-     channels)"). beets would count those tags against the right candidate,
-     enough to keep a correct match from being applied automatically. beets
-     writes the medium's own values when it applies the match;
-   - **cuts the release's candidates down to the area's medium** (see
-     [Hybrid SACDs](#hybrid-sacds));
-   - **prefers SACD editions.** Without pysacd's release, beets would take
-     whichever edition of the album scores best, often the CD. For this task
-     only, an SACD medium goes first in `match.preferred.media`; your own
-     preferred media follow it, and other imports don't see the change;
-   - **counts only an album on the same medium as a duplicate.** beets' default
-     duplicate keys are album artist and album, which both areas of a disc
-     (and a CD rip of the same release) share: without this, importing the
-     multichannel area after the stereo one would be skipped as a duplicate.
-     Another copy of the same layer is still a duplicate;
-   - **moves the files** into the library (see [Files and staging](#files-and-staging)).
-4. The album gets `sacd_iso_sha` and `sacd_area`; with `remove_iso`, the ISO is
-   deleted once every area is imported in this run and verified. The staging directory is removed.
-
-Nothing here changes how beets treats your other files in the same import.
-
-## Development
-
-```sh
-pip install -e '.[dev]'
-ruff check . && mypy beetsplug
-PYSACD_TESTS=/path/to/pysacd/tests pytest -q
-```
-
-The tests build synthetic SACD images with pysacd's test generator
-(`tests/sacdgen.py` in the pysacd source tree, found through `PYSACD_TESTS`,
-default `../pysacd/tests`) and import them into a throwaway beets library.
-MusicBrainz is mocked with a hybrid release whose media share recordings, so
-the tests need no network. DVD and Blu-ray images for the cataloguing tests
-come from `tests/discgen.py`, which writes minimal UDF and ISO 9660 file
-systems. `tests/test_tags_export.py` has one test that mounts sacdfs and reads the tags it
-serves; it runs when `SACDFS_IMAGE` names a container build of sacdfs main (needs podman and
-`/dev/fuse`), and CI builds one.
-
-`tests/test_live_musicbrainz.py` is the exception: it runs the plugin's matching
-against a real hybrid SACD release on musicbrainz.org (two requests). It skips
-unless `PYSACD_LIVE_MB=1`:
-
-```sh
-PYSACD_LIVE_MB=1 pytest tests/test_live_musicbrainz.py
-```
-
-### CI
-
-Every pull request runs ruff, mypy and the tests (Python 3.11 to 3.14, plus 3.15 as an early warning, the oldest
-and newest beets, Linux, macOS and Windows, pysacd's release and master branch),
-only the expected tests skipping (`tests/expected-skips.json` lists each skip and why; a new,
-stopped or changed skip fails the job), CodeQL, semgrep, a privacy check, dependency review (fails on high or critical
-vulnerabilities) and an AI review. One test leg runs under coverage.py and shows
-the report in its job summary, with HTML and XML reports as the `coverage`
-artifact; the XML report also goes to [Codecov](https://codecov.io/gh/aclater/beets-pysacd)
-for the badge, authenticated with the job's GitHub OIDC token (no stored secret;
-pull requests from forks skip the upload). Changes to workflows are linted with
-[zizmor](https://docs.zizmor.sh) (`pipx run zizmor==1.30.1 --offline
-.github/workflows`), and changes to this README get a link check (lychee).
-
-The Linux jobs run in Red Hat-derived containers, pinned by digest: GitHub's hosted Linux runners
-are Ubuntu only, so the lint, the Linux test legs, the fuzzing and the live MusicBrainz check run in
-Fedora 44 (Python from Fedora's packages), as does the release build, and semgrep, zizmor and the privacy check in UBI 10,
-with semgrep and zizmor installed from PyPI by hash (`.github/requirements/`) instead of their
-vendors' images. The `sacdfs main` tags test stays on the runner, since it builds sacdfs's own
-image (UBI 10 and Fedora based) with the runner's Podman.
-
-Changes to the DVD/Blu-ray identifier (`beetsplug/_sacd_discimage.py`) or the
-harness are fuzzed for 150 seconds with [Atheris](https://github.com/google/atheris)
-(`fuzz/fuzz_discimage.py`, seeded from `tests/discgen.py`'s images; its docstring shows
-how to run it locally). A crashing input is uploaded as the `fuzz-crashes` artifact; once
-fixed, it goes into `fuzz/regressions/`, which the tests replay.
-
-Weekly: OpenSSF Scorecard (also on every push to `main`; results published for
-the badge and shown under code scanning), the live MusicBrainz test, the link
-check, the test matrix, to catch new beets and pysacd releases, and 20 minutes of
-fuzzing.
-
-CI installs every Python dependency hash-checked (`pip install --require-hashes`),
-from two lock files written by `python3 -I scripts/lock.py` (needs
-[uv](https://docs.astral.sh/uv/)): `locks/latest/requirements.txt` with the newest
-beets and `locks/oldest/requirements.txt` with beets held at the floor in
-`pyproject.toml` (plus `locks/fuzz/requirements.txt`, Atheris). Both cover Python 3.11 to 3.14 on Linux (3.15 too, see above), macOS and Windows, and
-leave out releases younger than two weeks, except pysacd's, security fixes and the lap
-release with Python 3.15 wheels listed in the script. The plugin, and pysacd's master branch on that leg, are installed on
-top with `--no-deps`, so nothing unhashed is downloaded. Dependabot keeps both locks
-current (beets stays on the floor in the oldest); when a new release brings a new
-dependency, the locked install fails on Dependabot's PR, and rerunning
-`scripts/lock.py` there fixes it. Rerun it, too, after changing dependencies in
-`pyproject.toml`. For local work, `pip install -e '.[dev]'` still works.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report bugs and propose changes,
-[SECURITY.md](SECURITY.md) for reporting a vulnerability privately, and the
-[changelog](CHANGELOG.md) for what changed in each release. What each minor version brought,
-across the SACD projects: [RELEASES.md](https://github.com/aclater/sacd/blob/main/RELEASES.md).
-
-## Licence
-
-GPL-2.0-or-later (see [LICENSE](LICENSE)). The plugin imports pysacd, which is
-GPL-2.0-or-later.
+[Using the plugin](docs/usage.md) has the other commands and options,
+[configuration](docs/configuration.md) the settings, and [install](docs/install.md) the other
+ways to install.
+
+## Documentation
+
+- [Install](docs/install.md): requirements, attestations, beets from a Linux distribution
+- [Using the plugin](docs/usage.md): `sacd-import`, `sacd-info`, moving a library from extracts
+  to ISOs with [sacdfs](https://github.com/aclater/sacdfs) (`sacd-migrate`), keeping your tags
+  (`sacd-tags-export`), DVD and Blu-ray images
+- [Configuration](docs/configuration.md): settings, keeping or removing ISO images, staging
+- [How it works](docs/how-it-works.md): hybrid SACDs and the import steps
+- [Development](docs/development.md): tests and CI
+- [Changelog](CHANGELOG.md) · [releases](https://github.com/aclater/beets-pysacd/releases) ·
+  [contributing](CONTRIBUTING.md) · [security](SECURITY.md) ·
+  [releases by major version](https://github.com/aclater/dsd-toolbox/blob/main/RELEASES.md)
+
+## Licence and credits
+
+beets-pysacd is free software under the [GNU General Public License](LICENSE), version 2 or (at
+your option) any later version.
+
+- [beets](https://beets.io) (MIT) is the music library manager the plugin extends; it uses
+  beets' importer, MusicBrainz plugin and test helpers.
+- [pysacd](https://github.com/aclater/pysacd) (GPL-2.0-or-later) reads the discs, matches
+  MusicBrainz releases and converts the areas.
+- [MusicBrainz](https://musicbrainz.org) supplies the release data.
+
+Part of the [DSD Toolbox](https://github.com/aclater/dsd-toolbox).

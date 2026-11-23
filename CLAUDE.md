@@ -75,7 +75,7 @@ each is legitimate; `scripts/check_skips.py`); `pytest -q -rs` names the skips. 
 on Linux, macOS and Windows, and against pysacd's master branch (one leg
 under coverage, uploaded to Codecov by OIDC), plus CodeQL, semgrep, the privacy check, dependency review,
 zizmor on workflow changes, a README link check and an AI review. Weekly:
-OpenSSF Scorecard, a live MusicBrainz test and 20 minutes of fuzzing (README, "CI"). CI installs its
+OpenSSF Scorecard, a live MusicBrainz test and 20 minutes of fuzzing (docs/development.md, "CI"). CI installs its
 dependencies only from the hash locks in `locks/` (`scripts/lock.py`; rerun it after
 changing dependencies in `pyproject.toml`). Workflow changes
 must keep zizmor clean: `persist-credentials: false` on every checkout, and no
@@ -87,7 +87,7 @@ must keep zizmor clean: `persist-credentials: false` on every checkout, and no
 - Work on a branch and open a PR against `main`; never push to `main`
   directly. Write "Closes #N" only when the PR fully resolves the issue,
   otherwise "Part of #N". Never close an issue that isn't resolved.
-- **Docs always ship with the change** (README, this file, usage text), and
+- **Docs always ship with the change** (README, docs/, this file, usage text), and
   anything a user would notice gets a `CHANGELOG.md` entry.
 - **AI review.** The `ai-review` workflow posts a review from a second model
   on each PR. It sends the PR's title, description and diff to Google's Gemini
