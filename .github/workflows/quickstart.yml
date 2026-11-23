@@ -1,0 +1,80 @@
+# The README's Quick start, run as written against a wheel built from this checkout
+# (scripts/readme_quickstart.py): the commands come from the README itself, so a README change
+# that no longer works fails here. The wheel is built as the release workflow builds it. beets
+# and pysacd come from PyPI, as for a user; MusicBrainz is answered from tests/mbfixture.py, with
+# no MusicBrainz traffic. Weekly too, to catch new beets and pysacd releases.
+
+name: quickstart
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "41 6 * * 2"  # weekly
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quickstart:
+    name: README quick start
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      # Fedora 44, pinned by digest, like the release build: Red Hat-derived userland; the runner
+      # (Ubuntu, GitHub's only hosted Linux) only hosts the container.
+      image: registry.fedoraproject.org/fedora@sha256:b414c09be79dd1f32529b55b096b6bb30435d82ee16fbdbbabf8985eb5f86db0
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # python3 is the interpreter the README's `python3 -m venv` gets; 3.13 builds, as in the release.
+      - name: Python (Fedora)
+        run: |
+          dnf -y -q --setopt=install_weak_deps=False install shadow-utils util-linux git-core findutils \
+            python3 python3.13
+          dnf clean all
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      # As the release workflow: build and setuptools from the hash lock (scripts/lock.py, #19),
+      # without isolation, so nothing unhashed is downloaded.
+      - name: Build the wheel
+        run: |
+          python3.13 -m venv "$RUNNER_TEMP/build"
+          "$RUNNER_TEMP/build/bin/pip" install -q --require-hashes --only-binary :all: -r locks/latest/requirements.txt
+          "$RUNNER_TEMP/build/bin/python" -m build --wheel --no-isolation
+          ls -l dist
+
+      # The disc generator is in pysacd's tests, not its package: the source of the locked release.
+      - name: Find the pysacd release
+        id: pysacd
+        run: |
+          ref="v$("$RUNNER_TEMP/build/bin/python" -c 'import importlib.metadata as m; print(m.version("pysacd"))')"
+          [[ "$ref" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::unexpected pysacd ref $ref"; exit 1; }
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: aclater/pysacd
+          ref: ${{ steps.pysacd.outputs.ref }}
+          path: pysacd-src
+          persist-credentials: false
+
+      - name: Generate album.iso
+        run: |
+          mkdir "$RUNNER_TEMP/quickstart"
+          "$RUNNER_TEMP/build/bin/python" -I scripts/readme_quickstart.py make-disc --pysacd-tests pysacd-src/tests \
+            "$RUNNER_TEMP/quickstart/album.iso"
+
+      # In a folder of its own, as a normal user with a throwaway HOME; `pip install beets
+      # beets-pysacd` is swapped for beets and the built wheel, and nothing else changes.
+      - name: Run the Quick start
+        run: |
+          useradd -M -d "$RUNNER_TEMP/home" -s /bin/bash quickstart
+          mkdir "$RUNNER_TEMP/home"
+          chown quickstart "$RUNNER_TEMP/home" "$RUNNER_TEMP/quickstart"
+          runuser -u quickstart -- python3 -I scripts/readme_quickstart.py run --wheel dist/*.whl \
+            --workdir "$RUNNER_TEMP/quickstart" --home "$RUNNER_TEMP/home"

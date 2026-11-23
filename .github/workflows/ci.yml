@@ -49,6 +49,11 @@ jobs:
       - name: mypy
         run: mypy beetsplug
 
+      # The version claims in README.md and docs/ (Python range, beets range, pysacd floor) must
+      # match pyproject.toml: a short list of known sentences (scripts/check_doc_versions.py).
+      - name: Docs match the versions
+        run: python -I scripts/check_doc_versions.py
+
   test:
     name: tests (${{ matrix.os }}, Python ${{ matrix.python }}, beets ${{ matrix.beets }}, pysacd ${{ matrix.pysacd }})
     runs-on: ${{ matrix.os }}
