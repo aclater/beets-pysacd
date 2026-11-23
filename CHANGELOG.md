@@ -9,6 +9,10 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## [Unreleased]
 
+### Security
+- The private-names check (`scripts/check-private-names.sh`) now fails when it cannot run,
+  and refuses a name list that would match every line.
+
 ## [0.2.2] - 2026-11-15
 
 ### Fixes
