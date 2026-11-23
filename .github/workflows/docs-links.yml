@@ -1,4 +1,5 @@
-# Check the links in README.md and docs/ with lychee, weekly (links rot without a code
+# Check the links in README.md and docs/ with lychee, #fragments (headings in the linked
+# file) included, weekly (links rot without a code
 # change) and on pull requests that touch them.
 
 name: docs-links
@@ -29,7 +30,7 @@ jobs:
       - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8  # v2.9.0
         with:
           args: >-
-            --no-progress --max-concurrency 4 --max-retries 3
+            --no-progress --max-concurrency 4 --max-retries 3 --include-fragments
             --exclude '^https://api\.scorecard\.dev/'
             --exclude '^https://img\.shields\.io/'
             --exclude '^https://raw\.githubusercontent\.com/aclater/beets-pysacd/main/docs/assets/'
