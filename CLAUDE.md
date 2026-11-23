@@ -61,7 +61,7 @@ catalogued, never converted. That handler is the plugin's own, not pysacd's.
 ```bash
 ruff check .
 mypy beetsplug
-PYSACD_TESTS=/path/to/pysacd/tests pytest -q
+pytest -q
 ```
 
 The tests build synthetic SACD images with pysacd's test generator
@@ -69,12 +69,12 @@ The tests build synthetic SACD images with pysacd's test generator
 (default `../pysacd/tests`). DVD and Blu-ray test images come from
 `tests/discgen.py`. MusicBrainz is mocked; tests need no network.
 
-CI also runs the tests on Python 3.11 to 3.14 (and 3.15 as an early warning), on the oldest and newest beets,
+CI also runs the tests on Python 3.11 to 3.14 (and 3.15 as an early warning), on the oldest and
+newest beets on Linux and the newest on macOS and Windows, and against pysacd's master branch
+(one leg under coverage, uploaded to Codecov by OIDC), plus CodeQL, semgrep, the privacy check,
+dependency review, zizmor on workflow changes, a link check of README and docs/ and an AI review.
 CI fails when a skip is new, has stopped or has a new reason (`tests/expected-skips.json`, with why
-each is legitimate; `scripts/check_skips.py`); `pytest -q -rs` names the skips. CI also runs the tests on Python 3.11 to 3.14, on the oldest and newest beets,
-on Linux, macOS and Windows, and against pysacd's master branch (one leg
-under coverage, uploaded to Codecov by OIDC), plus CodeQL, semgrep, the privacy check, dependency review,
-zizmor on workflow changes, a README link check and an AI review. Weekly:
+each is legitimate; `scripts/check_skips.py`); `pytest -q -rs` names the skips. Weekly: CodeQL,
 OpenSSF Scorecard, a live MusicBrainz test and 20 minutes of fuzzing (docs/development.md, "CI"). CI installs its
 dependencies only from the hash locks in `locks/` (`scripts/lock.py`; rerun it after
 changing dependencies in `pyproject.toml`). Workflow changes
