@@ -93,7 +93,8 @@ top with `--no-deps`, so nothing unhashed is downloaded. Dependabot keeps both l
 current (beets stays on the floor in the oldest); when a new release brings a new
 dependency, the locked install fails on Dependabot's PR, and rerunning
 `scripts/lock.py` there fixes it. Rerun it, too, after changing dependencies in
-`pyproject.toml`. For local work, `pip install -e '.[dev]'` still works.
+`pyproject.toml`, and at each pysacd release: every run moves pysacd to its newest release, so
+the "pysacd release" legs test what users install. For local work, `pip install -e '.[dev]'` still works.
 
 ## See also
 

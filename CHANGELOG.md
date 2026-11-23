@@ -9,6 +9,10 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## [Unreleased]
 
+### Changed
+- CI's "pysacd release" legs test pysacd 0.5.5 (locked 0.5.2 before), and `scripts/lock.py` now
+  moves pysacd to its newest release on every run instead of keeping the locked version (#90).
+
 ## [0.2.2] - 2026-11-15
 
 ### Fixes
