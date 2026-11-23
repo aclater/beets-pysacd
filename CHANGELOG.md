@@ -1,14 +1,15 @@
 # Changelog
 
-Notable changes in each release of beets-pysacd. Versions follow
-[semantic versioning](https://semver.org/); before 1.0, a minor version may change
+Notable changes in each release of beets-pysacd. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
+[semantic versioning](https://semver.org/spec/v2.0.0.html); before 1.0, a minor version may change
 behaviour, and a patch version only adds or fixes. Releases are on
 [GitHub](https://github.com/aclater/beets-pysacd/releases) and
 [PyPI](https://pypi.org/project/beets-pysacd/), with signed build provenance.
 
-## Unreleased
+## [Unreleased]
 
-## 0.2.2 (2026-11-15)
+## [0.2.2] - 2026-11-15
 
 ### Fixes
 - `sacd-migrate --mount DIR` moves albums catalogued on a sacdfs 0.4.0 mount to the names
@@ -42,7 +43,7 @@ behaviour, and a patch version only adds or fixes. Releases are on
   MusicBrainz check and the release build in Fedora 44, semgrep, zizmor and the privacy check in UBI 10, with semgrep and
   zizmor installed from PyPI by hash instead of their vendors' images. CI only; the plugin is unchanged. (#58)
 
-## 0.2.1 (2026-11-14)
+## [0.2.1] - 2026-11-14
 
 A security release for users of `remove_iso` (off by default). **If you use `remove_iso: yes` or
 `--remove-iso`, upgrade.** Found in a private review asked for by the maintainer. Checked by hand
@@ -81,7 +82,7 @@ container): 122 passed, the 3 expected skips.
   The three skips today: the live MusicBrainz test, the fuzz-regression replay (no regression files
   yet) and the sacdfs mount test, which has its own job.
 
-## 0.2.0 (2026-11-02)
+## [0.2.0] - 2026-11-02
 
 - New `beet sacd-tags-export --tags DIR [QUERY]`: writes sacdfs's tag-layer files (genre, label,
   MusicBrainz IDs, cover art) from the albums `sacd-migrate` matched to an ISO, keyed by the
@@ -99,7 +100,7 @@ container): 122 passed, the 3 expected skips.
   can be verified offline (`gh attestation verify <file> --repo aclater/beets-pysacd
   --bundle <file>.intoto.jsonl`); 0.1.0 to 0.1.2 have them too (#20).
 
-## 0.1.2 (2026-10-30)
+## [0.1.2] - 2026-10-30
 
 - When pysacd's MusicBrainz match isn't used, or there is none, beets now prefers an
   SACD edition over the same album's CD edition, for the plugin's own imports only:
@@ -108,7 +109,7 @@ container): 122 passed, the 3 expected skips.
 
 No security fixes.
 
-## 0.1.1 (2026-10-29)
+## [0.1.1] - 2026-10-29
 
 - `pauses: yes` (or `sacd-import --pauses`) includes the pauses between tracks, cutting
   them as `pysacd-extract -b` does, so a library extracted with pauses gets identical
@@ -118,7 +119,7 @@ No security fixes.
 
 No security fixes.
 
-## 0.1.0 (2026-10-29)
+## [0.1.0] - 2026-10-29
 
 First release.
 
@@ -134,3 +135,11 @@ First release.
 - ISO images are kept unless `remove_iso: yes`, and then removed only after every area's
   import is verified.
 - Supports beets 2.12 and later, Python 3.11 to 3.14, on Linux, macOS and Windows.
+
+[Unreleased]: https://github.com/aclater/beets-pysacd/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/aclater/beets-pysacd/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/aclater/beets-pysacd/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/aclater/beets-pysacd/compare/v0.1.2...v0.2.0
+[0.1.2]: https://github.com/aclater/beets-pysacd/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/aclater/beets-pysacd/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/aclater/beets-pysacd/releases/tag/v0.1.0

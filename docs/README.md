@@ -1,5 +1,7 @@
 [beets-pysacd](../README.md) › Documentation
 
+<img src="assets/icon-256.png" alt="" width="96">
+
 # Documentation
 
 The documentation of beets-pysacd, the beets plugin that imports SACD images through pysacd.

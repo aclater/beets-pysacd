@@ -10,7 +10,7 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/aclater/beets-pysacd/badge)](https://scorecard.dev/viewer/?uri=github.com/aclater/beets-pysacd)
 [![PyPI](https://img.shields.io/pypi/v/beets-pysacd)](https://pypi.org/project/beets-pysacd/)
 
-beets-pysacd is a [beets](https://beets.io) plugin that imports SACD ISO images, which beets
+beets-pysacd is a [beets](https://beets.io) plugin that imports SACD images (`.iso`), which beets
 can't tag on its own: it reads each disc with [pysacd](https://github.com/aclater/pysacd), finds
 the MusicBrainz release and the SACD layer the disc is, and imports each area as DSF or FLAC
 through beets' normal importer. Each area becomes an album of its own, on its own medium of the
@@ -29,7 +29,7 @@ otherwise signed. With beets from a Linux distribution's package, see
 
 ## Quick start
 
-You need Python 3.11 to 3.14 on Linux or macOS, and an SACD disc image. The commands use
+You need Python 3.11 to 3.14 on Linux or macOS, and an SACD image. The commands use
 `album.iso` in the current folder; type your image's name instead. They install beets with the
 plugin, so start here if you don't use beets yet; if you do, see [install](docs/install/README.md).
 
