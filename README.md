@@ -1,3 +1,5 @@
+<img src="https://raw.githubusercontent.com/aclater/beets-pysacd/main/docs/assets/icon-256.png" alt="" width="96">
+
 # beets-pysacd
 
 [![CI](https://github.com/aclater/beets-pysacd/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aclater/beets-pysacd/actions/workflows/ci.yml)

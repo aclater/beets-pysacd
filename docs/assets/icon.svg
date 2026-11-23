@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>beets-pysacd</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1f3a5f"/>
+      <stop offset="1" stop-color="#0f1f36"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f5b63d"/>
+      <stop offset="1" stop-color="#e0902a"/>
+    </linearGradient>
+    <linearGradient id="beet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d9447a"/>
+      <stop offset="1" stop-color="#8e1846"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <!-- the shared DSD Toolbox disc -->
+  <circle cx="256" cy="216" r="132" fill="#e8eef5"/>
+  <circle cx="256" cy="216" r="104" fill="none" stroke="#9fb3c8" stroke-width="6"/>
+  <circle cx="256" cy="216" r="78" fill="none" stroke="#9fb3c8" stroke-width="6"/>
+  <circle cx="256" cy="216" r="52" fill="#c7d3e0"/>
+  <circle cx="256" cy="216" r="20" fill="#14283f"/>
+  <path d="M256 84a132 132 0 0 1 93 38l-93 94z" fill="#ffffff" opacity="0.55"/>
+  <!-- amber front panel: the project slot -->
+  <path d="M64 270a24 24 0 0 1 24-24h336a24 24 0 0 1 24 24v152a24 24 0 0 1-24 24H88a24 24 0 0 1-24-24z" fill="url(#amber)"/>
+  <!-- a cute beet filed with the disc -->
+  <g fill="#8e1846">
+    <path d="M250 296c-30-18-58-52-46-82 26 6 46 40 46 82z"/>
+    <path d="M262 296c30-18 58-52 46-82-26 6-46 40-46 82z"/>
+  </g>
+  <path d="M256 290c48 0 78 30 78 66 0 34-30 56-60 70l-18 28-18-28c-30-14-60-36-60-70 0-36 30-66 78-66z" fill="url(#beet)"/>
+  <path d="M206 330c8-14 22-22 36-24" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity="0.5"/>
+  <g fill="#14283f">
+    <circle cx="230" cy="356" r="11"/><circle cx="282" cy="356" r="11"/>
+  </g>
+  <path d="M242 384q14 12 28 0" fill="none" stroke="#14283f" stroke-width="8" stroke-linecap="round"/>
+</svg>
