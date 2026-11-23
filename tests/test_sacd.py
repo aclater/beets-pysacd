@@ -129,6 +129,37 @@ class TestImport(Base):
         self.run_command("sacd-import", str(self.iso))
         assert len(self.albums()) == 1
 
+    # #85: with no medium to compare (an as-is import, or no match), the other area of the same
+    # disc was taken for a duplicate of the first and skipped
+    def test_as_is_areas_in_two_runs_are_not_duplicates(self):
+        self.config["sacd"]["areas"] = "stereo"
+        self.run_command("import", "-A", str(self.iso))
+        self.config["sacd"]["areas"] = "multichannel"
+        self.run_command("import", "-A", str(self.iso))
+        assert sorted(a.sacd_area for a in self.albums()) == ["multichannel", "stereo"]
+
+    def test_an_album_without_sacd_area_is_told_apart_by_its_channels(self):
+        self.config["sacd"]["areas"] = "stereo"
+        self.run_command("import", "-A", str(self.iso))
+        [album] = self.albums()
+        del album["sacd_area"]
+        album.store()
+        self.config["sacd"]["areas"] = "multichannel"
+        self.run_command("import", "-A", str(self.iso))
+        assert len(self.albums()) == 2
+
+    def test_as_is_same_area_of_another_image_is_still_a_duplicate(self):
+        other = build_iso(self.isodir / "other.iso", catalog="OTHER-PRESSING")
+        self.run_command("import", "-A", str(self.iso))
+        self.run_command("import", "-A", str(other))
+        [album] = self.albums()
+        assert album.sacd_area == "stereo"
+
+    def test_as_is_same_area_twice_is_imported_once(self):
+        self.run_command("import", "-A", str(self.iso))
+        self.run_command("import", "-A", str(self.iso))
+        assert len(self.albums()) == 1
+
     def test_flac(self):
         from pysacd import _native
         if not _native.has_flac():
@@ -157,6 +188,20 @@ class TestImport(Base):
         [album] = self.albums()
         assert album.media == STEREO
         assert {i.disc for i in album.items()} == {2}
+
+
+class TestThreaded(Base):
+    """beets' default threaded pipeline, as `beet import` runs it (the test helper runs unthreaded,
+    with an in-memory library that threads can't share)."""
+    db_on_disk = True
+
+    def test_as_is_areas_in_one_run_are_not_duplicates(self):
+        # the second area is checked for duplicates before the first area's album has its
+        # sacd_area (#85): the album's channels tell the areas apart
+        self.config["threaded"] = True
+        self.config["sacd"]["areas"] = "both"
+        self.run_command("import", "-A", str(self.iso))
+        assert sorted(a.sacd_area for a in self.albums()) == ["multichannel", "stereo"]
 
 
 class TestOtherEditions(Base):

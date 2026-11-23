@@ -9,6 +9,11 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## [Unreleased]
 
+### Fixed
+- A disc's multichannel area is no longer skipped as a duplicate of its stereo area (or the other
+  way round) when the import has no medium to compare: an as-is import (`beet import -A`) or no
+  MusicBrainz match (#85). Importing the same area of another image is still a duplicate.
+
 ## [0.2.2] - 2026-11-15
 
 ### Fixes
