@@ -39,7 +39,7 @@ def truth() -> dict[str, str]:
 # (what, pattern, expected value from truth(), required): a pattern's groups, joined with " to ",
 # are compared with the expected value.
 CHECKS = [
-    ("minimum Python", r"Python (3\.\d+) or later", "{python_min}", True),
+    ("minimum Python", r"Python (3\.\d+) or later", "{python_min}", False),
     ("minimum Python (badge)", r"python-(3\.\d+)%2B", "{python_min}", True),
     ("minimum Python (badge text)", r"Python (3\.\d+)\+", "{python_min}", True),
     ("supported Python range", r"Python (3\.\d+) to (3\.\d+)", "{python_min} to {python_max}", True),
@@ -47,6 +47,11 @@ CHECKS = [
     # the plugin's floor, as the requirements state it; feature notes ("pysacd 0.2.1 or later") are not it
     ("minimum pysacd", r"(?:Requirements:|wheel on PyPI)[^\n]*?pysacd (\d+\.\d+(?:\.\d+)?) or\s+later",
      "{pysacd_min}", True),
+    # the requirements table in the install docs
+    ("Python (requirements table)", r"(?m)^\| Python \| (3\.\d+) to (3\.\d+) \|", "{python_min} to {python_max}", False),
+    ("beets (requirements table)", r"(?m)^\| beets \| (\d+\.\d+) or later \((\d+)\.x\) \|", "{beets_min} to {beets_major}",
+     False),
+    ("pysacd (requirements table)", r"(?m)^\| pysacd \| (\d+\.\d+(?:\.\d+)?) or later", "{pysacd_min}", False),
     ("pinned plugin release", r"beets-pysacd==(\d+\.\d+\.\d+)", "{version}", False),
 ]
 
