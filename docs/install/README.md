@@ -55,7 +55,7 @@ gh attestation verify beets_pysacd-0.2.2-py3-none-any.whl --repo aclater/beets-p
 # /facts
 ```
 
-The command prints nothing and exits 0 when the wheel matches. Tested on the 0.2.2 wheel
+The command exits 0 when the wheel matches (piped, it prints nothing; in a terminal it may print a success line). Tested on the 0.2.2 wheel
 (2026-11-24):
 
 <!-- docs-lint: ignore old-owner -- the table lists what each name gives for the 0.2.2 release signed as aclater/beets-pysacd -->
