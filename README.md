@@ -90,8 +90,14 @@ the other ways to install.
 
 ## Licence and credits
 
-beets-pysacd is free software under the [GNU General Public License](LICENSE), version 2 or (at
-your option) any later version.
+beets-pysacd's code is free software under the [GNU General Public License](LICENSE), version 2
+or (at your option) any later version (`GPL-2.0-or-later`).
+
+The documentation in `docs/`, and any measurement data published in it, are licensed under
+[CC BY 4.0](LICENSES/CC-BY-4.0.txt) (`CC-BY-4.0`), except for the icon files in `docs/assets/`,
+which are GPL-2.0-or-later, as [their page](docs/assets/README.md) says.
+
+To cite beets-pysacd, use [CITATION.cff](CITATION.cff).
 
 - [beets](https://beets.io) (MIT) is the music library manager the plugin extends; it uses
   beets' importer, MusicBrainz plugin and test helpers.

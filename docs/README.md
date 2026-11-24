@@ -7,6 +7,8 @@
 The documentation of beets-pysacd, the beets plugin that imports SACD images through pysacd.
 Start with the [quick start](../README.md#quick-start) if you are new to it.
 
+The documentation is licensed [CC BY 4.0](../LICENSES/CC-BY-4.0.txt), except for the parts listed under [Licence and credits](../README.md#licence-and-credits), which also gives the code's licence.
+
 ## Install
 
 - [Install](install/README.md): requirements, pip, checking a download

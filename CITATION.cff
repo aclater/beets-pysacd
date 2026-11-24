@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use beets-pysacd, please cite it using the metadata from this file."
+type: software
+title: beets-pysacd
+abstract: >-
+  beets-pysacd is a beets plugin that imports SACD images (.iso), which beets
+  can't tag on its own: it reads each disc with pysacd, finds the MusicBrainz
+  release and the SACD layer the disc is, and imports each area as DSF or FLAC
+  through beets' normal importer, so stereo and multichannel layers stay apart
+  in the library.
+authors:
+  - alias: aclater
+    website: "https://github.com/aclater"
+version: 0.2.2
+date-released: "2026-11-15"
+repository-code: "https://github.com/dsd-toolbox/beets-pysacd"
+url: "https://pypi.org/project/beets-pysacd/"
+license: GPL-2.0-or-later
+keywords:
+  - beets
+  - SACD
+  - DSD
+  - DSF
+  - FLAC
+  - MusicBrainz
+  - music library
+  - audio
