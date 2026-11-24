@@ -4,6 +4,7 @@
 
 How to install the plugin with pip, what it needs, and how to check a release download. With
 beets from a Linux distribution's package, see [beets from a distribution package](packages.md).
+On Windows, follow [install on Windows](windows.md).
 
 ## From PyPI
 
@@ -67,6 +68,7 @@ gh attestation verify beets_pysacd-0.2.2-py3-none-any.whl --repo aclater/beets-p
 
 ## See also
 
+- [Install on Windows](windows.md)
 - [Beets from a distribution package](packages.md)
 - [User guide](../user-guide.md)
 - [Options and configuration](../options.md)

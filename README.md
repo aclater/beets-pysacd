@@ -20,7 +20,7 @@ release, so stereo and multichannel layers stay apart in your library.
 
 | System | How | Guide |
 |---|---|---|
-| Linux, macOS, Windows | A pure-Python wheel on PyPI, for Python <!-- facts:python-min -->3.11<!-- /facts --> to 3.14 with beets 2.12 or later (2.x). It needs pysacd 0.2 or later, whose wheels carry the engine for Linux (x86-64, aarch64), macOS and Windows. CI tests the oldest and newest beets on Linux, and the newest on macOS and Windows | [install](docs/install/README.md) |
+| Linux, macOS, Windows | A pure-Python wheel on PyPI, for Python <!-- facts:python-min -->3.11<!-- /facts --> to 3.14 with beets 2.12 or later (2.x). It needs pysacd 0.2 or later, whose wheels carry the engine for Linux (x86-64, aarch64), macOS and Windows. CI tests the oldest and newest beets on Linux, and the newest on macOS and Windows | [install](docs/install/README.md) · [on Windows](docs/install/windows.md) |
 
 Each [GitHub release](https://github.com/dsd-toolbox/beets-pysacd/releases) has the wheel and the
 sdist with a build provenance attestation, checkable with `gh attestation verify`. They are not
@@ -32,6 +32,7 @@ otherwise signed. With beets from a Linux distribution's package, see
 You need Python <!-- facts:python-min -->3.11<!-- /facts --> to 3.14 on Linux or macOS, and an SACD image. The commands use
 `album.iso` in the current folder; type your image's name instead. They install beets with the
 plugin, so start here if you don't use beets yet; if you do, see [install](docs/install/README.md).
+On Windows, follow [install on Windows](docs/install/windows.md) instead.
 
 1. Install beets and the plugin in a virtual environment of their own:
 
@@ -81,6 +82,8 @@ the other ways to install.
 
 - [Documentation index](docs/README.md)
 - [Install](docs/install/README.md): requirements, attestations, beets from a Linux distribution
+- [Install on Windows](docs/install/windows.md): Python, beets and the plugin, `config.yaml`, a
+  first import
 - [User guide](docs/user-guide.md): `sacd-import`, `sacd-info`, moving a library from extracts
   to SACD images with [sacdfs](https://github.com/dsd-toolbox/sacdfs) (`sacd-migrate`), keeping your
   tags (`sacd-tags-export`), DVD and Blu-ray images

@@ -9,6 +9,12 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## [Unreleased]
 
+### Added
+- docs/install/windows.md: installing on Windows 11 step by step: python.org Python,
+  `py -m pip install beets beets-pysacd` or pipx, where beets' `config.yaml` is
+  (`%APPDATA%\beets`), turning the plugin on, a first import, and Windows paths. The README and
+  the docs index link it.
+
 ### Fixed
 - A disc's multichannel area is no longer skipped as a duplicate of its stereo area (or the other
   way round) when the import has no medium to compare: an as-is import (`beet import -A`) or no

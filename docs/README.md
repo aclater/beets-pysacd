@@ -12,6 +12,8 @@ The documentation is licensed [CC BY 4.0](../LICENSES/CC-BY-4.0.txt), as is the 
 ## Install
 
 - [Install](install/README.md): requirements, pip, checking a download
+- [Install on Windows](install/windows.md): Python, beets and the plugin, where `config.yaml`
+  lives, a first import, Windows paths
 - [Beets from a distribution package](install/packages.md): making the plugin importable
 
 ## Use
