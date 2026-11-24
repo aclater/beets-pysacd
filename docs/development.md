@@ -51,8 +51,7 @@ for the badge, authenticated with the job's GitHub OIDC token (no stored secret;
 pull requests from forks skip the upload). Changes to workflows are linted with
 [zizmor](https://docs.zizmor.sh), at the version pinned in `.github/requirements/zizmor.txt`
 (`pip install --require-hashes -r .github/requirements/zizmor.txt`, then
-`zizmor --offline .github/workflows`), and changes to the README or `docs/` get a link check (lychee, `#fragment`
-links to headings included).
+`zizmor --offline .github/workflows`).
 
 Two more checks keep the docs true. The `quickstart` workflow (also weekly) runs the README's
 Quick start as written (`scripts/readme_quickstart.py`): it builds the wheel as the release does,
@@ -78,7 +77,8 @@ on a line starting `Docs: none needed`) and docs-facts (every `<!-- facts:... --
 the minimum Python and the current release in [install](install/README.md), matches its source).
 The `docs-run` workflow runs the command blocks of README.md and `docs/` marked to run, in a fresh
 Fedora container against the published release, on pull requests that change the docs, weekly and
-from the Actions tab; every other block carries a skip marker with its reason. The `docs-audit`
+from the Actions tab; every other block carries a skip marker with its reason, and a block with
+neither marker fails the run. The `docs-audit`
 workflow is the step after each release (see the
 [release test plan](release-test-plan.md#after-the-release-run-the-docs-audit)).
 

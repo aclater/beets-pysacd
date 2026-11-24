@@ -23,30 +23,30 @@ jobs:
   lint:
     permissions:
       contents: read
-    uses: dsd-toolbox/dsd-toolbox/.github/workflows/docs-lint.yml@b50a7cca297022561959ba9a2532c0673d532ada
+    uses: dsd-toolbox/dsd-toolbox/.github/workflows/docs-lint.yml@33e1b0308e4bb9890701d5e3bb857c9ce9fe110f
     with:
-      tools_ref: b50a7cca297022561959ba9a2532c0673d532ada
+      tools_ref: 33e1b0308e4bb9890701d5e3bb857c9ce9fe110f
 
   links:
     permissions:
       contents: read
-    uses: dsd-toolbox/dsd-toolbox/.github/workflows/docs-links.yml@b50a7cca297022561959ba9a2532c0673d532ada
+    uses: dsd-toolbox/dsd-toolbox/.github/workflows/docs-links.yml@33e1b0308e4bb9890701d5e3bb857c9ce9fe110f
     with:
-      tools_ref: b50a7cca297022561959ba9a2532c0673d532ada
+      tools_ref: 33e1b0308e4bb9890701d5e3bb857c9ce9fe110f
       external: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
 
   touched:
     if: github.event_name == 'pull_request'
     permissions:
       contents: read
-    uses: dsd-toolbox/dsd-toolbox/.github/workflows/docs-touched.yml@b50a7cca297022561959ba9a2532c0673d532ada
+    uses: dsd-toolbox/dsd-toolbox/.github/workflows/docs-touched.yml@33e1b0308e4bb9890701d5e3bb857c9ce9fe110f
     with:
-      tools_ref: b50a7cca297022561959ba9a2532c0673d532ada
+      tools_ref: 33e1b0308e4bb9890701d5e3bb857c9ce9fe110f
 
   # Read-only: checks the facts regions against pyproject.toml and the public release data.
   facts:
     permissions:
       contents: read
-    uses: dsd-toolbox/dsd-toolbox/.github/workflows/docs-facts.yml@b50a7cca297022561959ba9a2532c0673d532ada
+    uses: dsd-toolbox/dsd-toolbox/.github/workflows/docs-facts.yml@33e1b0308e4bb9890701d5e3bb857c9ce9fe110f
     with:
-      tools-ref: b50a7cca297022561959ba9a2532c0673d532ada
+      tools-ref: 33e1b0308e4bb9890701d5e3bb857c9ce9fe110f

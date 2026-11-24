@@ -21,3 +21,8 @@ history = ["release-test-plan.md"]
 [run.images.fedora44]
 ref = "registry.fedoraproject.org/fedora@sha256:b414c09be79dd1f32529b55b096b6bb30435d82ee16fbdbbabf8985eb5f86db0"
 network = true
+
+[run]
+# docs-run: the package names a block may install with packages= (every other name is refused;
+# on a pull request the list is read from the base commit). Blocks that need more use setup=.
+packages = ["pipx"]

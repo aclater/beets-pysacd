@@ -35,7 +35,7 @@ plugin, so start here if you don't use beets yet; if you do, see [install](docs/
 
 1. Install beets and the plugin in a virtual environment of their own:
 
-   <!-- docs-run: setup="dnf -y -q --setopt=install_weak_deps=False install python3 python3-pip git-core && git clone -q --depth 1 --branch v0.5.5 https://github.com/dsd-toolbox/pysacd /tmp/pysacd && python3 -c \"import sys; sys.path.insert(0, '/tmp/pysacd/tests'); import sacdgen as g; a = lambda c: g.AreaSpec(c, [bytes([105]) * 4704 * c] * 225, [75] * 3, dst=False, titles=['One', 'Two', 'Three']); g.build_iso('album.iso', [a(2), a(6)], info=g.DiscInfo(title='Docs run album', artist='Docs run artist'))\" && mkdir -p .local/bin && ln -s ../../beets-env/bin/beet .local/bin/beet" -->
+   <!-- docs-run: setup="dnf -y -q --setopt=install_weak_deps=False install python3 python3-pip git-core && git init -q /tmp/pysacd && git -C /tmp/pysacd fetch -q --depth 1 https://github.com/dsd-toolbox/pysacd a2a6c03a525e73a3566d1aa86bedc57a922cb961 && git -C /tmp/pysacd checkout -q FETCH_HEAD && python3 -c \"import sys; sys.path.insert(0, '/tmp/pysacd/tests'); import sacdgen as g; a = lambda c: g.AreaSpec(c, [bytes([105]) * 4704 * c] * 225, [75] * 3, dst=False, titles=['One', 'Two', 'Three']); g.build_iso('album.iso', [a(2), a(6)], info=g.DiscInfo(title='Docs run album', artist='Docs run artist'))\" && mkdir -p .local/bin && ln -s ../../beets-env/bin/beet .local/bin/beet" -->
    ```sh
    python3 -m venv beets-env
    . beets-env/bin/activate

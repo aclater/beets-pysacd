@@ -23,7 +23,8 @@ jobs:
   commands:
     permissions:
       contents: read
-    uses: dsd-toolbox/dsd-toolbox/.github/workflows/docs-run.yml@b50a7cca297022561959ba9a2532c0673d532ada
+    uses: dsd-toolbox/dsd-toolbox/.github/workflows/docs-run.yml@33e1b0308e4bb9890701d5e3bb857c9ce9fe110f
     with:
-      tools-ref: b50a7cca297022561959ba9a2532c0673d532ada
+      tools-ref: 33e1b0308e4bb9890701d5e3bb857c9ce9fe110f
       version-of: dsd-toolbox/beets-pysacd
+      fail_unmarked: true  # a new command block needs a run or skip marker
