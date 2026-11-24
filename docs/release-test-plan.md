@@ -85,31 +85,38 @@ plugin's Windows behaviour with a real disc is untested.
 DSF and FLAC file, the disc fingerprint, skipping an area already imported, `remove_iso` and the
 staging clean-up. `tests/test_discimage.py` identifies DVD-Audio, DVD-Video and Blu-ray images.
 
-**On real discs, against PREVIOUS (new).** The fixtures can't show how matching behaves on real
-releases with many editions. Import the five discs of the [minimum set](#5-the-real-disc-corpus)
-with PREVIOUS and with VERSION, each into its own throwaway library, with live MusicBrainz, and
-compare:
+**On real discs, against PREVIOUS.** The fixtures can't show how matching behaves on real
+releases with many editions. `scripts/release_disc_check.py` imports each disc with PREVIOUS and
+with VERSION, each run into its own throwaway library with a throwaway HOME and config, with live
+MusicBrainz, and compares the albums (one per area), the release and medium matched, the tags, and
+the files' count, format, size and checksum. It runs four modes: `beet import -q` and `beet import
+-q -A`, each with both areas in one run, and, on hybrid discs, the multichannel area first and the
+stereo area in a second run, which checks the duplicate handling in both orders. Use at least the
+[minimum set](#5-the-real-disc-corpus), with VERSION from the release commit and the same beets in both:
 
 ```sh
-mkdir -p ~/release-check/prev ~/release-check/new && cd ~/release-check
-python3 -m venv prev/venv && prev/venv/bin/pip install beets beets-pysacd==PREVIOUS
-python3 -m venv new/venv && new/venv/bin/pip install beets beets-pysacd==VERSION
-printf 'directory: ~/release-check/prev/music\nlibrary: ~/release-check/prev/library.db\nplugins: musicbrainz sacd\n' > prev/config.yaml
-printf 'directory: ~/release-check/new/music\nlibrary: ~/release-check/new/library.db\nplugins: musicbrainz sacd\n' > new/config.yaml
-yes A | prev/venv/bin/beet -c prev/config.yaml sacd-import -a both DISC1.iso DISC2.iso DISC3.iso DISC4.iso DISC5.iso
-yes A | new/venv/bin/beet -c new/config.yaml sacd-import -a both DISC1.iso DISC2.iso DISC3.iso DISC4.iso DISC5.iso
-prev/venv/bin/beet -c prev/config.yaml ls -f '$mb_albumid $disc $track $title $sacd_area $sacd_iso_sha' > prev.txt
-new/venv/bin/beet -c new/config.yaml ls -f '$mb_albumid $disc $track $title $sacd_area $sacd_iso_sha' > new.txt
-diff prev.txt new.txt
-(cd prev/music && find . -type f -name '*.dsf' -exec sha256sum {} +) | sort -k2 > prev.sha256
-(cd new/music && find . -type f -name '*.dsf' -exec sha256sum {} +) | sort -k2 > new.sha256
-diff prev.sha256 new.sha256
+mkdir -p ~/release-check && cd ~/release-check
+git clone https://github.com/aclater/beets-pysacd beets-pysacd-release
+python3 -m venv prev && prev/bin/pip install beets pysacd==PYSACD beets-pysacd==PREVIOUS
+python3 -m venv new && new/bin/pip install beets pysacd==PYSACD ./beets-pysacd-release
+systemd-run --user --scope -p MemoryMax=16G -p MemorySwapMax=0 -p CPUQuota=400% \
+  python3 -I beets-pysacd-release/scripts/release_disc_check.py run --install prev=prev --install new=new \
+  --work work --out out DISC1.iso DISC2.iso DISC3.iso DISC4.iso DISC5.iso
 ```
 
-DISC1 to DISC5 are the maintainer's images (the `'$...'` fields are beets' own format, not shell
-variables). *Expected:* no difference, or only what VERSION's changelog says changed. Record counts
-(albums, items, matching releases) in the release issue, never titles. *New:* not yet run; the
-first run sets the baseline.
+DISC1 to DISC5 are the maintainer's images. The tool prints one line per disc and mode and writes
+`out/diff.tsv` (every difference, with text tags as short hashes) and `out/summary.txt`; it exits
+non-zero when anything differs, an import fails, or MusicBrainz was unavailable after two retries
+(the pair is then inconclusive). `out/index.tsv`, `out/logs` and `out/runs` hold paths and titles:
+keep them private. *Expected:* no difference, or only what VERSION's changelog says changed. Record
+counts (discs, modes, differences) in the release issue, never titles, paths or release IDs.
+*Validated:* 2026-11-24, 0.2.2 from PyPI against `main` with the fixes for #85, #86 and #90, both on
+beets 2.14.1, pysacd 0.5.5 and Python 3.13, on 9 discs (3 hybrid with both areas, 1 multichannel
+only, 5 stereo only; DST and plain DSD; 3 without disc text; both discs of a 2-disc set): 24 disc
+and mode pairs. Files were identical wherever both imported an area. The one difference is #85: on
+the hybrid disc with no MusicBrainz match, 0.2.2 took the second area for a duplicate and skipped it
+in all four modes. On the hybrid discs that match, both releases import both areas, as the areas'
+tags differ. No multichannel area matched a release, in either version.
 
 ## 3. Timed fuzzing
 
