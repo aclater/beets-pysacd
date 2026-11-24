@@ -93,9 +93,9 @@ the other ways to install.
 beets-pysacd's code is free software under the [GNU General Public License](LICENSE), version 2
 or (at your option) any later version (`GPL-2.0-or-later`).
 
-The documentation in `docs/`, and any measurement data published in it, are licensed under
-[CC BY 4.0](LICENSES/CC-BY-4.0.txt) (`CC-BY-4.0`), except for the icon files in `docs/assets/`,
-which are GPL-2.0-or-later, as [their page](docs/assets/README.md) says.
+The text of this README, the documentation in `docs/` (the icon files in `docs/assets/` included)
+and any measurement data published in it are licensed under [CC BY 4.0](LICENSES/CC-BY-4.0.txt)
+(`CC-BY-4.0`).
 
 To cite beets-pysacd, use [CITATION.cff](CITATION.cff).
 

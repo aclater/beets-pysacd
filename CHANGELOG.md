@@ -21,8 +21,8 @@ behaviour, and a patch version only adds or fixes. Releases are on
 - The user guide's commands use one set of example folders, named at the top of the guide (#91).
 - CI's "pysacd release" legs test pysacd 0.5.5 (locked 0.5.2 before), and `scripts/lock.py` now
   moves pysacd to its newest release on every run instead of keeping the locked version (#90).
-- Documentation and published measurement data are now licensed CC BY 4.0; the code licence is
-  unchanged (GPL-2.0-or-later). The exceptions are listed in the README's "Licence and credits".
+- Documentation (the README's text and the icons included) and published measurement data are
+  now licensed CC BY 4.0; the code licence is unchanged (GPL-2.0-or-later).
   A `CITATION.cff` describes how to cite beets-pysacd.
 
 ### Security
