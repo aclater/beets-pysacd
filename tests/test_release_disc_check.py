@@ -2,6 +2,7 @@
 
 import copy
 import json
+import sqlite3
 import sys
 import tempfile
 import unittest
@@ -90,6 +91,36 @@ class Compare(unittest.TestCase):
             summary = (out / "summary.txt").read_text()
             self.assertIn("FAILED", summary)
             self.assertIn("2 disc/mode pairs, 2 with differences, 1 with a failed import", summary)
+
+
+class Collect(unittest.TestCase):
+    def test_relative_and_absolute_item_paths_are_found(self):
+        with tempfile.TemporaryDirectory() as d:
+            run = Path(d)
+            (run / "music" / "A").mkdir(parents=True)
+            (run / "music" / "A" / "01.dsf").write_bytes(b"x" * 10)
+            (run / "music" / "A" / "02.dsf").write_bytes(b"y" * 20)
+            (run / "music" / "A" / "stray.txt").write_bytes(b"z")
+            con = sqlite3.connect(run / "library.db")
+            con.executescript(
+                "CREATE TABLE albums (id INTEGER PRIMARY KEY, album TEXT);"
+                "CREATE TABLE items (id INTEGER PRIMARY KEY, album_id INTEGER, path BLOB, title TEXT, track INTEGER,"
+                " disc INTEGER);"
+                "CREATE TABLE album_attributes (entity_id INTEGER, key TEXT, value TEXT);"
+                "CREATE TABLE item_attributes (entity_id INTEGER, key TEXT, value TEXT);"
+                "INSERT INTO albums VALUES (1, 'Album');"
+                "INSERT INTO album_attributes VALUES (1, 'sacd_area', 'stereo');")
+            con.execute("INSERT INTO items VALUES (1, 1, ?, 'One', 1, 1)", (b"A/01.dsf",))
+            absolute = str(run / "music" / "A" / "02.dsf").encode()
+            con.execute("INSERT INTO items VALUES (2, 1, ?, 'Two', 2, 1)", (absolute,))
+            con.commit()
+            con.close()
+            rec = rdc.collect(run)
+            items = rec["albums"][0]["items"]
+            self.assertEqual([(i["exists"], i["size"], i["path"]) for i in items],
+                             [(True, 10, "A/01.dsf"), (True, 20, "A/02.dsf")])
+            self.assertEqual(rec["albums"][0]["sacd_area"], "stereo")
+            self.assertEqual(rec["stray_files"], 1)
 
 
 if __name__ == "__main__":

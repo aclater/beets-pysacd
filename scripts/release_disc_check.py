@@ -156,7 +156,7 @@ def collect(run: Path) -> dict:
             for i in map(dict, rows):
                 it = {k: i[k] for k in ITEM_FIELDS if k in i}
                 it.update({k: v for k, v in flex.get(("item", i["id"]), {}).items() if k.startswith("sacd_")})
-                path = Path(os.fsdecode(i["path"]))
+                path = music / os.fsdecode(i["path"])     # beets 2.14 stores paths relative to `directory`
                 owned.add(path)
                 it.update(file_facts(path))
                 it["path"] = os.fsdecode(path.relative_to(music)) if path.is_relative_to(music) else str(path)
