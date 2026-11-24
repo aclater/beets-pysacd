@@ -7,6 +7,12 @@ A short list of known sentences, not a scan for every number: each pattern below
 in README.md and every docs/**/*.md, and each match must say what the source of truth says.
 Patterns marked required must match somewhere, so a reworded sentence fails here instead of
 going unchecked; reword the pattern with it. Exits 1 with one line per mismatch.
+
+The minimum Python in the prose is also a docs-facts region (`<!-- facts:python-min -->`), which
+the shared docs-facts check (`.github/workflows/docs.yml`) compares with pyproject.toml. This
+script reads the text with those markers removed, so its patterns see the sentences as shown, and
+it covers what docs-facts has no key for: the newest Python (the classifiers), the beets and
+pysacd floors, and the Python badge, whose URL can't hold a region.
 """
 
 from __future__ import annotations
@@ -17,6 +23,7 @@ import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+FACTS_MARKER = re.compile(r"<!-- /?facts(?::[^>]*)? -->")
 
 
 def truth() -> dict[str, str]:
@@ -66,7 +73,8 @@ def main() -> int:
     if t["classifier_min"] != t["python_min"]:
         bad.append(f"pyproject.toml: requires-python is >={t['python_min']} but the oldest Python "
                    f"classifier is {t['classifier_min']}")
-    texts = {p.relative_to(ROOT).as_posix(): p.read_text(encoding="utf-8") for p in docs()}
+    # facts markers removed, so "Python <!-- facts:python-min -->3.11<!-- /facts --> to 3.14" reads as shown
+    texts = {p.relative_to(ROOT).as_posix(): FACTS_MARKER.sub("", p.read_text(encoding="utf-8")) for p in docs()}
     for what, pattern, expected, required in CHECKS:
         want = expected.format(**t)
         seen = 0

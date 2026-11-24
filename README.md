@@ -3,12 +3,12 @@
 # beets-pysacd
 
 [![CI](https://github.com/dsd-toolbox/beets-pysacd/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dsd-toolbox/beets-pysacd/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/aclater/beets-pysacd/branch/main/graph/badge.svg)](https://codecov.io/gh/aclater/beets-pysacd)
+[![Coverage](https://codecov.io/gh/dsd-toolbox/beets-pysacd/branch/main/graph/badge.svg)](https://codecov.io/gh/dsd-toolbox/beets-pysacd)
 [![CodeQL](https://github.com/dsd-toolbox/beets-pysacd/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/dsd-toolbox/beets-pysacd/actions/workflows/codeql.yml)
-[![License: GPL-2.0-or-later](https://img.shields.io/badge/license-GPL--2.0--or--later-blue)](LICENSE)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](pyproject.toml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/dsd-toolbox/beets-pysacd/badge)](https://scorecard.dev/viewer/?uri=github.com/dsd-toolbox/beets-pysacd)
 [![PyPI](https://img.shields.io/pypi/v/beets-pysacd)](https://pypi.org/project/beets-pysacd/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](pyproject.toml)
+[![Licence: GPL-2.0-or-later](https://img.shields.io/badge/license-GPL--2.0--or--later-blue)](LICENSE)
 
 beets-pysacd is a [beets](https://beets.io) plugin that imports SACD images (`.iso`), which beets
 can't tag on its own: it reads each disc with [pysacd](https://github.com/dsd-toolbox/pysacd), finds
@@ -20,7 +20,7 @@ release, so stereo and multichannel layers stay apart in your library.
 
 | System | How | Guide |
 |---|---|---|
-| Linux, macOS, Windows | A pure-Python wheel on PyPI, for Python 3.11 to 3.14 with beets 2.12 or later (2.x). It needs pysacd 0.2 or later, whose wheels carry the engine for Linux (x86-64, aarch64), macOS and Windows. CI tests the oldest and newest beets on Linux, and the newest on macOS and Windows | [install](docs/install/README.md) |
+| Linux, macOS, Windows | A pure-Python wheel on PyPI, for Python <!-- facts:python-min -->3.11<!-- /facts --> to 3.14 with beets 2.12 or later (2.x). It needs pysacd 0.2 or later, whose wheels carry the engine for Linux (x86-64, aarch64), macOS and Windows. CI tests the oldest and newest beets on Linux, and the newest on macOS and Windows | [install](docs/install/README.md) · [on Windows](docs/install/windows.md) |
 
 Each [GitHub release](https://github.com/dsd-toolbox/beets-pysacd/releases) has the wheel and the
 sdist with a build provenance attestation, checkable with `gh attestation verify`. They are not
@@ -29,20 +29,33 @@ otherwise signed. With beets from a Linux distribution's package, see
 
 ## Quick start
 
-You need Python 3.11 to 3.14 on Linux or macOS, and an SACD image. The commands use
+You need Python <!-- facts:python-min -->3.11<!-- /facts --> to 3.14 and an SACD image. The commands use
 `album.iso` in the current folder; type your image's name instead. They install beets with the
 plugin, so start here if you don't use beets yet; if you do, see [install](docs/install/README.md).
+On Windows, get Python from the [python.org](https://www.python.org/downloads/windows/) installer
+and tick **Add python.exe to PATH** on its first screen; the Windows commands follow each step's
+Linux and macOS ones, and [install on Windows](docs/install/windows.md) has the details.
 
-1. Install beets and the plugin in a virtual environment of their own:
+1. Install beets and the plugin in a virtual environment of their own (Linux and macOS):
 
+   <!-- docs-run: setup="dnf -y -q --setopt=install_weak_deps=False install python3 python3-pip git-core && git init -q /tmp/pysacd && git -C /tmp/pysacd fetch -q --depth 1 https://github.com/dsd-toolbox/pysacd a2a6c03a525e73a3566d1aa86bedc57a922cb961 && git -C /tmp/pysacd checkout -q FETCH_HEAD && python3 -c \"import sys; sys.path.insert(0, '/tmp/pysacd/tests'); import sacdgen as g; a = lambda c: g.AreaSpec(c, [bytes([105]) * 4704 * c] * 225, [75] * 3, dst=False, titles=['One', 'Two', 'Three']); g.build_iso('album.iso', [a(2), a(6)], info=g.DiscInfo(title='Docs run album', artist='Docs run artist'))\" && mkdir -p .local/bin && ln -s ../../beets-env/bin/beet .local/bin/beet" -->
    ```sh
    python3 -m venv beets-env
    . beets-env/bin/activate
    pip install beets beets-pysacd
    ```
 
-2. Turn the plugin on, with beets' MusicBrainz plugin, and keep the library in `~/Music`:
+   On Windows, in PowerShell:
 
+   <!-- docs-run: skip="Windows: PowerShell and the py launcher; the same pip install runs on Linux above" -->
+   ```powershell
+   py -m pip install beets beets-pysacd
+   ```
+
+2. Turn the plugin on, with beets' MusicBrainz plugin, and keep the library in `~/Music`. beets reads
+   `~/.config/beets/config.yaml` on Linux and macOS, and `%APPDATA%\beets\config.yaml` on Windows:
+
+   <!-- docs-run: -->
    ```sh
    mkdir -p ~/.config/beets
    cat > ~/.config/beets/config.yaml <<'EOF'
@@ -51,8 +64,20 @@ plugin, so start here if you don't use beets yet; if you do, see [install](docs/
    EOF
    ```
 
+   On Windows, in PowerShell, this creates the folder and the file:
+
+   <!-- docs-run: skip="Windows: PowerShell; on Linux the same file is made by the block above" -->
+   ```powershell
+   New-Item -ItemType Directory -Force "$env:APPDATA\beets"
+   Set-Content "$env:APPDATA\beets\config.yaml" @"
+   directory: ~/Music
+   plugins: musicbrainz sacd
+   "@
+   ```
+
 3. Check that the plugin reads the disc:
 
+   <!-- docs-run: expect="Docs run album" expect="Three" -->
    ```sh
    beet sacd-info album.iso
    ```
@@ -61,6 +86,7 @@ plugin, so start here if you don't use beets yet; if you do, see [install](docs/
 
 4. Import it:
 
+   <!-- docs-run: skip="interactive: the importer asks the reader to accept the MusicBrainz match. The quickstart workflow runs this step with MusicBrainz answered from a fixture" -->
    ```sh
    beet sacd-import album.iso
    ```
@@ -68,6 +94,12 @@ plugin, so start here if you don't use beets yet; if you do, see [install](docs/
    The plugin converts the stereo area to DSF and hands it to the beets importer, which shows the
    MusicBrainz release it found. Accept it, or pick another, as in any beets import. The tracks
    land in `~/Music`; `beet ls -a` lists the album.
+
+   If MusicBrainz has no release for the disc, the importer prints `No matching release found`
+   and shows its prompt without a match to accept. Choose `U` (use as-is) to import the disc with
+   the tags it carries, `E` to search MusicBrainz by hand, `I` to enter a release ID, or `S` to
+   skip it. Step 3 already showed that the plugin reads the disc; a missing match is about
+   MusicBrainz, not about the plugin.
 
 The [user guide](docs/user-guide.md) has the other commands, [options and
 configuration](docs/options.md) every option and setting, and [install](docs/install/README.md)
@@ -77,6 +109,8 @@ the other ways to install.
 
 - [Documentation index](docs/README.md)
 - [Install](docs/install/README.md): requirements, attestations, beets from a Linux distribution
+- [Install on Windows](docs/install/windows.md): Python, beets and the plugin, `config.yaml`, a
+  first import
 - [User guide](docs/user-guide.md): `sacd-import`, `sacd-info`, moving a library from extracts
   to SACD images with [sacdfs](https://github.com/dsd-toolbox/sacdfs) (`sacd-migrate`), keeping your
   tags (`sacd-tags-export`), DVD and Blu-ray images
@@ -90,8 +124,14 @@ the other ways to install.
 
 ## Licence and credits
 
-beets-pysacd is free software under the [GNU General Public License](LICENSE), version 2 or (at
-your option) any later version.
+beets-pysacd's code is free software under the [GNU General Public License](LICENSE), version 2
+or (at your option) any later version (`GPL-2.0-or-later`).
+
+The text of this README, the documentation in `docs/` (the icon files in `docs/assets/` included)
+and any measurement data published in it are licensed under [CC BY 4.0](LICENSES/CC-BY-4.0.txt)
+(`CC-BY-4.0`).
+
+To cite beets-pysacd, use [CITATION.cff](CITATION.cff).
 
 - [beets](https://beets.io) (MIT) is the music library manager the plugin extends; it uses
   beets' importer, MusicBrainz plugin and test helpers.

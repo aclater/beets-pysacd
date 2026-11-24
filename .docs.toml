@@ -1,0 +1,28 @@
+# Settings for the DSD Toolbox's shared docs tools (dsd-toolbox/dsd-toolbox, docs/docs-tooling.md),
+# run by .github/workflows/docs.yml, docs-run.yml and docs-audit.yml.
+name = "beets-pysacd"
+kind = "app"
+default_branch = "main"
+
+# A change to the plugin or its packaging must change the README, docs/ or the changelog, or say
+# "Docs: none needed" with the reason in the pull request.
+[touched]
+code = ["beetsplug/**", "pyproject.toml"]
+docs = ["README.md", "docs/**", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md"]
+# Tests, fuzzing, CI, the lock files and the maintainer scripts change no user-facing behaviour.
+ignore = ["tests/**", "fuzz/**", ".github/**", "locks/**", "scripts/**"]
+
+[audit]
+# The release test plan records which versions each step was validated with: history, like the changelog.
+history = ["release-test-plan.md"]
+
+# docs/install/packages.md's PYTHONPATH example is Fedora 44's packaged beets (2.14.1; Fedora 43
+# packages 2.6.1, below the plugin's floor). The digest is the Fedora 44 that ci.yml pins.
+[run.images.fedora44]
+ref = "registry.fedoraproject.org/fedora@sha256:b414c09be79dd1f32529b55b096b6bb30435d82ee16fbdbbabf8985eb5f86db0"
+network = true
+
+[run]
+# docs-run: the package names a block may install with packages= (every other name is refused;
+# on a pull request the list is read from the base commit). Blocks that need more use setup=.
+packages = ["pipx"]

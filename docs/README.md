@@ -7,9 +7,13 @@
 The documentation of beets-pysacd, the beets plugin that imports SACD images through pysacd.
 Start with the [quick start](../README.md#quick-start) if you are new to it.
 
+The documentation is licensed [CC BY 4.0](../LICENSES/CC-BY-4.0.txt), as is the README; [Licence and credits](../README.md#licence-and-credits) gives the code's licence.
+
 ## Install
 
 - [Install](install/README.md): requirements, pip, checking a download
+- [Install on Windows](install/windows.md): Python, beets and the plugin, where `config.yaml`
+  lives, a first import, Windows paths
 - [Beets from a distribution package](install/packages.md): making the plugin importable
 
 ## Use
@@ -28,21 +32,22 @@ Start with the [quick start](../README.md#quick-start) if you are new to it.
 - [Design](design.md): hybrid SACDs and the import steps
 - [Development](development.md): tests and CI
 
-## Release
-
-- [Releasing](../CONTRIBUTING.md#releasing): the `v*` tag, the checks the release workflow runs, and the
-  release summary in the DSD Toolbox
-- [Release test plan](release-test-plan.md): every check a release runs, on which platforms and
-  discs, and the sign-off table for the release issue
-
 ## Project
 
 - [Changelog](../CHANGELOG.md)
 - [Releases](https://github.com/dsd-toolbox/beets-pysacd/releases)
 - [Contributing](../CONTRIBUTING.md)
 - [Security policy](../SECURITY.md)
+- [Icon](assets/README.md): the icon files and where each is used
 - [Releases by major version](https://github.com/dsd-toolbox/dsd-toolbox/blob/main/RELEASES.md),
   across the DSD Toolbox projects
+
+## Release
+
+- [Releasing](../CONTRIBUTING.md#releasing): the `v*` tag, the checks the release workflow runs, and the
+  release summary in the DSD Toolbox
+- [Release test plan](release-test-plan.md): every check a release runs, on which platforms and
+  discs, and the sign-off table for the release issue
 
 ## See also
 

@@ -4,7 +4,7 @@
     python3 -I scripts/check_skips.py --job NAME REPORT.json
 
 pysacd's comparison job once skipped 44 tests for six releases in a job that stayed green
-(aclater/pysacd#131). So every skip a CI job may have is listed in tests/expected-skips.json,
+(dsd-toolbox/pysacd#131). So every skip a CI job may have is listed in tests/expected-skips.json,
 with its job, its reason as pytest reports it, and why it is legitimate there. This fails on
 a new skip, on a skip that has stopped (remove it from the list), on a changed reason, and on
 a report with no tests. pytest writes the report when PYSACD_TEST_REPORT names a file

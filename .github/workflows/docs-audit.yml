@@ -1,0 +1,22 @@
+# The docs audit after a release (dsd-toolbox/dsd-toolbox tools/docs/docs_audit.py, pinned to one
+# commit): docs lint, the link check with external URLs, the docs facts check, and the checklist of
+# versions, options and platforms to compare with the release. Run it from the Actions tab once the
+# release is public (docs/release-test-plan.md, "After the release: run the docs audit"); it also
+# runs when a release is published. The DSD Toolbox runs the same audit every month.
+
+name: docs-audit
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  audit:
+    permissions:
+      contents: read
+    uses: dsd-toolbox/dsd-toolbox/.github/workflows/docs-audit.yml@33e1b0308e4bb9890701d5e3bb857c9ce9fe110f
+    with:
+      tools_ref: 33e1b0308e4bb9890701d5e3bb857c9ce9fe110f
