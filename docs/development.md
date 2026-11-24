@@ -9,7 +9,7 @@ How to run the checks and tests locally, and what CI runs on every pull request 
 From a clone of beets-pysacd, with pysacd's source cloned next to it:
 
 ```sh
-git clone https://github.com/aclater/pysacd ../pysacd
+git clone https://github.com/dsd-toolbox/pysacd ../pysacd
 pip install -e '.[dev]'
 ruff check . && mypy beetsplug
 pytest -q
@@ -40,14 +40,16 @@ PYSACD_LIVE_MB=1 pytest tests/test_live_musicbrainz.py
 Every pull request runs ruff, mypy and the tests (Python 3.11 to 3.14, plus 3.15 as an early warning; the oldest
 and newest beets on Linux, the newest on macOS and Windows; pysacd's release and master branch),
 only the expected tests skipping (`tests/expected-skips.json` lists each skip and why; a new,
-stopped or changed skip fails the job), CodeQL, semgrep, a privacy check, dependency review (fails on high or critical
+stopped or changed skip fails the job), CodeQL, semgrep, a privacy check (`scripts/check-private-names.sh`, which fails when it cannot run;
+`tests/test_check_private_names.py` tests it), dependency review (fails on high or critical
 vulnerabilities) and an AI review. One test leg runs under coverage.py and shows
 the report in its job summary, with HTML and XML reports as the `coverage`
 artifact; the XML report also goes to [Codecov](https://codecov.io/gh/aclater/beets-pysacd)
 for the badge, authenticated with the job's GitHub OIDC token (no stored secret;
 pull requests from forks skip the upload). Changes to workflows are linted with
-[zizmor](https://docs.zizmor.sh) (`pipx run zizmor==1.32.0 --offline
-.github/workflows`), and changes to the README or `docs/` get a link check (lychee, `#fragment`
+[zizmor](https://docs.zizmor.sh), at the version pinned in `.github/requirements/zizmor.txt`
+(`pip install --require-hashes -r .github/requirements/zizmor.txt`, then
+`zizmor --offline .github/workflows`), and changes to the README or `docs/` get a link check (lychee, `#fragment`
 links to headings included).
 
 Two more checks keep the docs true. The `quickstart` workflow (also weekly) runs the README's
@@ -87,19 +89,20 @@ from two lock files written by `python3 -I scripts/lock.py` (needs
 [uv](https://docs.astral.sh/uv/)): `locks/latest/requirements.txt` with the newest
 beets and `locks/oldest/requirements.txt` with beets held at the floor in
 `pyproject.toml` (plus `locks/fuzz/requirements.txt`, Atheris). Both cover Python 3.11 to 3.14 on Linux (3.15 too, see [install](install/README.md)), macOS and Windows, and
-leave out releases younger than two weeks, except pysacd's, security fixes and the lap
-release with Python 3.15 wheels listed in the script. The plugin, and pysacd's master branch on that leg, are installed on
+leave out releases younger than two weeks, except pysacd's and the security fixes listed in
+the script. The plugin, and pysacd's master branch on that leg, are installed on
 top with `--no-deps`, so nothing unhashed is downloaded. Dependabot keeps both locks
 current (beets stays on the floor in the oldest); when a new release brings a new
 dependency, the locked install fails on Dependabot's PR, and rerunning
 `scripts/lock.py` there fixes it. Rerun it, too, after changing dependencies in
-`pyproject.toml`. For local work, `pip install -e '.[dev]'` still works.
+`pyproject.toml`, and at each pysacd release: every run moves pysacd to its newest release, so
+the "pysacd release" legs test what users install. For local work, `pip install -e '.[dev]'` still works.
 
 ## See also
 
 - [Contributing](../CONTRIBUTING.md): reporting bugs and proposing changes
 - [Security policy](../SECURITY.md): reporting a vulnerability privately
 - [Changelog](../CHANGELOG.md): what changed in each release
-- [Releases by major version](https://github.com/aclater/dsd-toolbox/blob/main/RELEASES.md), across the DSD Toolbox projects
+- [Releases by major version](https://github.com/dsd-toolbox/dsd-toolbox/blob/main/RELEASES.md), across the DSD Toolbox projects
 
-Part of the [DSD Toolbox](https://github.com/aclater/dsd-toolbox).
+Part of the [DSD Toolbox](https://github.com/dsd-toolbox/dsd-toolbox).

@@ -38,7 +38,7 @@ if _PLUGIN_DIR not in list(beetsplug.__path__):
     beetsplug.__path__ = [*beetsplug.__path__, _PLUGIN_DIR]
 
 RELEASE_ID = "1a2a37a4-2ee5-3aa8-b1bf-4976dbb8007c"
-CONTACT = "https://github.com/aclater/beets-pysacd"
+CONTACT = "https://github.com/dsd-toolbox/beets-pysacd"
 CD = "Hybrid SACD (CD layer)"
 STEREO = "Hybrid SACD (SACD layer, 2 channels)"
 MULTI = "Hybrid SACD (SACD layer, multichannel)"

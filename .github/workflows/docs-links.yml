@@ -33,6 +33,6 @@ jobs:
             --no-progress --max-concurrency 4 --max-retries 3 --include-fragments
             --exclude '^https://api\.scorecard\.dev/'
             --exclude '^https://img\.shields\.io/'
-            --exclude '^https://raw\.githubusercontent\.com/aclater/beets-pysacd/main/docs/assets/'
+            --exclude '^https://raw\.githubusercontent\.com/dsd-toolbox/beets-pysacd/main/docs/assets/'
             README.md 'docs/**/*.md'
           fail: true

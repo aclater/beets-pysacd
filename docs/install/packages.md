@@ -36,4 +36,4 @@ pysacd's engine is under `lib64`. `beet version` lists `sacd` among the plugins 
 - [Install](README.md)
 - [User guide](../user-guide.md)
 
-Part of the [DSD Toolbox](https://github.com/aclater/dsd-toolbox).
+Part of the [DSD Toolbox](https://github.com/dsd-toolbox/dsd-toolbox).

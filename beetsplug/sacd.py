@@ -155,6 +155,16 @@ def is_sacd_layer(fmt: str) -> bool:
     return "SACD" in fmt and "(CD layer" not in fmt
 
 
+def album_area(album) -> str | None:
+    """The SACD area a library album holds: its `sacd_area` or, until that is set, its channel
+    count (more than two is multichannel). None when unknown or mixed."""
+    if album.get("sacd_area") in AREAS:
+        return album.get("sacd_area")
+    kinds = {"multichannel" if (item.channels or 0) > 2 else "stereo" if item.channels else None
+             for item in album.items()}
+    return kinds.pop() if len(kinds) == 1 else None
+
+
 def vet_match(match) -> tuple[bool, bool]:
     """Whether to use pysacd's MusicBrainz match: (its release, its medium).
 
@@ -228,6 +238,7 @@ class SacdPlugin(BeetsPlugin):
         self._staging_roots: list[Path] = []
         self._pending_auto = False
         self.register_listener("import_begin", self.import_begin)
+        self.register_listener("import_task_created", self.task_created)
         self.register_listener("import_task_start", self.task_start)
         self.register_listener("albuminfo_received", self.albuminfo_received)
         self.register_listener("import_task_choice", self.task_choice)
@@ -423,7 +434,7 @@ class SacdPlugin(BeetsPlugin):
                         if opts.apply:
                             item.store()
         ui.print_(f"{n_albums} album(s) matched" + (f", {n_held} held back by the verify report" if n_held else "")
-                  + (f"; {n_cat} catalogued" if opts.catalogue else "")
+                  + (f"; {n_cat} {'catalogued' if opts.apply else 'to catalogue'}" if opts.catalogue else "")
                   + (f"; {n_moved} catalogued item path(s) {'moved' if opts.apply else 'to move'} to sacdfs "
                      f"0.4.1 names" if n_moved else "")
                   + (f"; {n_stamped} catalogued item mtime(s) {'recorded' if opts.apply else 'to record'}"
@@ -549,7 +560,9 @@ class SacdPlugin(BeetsPlugin):
     def sacd_tags_export(self, lib, opts, args) -> None:
         """Write the sacdfs tags file of every SACD disc the library has albums for.
 
-        Albums are those whose items carry `sacd_iso` and `sacd_area` (sacd-import, sacd-migrate).
+        Albums are those whose items carry `sacd_iso`, `sacd_area` and `sacd_track`, which sacd-migrate
+        sets (on extracts it matches, and on the albums --catalogue adds); sacd-import doesn't.
+        An album with nothing to export (no genre, label, MusicBrainz IDs or cover) gets no file.
         The file is named by the disc's TOC key, worked out as sacdfs does. Per area, the genre,
         label and MusicBrainz IDs of the album and its tracks, and the album's cover, are written
         to `[<area>.album]` and `[<area>.track.N]`; every other field already in the file stays."""
@@ -588,6 +601,9 @@ class SacdPlugin(BeetsPlugin):
                 section = self._tag_section(items, tags_dir, key, area, opts.dry_run)
                 if section:
                     ours[area] = section
+            if not ours and not path.exists():
+                ui.print_(f"{shown}: nothing to export, no {key}.toml written")
+                continue
             data = _sacd_tags.dumps(_sacd_tags.merge(existing, ours)).encode()
             if opts.dry_run:
                 changed = not path.exists() or path.read_bytes() != data
@@ -791,6 +807,25 @@ class SacdPlugin(BeetsPlugin):
         top = getattr(task, "toppath", None)
         return self._pins.get(top) if top else None
 
+    def task_created(self, session, task) -> None:
+        """Duplicates of an area's task: set when the task is made, as an as-is import (-A) has no
+        import_task_start."""
+        pin = self._pin_of(task)
+        if pin is None:
+            return
+        # The other layer of the same release (the other area, or the CD layer) has the same
+        # artist and album, which beets' default duplicate keys would call a duplicate. Only an
+        # album on the same medium is one, and never one of the other area, also when there is
+        # no medium to compare (an as-is import, or no match).
+        find_duplicates = task.find_duplicates
+
+        def same_medium_duplicates(lib):
+            media = getattr(getattr(task, "match", None), "info", None)
+            media = getattr(media, "media", None)
+            found = find_duplicates(lib)
+            return [a for a in found if (not media or a.get("media") == media) and album_area(a) in (None, pin.area)]
+        task.find_duplicates = same_medium_duplicates
+
     def task_start(self, session, task) -> None:
         pin = self._pin_of(task)
         if pin is None:
@@ -832,18 +867,6 @@ class SacdPlugin(BeetsPlugin):
             bound.arguments["operation"] = MoveOperation.MOVE
             return manipulate(*bound.args, **bound.kwargs)
         task.manipulate_files = manipulate_move
-
-        # The other layer of the same release (the other area, or the CD layer) has the same
-        # artist and album, which beets' default duplicate keys would call a duplicate. Only an
-        # album on the same medium is one.
-        find_duplicates = task.find_duplicates
-
-        def same_medium_duplicates(lib):
-            media = getattr(getattr(task, "match", None), "info", None)
-            media = getattr(media, "media", None)
-            found = find_duplicates(lib)
-            return [a for a in found if not media or a.get("media") == media]
-        task.find_duplicates = same_medium_duplicates
 
     def albuminfo_received(self, info) -> None:
         pin = _current.get()

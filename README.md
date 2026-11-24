@@ -1,17 +1,17 @@
-<img src="https://raw.githubusercontent.com/aclater/beets-pysacd/main/docs/assets/icon-256.png" alt="" width="96">
+<img src="https://raw.githubusercontent.com/dsd-toolbox/beets-pysacd/main/docs/assets/icon-256.png" alt="" width="96">
 
 # beets-pysacd
 
-[![CI](https://github.com/aclater/beets-pysacd/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aclater/beets-pysacd/actions/workflows/ci.yml)
+[![CI](https://github.com/dsd-toolbox/beets-pysacd/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dsd-toolbox/beets-pysacd/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/aclater/beets-pysacd/branch/main/graph/badge.svg)](https://codecov.io/gh/aclater/beets-pysacd)
-[![CodeQL](https://github.com/aclater/beets-pysacd/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/aclater/beets-pysacd/actions/workflows/codeql.yml)
+[![CodeQL](https://github.com/dsd-toolbox/beets-pysacd/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/dsd-toolbox/beets-pysacd/actions/workflows/codeql.yml)
 [![License: GPL-2.0-or-later](https://img.shields.io/badge/license-GPL--2.0--or--later-blue)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](pyproject.toml)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/aclater/beets-pysacd/badge)](https://scorecard.dev/viewer/?uri=github.com/aclater/beets-pysacd)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/dsd-toolbox/beets-pysacd/badge)](https://scorecard.dev/viewer/?uri=github.com/dsd-toolbox/beets-pysacd)
 [![PyPI](https://img.shields.io/pypi/v/beets-pysacd)](https://pypi.org/project/beets-pysacd/)
 
 beets-pysacd is a [beets](https://beets.io) plugin that imports SACD images (`.iso`), which beets
-can't tag on its own: it reads each disc with [pysacd](https://github.com/aclater/pysacd), finds
+can't tag on its own: it reads each disc with [pysacd](https://github.com/dsd-toolbox/pysacd), finds
 the MusicBrainz release and the SACD layer the disc is, and imports each area as DSF or FLAC
 through beets' normal importer. Each area becomes an album of its own, on its own medium of the
 release, so stereo and multichannel layers stay apart in your library.
@@ -22,7 +22,7 @@ release, so stereo and multichannel layers stay apart in your library.
 |---|---|---|
 | Linux, macOS, Windows | A pure-Python wheel on PyPI, for Python 3.11 to 3.14 with beets 2.12 or later (2.x). It needs pysacd 0.2 or later, whose wheels carry the engine for Linux (x86-64, aarch64), macOS and Windows. CI tests the oldest and newest beets on Linux, and the newest on macOS and Windows | [install](docs/install/README.md) |
 
-Each [GitHub release](https://github.com/aclater/beets-pysacd/releases) has the wheel and the
+Each [GitHub release](https://github.com/dsd-toolbox/beets-pysacd/releases) has the wheel and the
 sdist with a build provenance attestation, checkable with `gh attestation verify`. They are not
 otherwise signed. With beets from a Linux distribution's package, see
 [beets from a distribution package](docs/install/packages.md) for making the plugin importable.
@@ -78,15 +78,15 @@ the other ways to install.
 - [Documentation index](docs/README.md)
 - [Install](docs/install/README.md): requirements, attestations, beets from a Linux distribution
 - [User guide](docs/user-guide.md): `sacd-import`, `sacd-info`, moving a library from extracts
-  to SACD images with [sacdfs](https://github.com/aclater/sacdfs) (`sacd-migrate`), keeping your
+  to SACD images with [sacdfs](https://github.com/dsd-toolbox/sacdfs) (`sacd-migrate`), keeping your
   tags (`sacd-tags-export`), DVD and Blu-ray images
 - [Options and configuration](docs/options.md): every option and setting, keeping or removing
   SACD images, staging
 - [Design](docs/design.md): hybrid SACDs and the import steps
 - [Development](docs/development.md): tests and CI
-- [Changelog](CHANGELOG.md) · [releases](https://github.com/aclater/beets-pysacd/releases) ·
+- [Changelog](CHANGELOG.md) · [releases](https://github.com/dsd-toolbox/beets-pysacd/releases) ·
   [contributing](CONTRIBUTING.md) · [security](SECURITY.md) ·
-  [releases by major version](https://github.com/aclater/dsd-toolbox/blob/main/RELEASES.md)
+  [releases by major version](https://github.com/dsd-toolbox/dsd-toolbox/blob/main/RELEASES.md)
 
 ## Licence and credits
 
@@ -95,8 +95,8 @@ your option) any later version.
 
 - [beets](https://beets.io) (MIT) is the music library manager the plugin extends; it uses
   beets' importer, MusicBrainz plugin and test helpers.
-- [pysacd](https://github.com/aclater/pysacd) (GPL-2.0-or-later) reads the discs, matches
+- [pysacd](https://github.com/dsd-toolbox/pysacd) (GPL-2.0-or-later) reads the discs, matches
   MusicBrainz releases and converts the areas.
 - [MusicBrainz](https://musicbrainz.org) supplies the release data.
 
-Part of the [DSD Toolbox](https://github.com/aclater/dsd-toolbox).
+Part of the [DSD Toolbox](https://github.com/dsd-toolbox/dsd-toolbox).
