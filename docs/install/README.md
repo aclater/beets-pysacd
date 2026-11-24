@@ -7,7 +7,7 @@ beets from a Linux distribution's package, see [beets from a distribution packag
 
 ## From PyPI
 
-<!-- docs-run: setup="dnf -y -q --setopt=install_weak_deps=False install python3-pip gh && python3 -c \"import json, urllib.request as u; r = json.load(u.urlopen('https://api.github.com/repos/dsd-toolbox/beets-pysacd/releases/latest')); [u.urlretrieve(a['browser_download_url'], a['name']) for a in r['assets'] if '.whl' in a['name']]\"" expect="Successfully installed" -->
+<!-- docs-run: setup="dnf -y -q --setopt=install_weak_deps=False install python3-pip gh && python3 -m pip download -q --no-deps --only-binary :all: beets-pysacd && curl -fsSLO https://github.com/dsd-toolbox/beets-pysacd/releases/latest/download/$(ls beets_pysacd-*.whl).intoto.jsonl" expect="Successfully installed" -->
 ```sh
 # facts:install kind=pip name=beets-pysacd
 pip install beets-pysacd
