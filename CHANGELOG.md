@@ -22,6 +22,10 @@ behaviour, and a patch version only adds or fixes. Releases are on
 - CI's "pysacd release" legs test pysacd 0.5.5 (locked 0.5.2 before), and `scripts/lock.py` now
   moves pysacd to its newest release on every run instead of keeping the locked version (#90).
 
+### Security
+- The private-names check (`scripts/check-private-names.sh`) now fails when it cannot run,
+  and refuses a name list that would match every line.
+
 ## [0.2.2] - 2026-11-15
 
 ### Fixes
