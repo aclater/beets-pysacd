@@ -35,7 +35,7 @@ it from its sdist. The suite passes there. Until beets supports 3.15, use Python
 
 ## Checking a download
 
-Each [GitHub release](https://github.com/aclater/beets-pysacd/releases) has the wheel and the
+Each [GitHub release](https://github.com/dsd-toolbox/beets-pysacd/releases) has the wheel and the
 sdist, each with its build provenance attestation beside it as a `.intoto.jsonl` file. They are
 not otherwise signed. For the 0.2.2 wheel:
 
@@ -56,4 +56,4 @@ gh attestation verify beets_pysacd-0.2.2-py3-none-any.whl --repo aclater/beets-p
 - [User guide](../user-guide.md)
 - [Options and configuration](../options.md)
 
-Part of the [DSD Toolbox](https://github.com/aclater/dsd-toolbox).
+Part of the [DSD Toolbox](https://github.com/dsd-toolbox/dsd-toolbox).

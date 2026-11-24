@@ -8,7 +8,7 @@ Instructions for coding agents working in this repository. Read
 A beets plugin (`beetsplug/sacd.py`, enabled with `plugins: sacd`) that imports
 SACD ISO images. beets can't tag an `.iso`, so for each ISO the plugin:
 
-1. reads the TOC with [pysacd](https://github.com/aclater/pysacd), in-process;
+1. reads the TOC with [pysacd](https://github.com/dsd-toolbox/pysacd), in-process;
 2. matches the MusicBrainz release and the medium (stereo or multichannel
    layer) by barcode, catalogue number, track count, durations and ISRCs;
 3. extracts each selected area to DSF or FLAC in a staging directory;

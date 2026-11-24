@@ -36,16 +36,16 @@ Start with the [quick start](../README.md#quick-start) if you are new to it.
 ## Project
 
 - [Changelog](../CHANGELOG.md)
-- [Releases](https://github.com/aclater/beets-pysacd/releases)
+- [Releases](https://github.com/dsd-toolbox/beets-pysacd/releases)
 - [Contributing](../CONTRIBUTING.md)
 - [Security policy](../SECURITY.md)
-- [Releases by major version](https://github.com/aclater/dsd-toolbox/blob/main/RELEASES.md),
+- [Releases by major version](https://github.com/dsd-toolbox/dsd-toolbox/blob/main/RELEASES.md),
   across the DSD Toolbox projects
 
 ## See also
 
-- [pysacd](https://github.com/aclater/pysacd)
-- [sacdfs](https://github.com/aclater/sacdfs)
+- [pysacd](https://github.com/dsd-toolbox/pysacd)
+- [sacdfs](https://github.com/dsd-toolbox/sacdfs)
 - [beets](https://beets.io)
 
-Part of the [DSD Toolbox](https://github.com/aclater/dsd-toolbox).
+Part of the [DSD Toolbox](https://github.com/dsd-toolbox/dsd-toolbox).

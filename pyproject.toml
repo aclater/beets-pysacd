@@ -32,7 +32,7 @@ dependencies = ["beets>=2.12,<3", "pysacd>=0.2"]
 dev = ["pytest==9.2.0", "ruff==0.17.3", "mypy==2.4.1", "coverage==7.17.2"]
 
 [project.urls]
-Homepage = "https://github.com/aclater/beets-pysacd"
+Homepage = "https://github.com/dsd-toolbox/beets-pysacd"
 
 [tool.setuptools]
 # beetsplug is a namespace package shared with beets and other plugins: no __init__.py
