@@ -46,8 +46,8 @@ CI can mean an old one. Run the suite against PYSACD on the oldest and the lates
 release commit:
 
 ```sh
-git clone https://github.com/aclater/beets-pysacd beets-pysacd-release
-git clone --depth 1 --branch vPYSACD https://github.com/aclater/pysacd pysacd-PYSACD
+git clone https://github.com/dsd-toolbox/beets-pysacd beets-pysacd-release
+git clone --depth 1 --branch vPYSACD https://github.com/dsd-toolbox/pysacd pysacd-PYSACD
 podman run --rm -it --memory 4g --cpus 2 -v ./beets-pysacd-release:/src:ro,Z -v ./pysacd-PYSACD:/pysacd:ro,Z registry.fedoraproject.org/fedora:44 bash
 ```
 
@@ -96,7 +96,7 @@ stereo area in a second run, which checks the duplicate handling in both orders.
 
 ```sh
 mkdir -p ~/release-check && cd ~/release-check
-git clone https://github.com/aclater/beets-pysacd beets-pysacd-release
+git clone https://github.com/dsd-toolbox/beets-pysacd beets-pysacd-release
 python3 -m venv prev && prev/bin/pip install beets pysacd==PYSACD beets-pysacd==PREVIOUS
 python3 -m venv new && new/bin/pip install beets pysacd==PYSACD ./beets-pysacd-release
 systemd-run --user --scope -p MemoryMax=16G -p MemorySwapMax=0 -p CPUQuota=400% \
@@ -169,8 +169,8 @@ from `tests/mbfixture.py`; [step 2](#2-identity-fixtures-and-real-discs) and the
 cover the real service.
 
 ```sh
-git clone --depth 1 --branch vVERSION https://github.com/aclater/beets-pysacd beets-pysacd-VERSION
-git clone --depth 1 --branch vPYSACD https://github.com/aclater/pysacd pysacd-PYSACD
+git clone --depth 1 --branch vVERSION https://github.com/dsd-toolbox/beets-pysacd beets-pysacd-VERSION
+git clone --depth 1 --branch vPYSACD https://github.com/dsd-toolbox/pysacd pysacd-PYSACD
 podman run --rm --memory 4g --cpus 2 -v ./beets-pysacd-VERSION:/src:ro,Z -v ./pysacd-PYSACD:/pysacd:ro,Z registry.fedoraproject.org/fedora:44 bash -euc '
 dnf -y -q install python3 python3-pip python3-numpy shadow-utils util-linux findutils
 useradd -m quickstart && mkdir /work /qshome
@@ -215,7 +215,7 @@ generated `album.iso` (named `Album.iso` in the user guide). Not runnable, with 
 ## 8. Performance
 
 No timing table: an import's time is pysacd's conversion, timed in
-[pysacd's plan](https://github.com/aclater/pysacd/blob/master/docs/release-test-plan.md). The
+[pysacd's plan](https://github.com/dsd-toolbox/pysacd/blob/master/docs/release-test-plan.md). The
 plugin's own work per disc (TOC, fingerprint, matching) is small next to it, and
 MusicBrainz's rate limit dominates matching.
 
@@ -231,12 +231,12 @@ build provenance attestation:
 
 ```sh
 mkdir release-check && cd release-check
-gh release download vVERSION -R aclater/beets-pysacd -D github
+gh release download vVERSION -R dsd-toolbox/beets-pysacd -D github
 curl -s https://pypi.org/pypi/beets-pysacd/VERSION/json | python3 -I -c 'import json,sys; [print(u["digests"]["sha256"] + "  " + u["filename"]) for u in json.load(sys.stdin)["urls"]]' > pypi.sha256
 (cd github && sha256sum -c ../pypi.sha256)
 ls github | grep -vc intoto.jsonl && wc -l < pypi.sha256
-find github -name '*.whl' -o -name '*.tar.gz' | xargs -I FILE gh attestation verify FILE --repo aclater/beets-pysacd
-find github -name '*.whl' -o -name '*.tar.gz' | xargs -I FILE gh attestation verify FILE --repo aclater/beets-pysacd --bundle FILE.intoto.jsonl
+find github -name '*.whl' -o -name '*.tar.gz' | xargs -I FILE gh attestation verify FILE --repo dsd-toolbox/beets-pysacd
+find github -name '*.whl' -o -name '*.tar.gz' | xargs -I FILE gh attestation verify FILE --repo dsd-toolbox/beets-pysacd --bundle FILE.intoto.jsonl
 ```
 
 *Expected:* both files `OK`, the two counts equal (2), every verification passes. *Validated:*
@@ -279,6 +279,6 @@ changelog section.
 
 - [Releasing](../CONTRIBUTING.md#releasing)
 - [Development](development.md): tests and CI
-- [pysacd's release test plan](https://github.com/aclater/pysacd/blob/master/docs/release-test-plan.md)
+- [pysacd's release test plan](https://github.com/dsd-toolbox/pysacd/blob/master/docs/release-test-plan.md)
 
-Part of the [DSD Toolbox](https://github.com/aclater/dsd-toolbox).
+Part of the [DSD Toolbox](https://github.com/dsd-toolbox/dsd-toolbox).
