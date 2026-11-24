@@ -208,7 +208,7 @@ is on PyPI, and link the run in the sign-off.
 *Expected:* every block marked to run passes, and no block is unmarked. For a release that
 changes `sacd-migrate`, also run the user guide's `sacdfs verify`, `--catalogue --mount` and
 `--mount` commands by hand against a sacdfs container build, as the `tags served by sacdfs main`
-job does. *Validated:* VALIDATED-TBD
+job does. *Validated:* 2026-11-24 against 0.2.2 from PyPI, docs-run on a lab host with Podman: 26 blocks, 12 run and passed, 14 skipped with their reasons.
 
 ## 8. Performance
 

@@ -26,7 +26,7 @@ pipx inject beets beets-pysacd
 Or keep the packaged beets and add the directories pip installed the plugin into to its path,
 for example on Fedora 44 (Python 3.14):
 
-<!-- docs-run: group=packaged-beets image=fedora44 setup="dnf -y -q --setopt=install_weak_deps=False install beets python3-pip && pip install -q beets-pysacd" expect="plugins:.*sacd" -->
+<!-- docs-run: group=packaged-beets image=fedora44 setup="dnf -y -q --setopt=install_weak_deps=False install beets python3-pip && pip install -q beets-pysacd && mkdir -p .config/beets && printf 'plugins: musicbrainz sacd\\n' > .config/beets/config.yaml" expect="plugins:.*sacd" -->
 ```sh
 PYTHONPATH=/usr/local/lib/python3.14/site-packages:/usr/local/lib64/python3.14/site-packages beet version
 ```
