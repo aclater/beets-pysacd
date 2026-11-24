@@ -159,7 +159,7 @@ def collect(run: Path) -> dict:
                 path = music / os.fsdecode(i["path"])     # beets 2.14 stores paths relative to `directory`
                 owned.add(path)
                 it.update(file_facts(path))
-                it["path"] = os.fsdecode(path.relative_to(music)) if path.is_relative_to(music) else str(path)
+                it["path"] = path.relative_to(music).as_posix() if path.is_relative_to(music) else str(path)
                 items.append(it)
             alb["items"] = items
             albums.append(alb)
