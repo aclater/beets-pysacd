@@ -39,10 +39,6 @@ BUILD_TOOLS = ["setuptools>=77", "build", "pyproject-hooks"]
 NOT_HELD_BACK = {
     "pysacd": "",
     "certifi": ">=2026.10.18",   # GHSA-6q48-6c7w-9gw2 (critical): 2026.10.18 is the first fixed release
-    # lap 0.5.14, released 2026-11-03, is the first version with a Python 3.15 wheel, which the 3.15
-    # CI leg needs (#50). An exception to the two-week hold-back that the owner accepted; the hash
-    # pins exactly what is installed. Drop this entry on 2026-11-17, when 0.5.14 is two weeks old.
-    "lap": ">=0.5.14",
 }
 # the fuzz workflow (fuzz/fuzz_discimage.py, #22): Atheris, whose wheels start at Python 3.12
 FUZZ = ["atheris"]

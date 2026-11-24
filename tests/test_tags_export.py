@@ -139,6 +139,21 @@ class TestExport(TagsBase):
         self.run_command("sacd-tags-export", "--tags", str(self.tags))
         assert self.file()["stereo"]["album"].get("genre") is None
 
+    def test_an_album_with_nothing_to_export_gets_no_file(self, capsys):
+        # no genre, label, IDs or cover: a file with only the header comment helps nobody (#86)
+        album = self.migrated()
+        for it in album.items():
+            it["mb_releasetrackid"] = it["mb_trackid"] = it["mb_artistid"] = ""
+            it.store()
+        for field in ("genre", "label", "mb_albumid", "mb_releasegroupid", "mb_albumartistid"):
+            album[field] = ""
+        album.store()
+        self.run_command("sacd-tags-export", "--tags", str(self.tags))
+        out = capsys.readouterr().out
+        assert f"nothing to export, no {self.key()}.toml written" in out
+        assert "0 tags file(s) written." in out
+        assert not list(self.tags.iterdir())
+
     def test_needs_a_tags_directory(self):
         from beets.ui import UserError
         with pytest.raises(UserError):

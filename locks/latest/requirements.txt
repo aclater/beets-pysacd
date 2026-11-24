@@ -528,9 +528,7 @@ lap==0.5.14 \
     --hash=sha256:efa30b7733b78658387db7f11b7b99fb651d07fd0a3b3fb74b8d6bdace3ca103 \
     --hash=sha256:fb222c696631b6a4fa5da0925efe84ad22ffa29673160f50b1dedfa68d265af9 \
     --hash=sha256:fb674f5d340384aa4e31c2932d2fb0f2ce72845003841b89c373eeb91aa34cae
-    # via
-    #   -c latest-constraints.txt
-    #   beets
+    # via beets
 librt==0.16.0 ; platform_python_implementation != 'PyPy' \
     --hash=sha256:001bfd59a7d45b17e3e75f2a8c6405280b35e7b84471792778e718c4f368950e \
     --hash=sha256:0058f9d68721094105917254c72ac0569117bb7b13b9769cf45d26d89f9d21cd \

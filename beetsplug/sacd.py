@@ -434,7 +434,7 @@ class SacdPlugin(BeetsPlugin):
                         if opts.apply:
                             item.store()
         ui.print_(f"{n_albums} album(s) matched" + (f", {n_held} held back by the verify report" if n_held else "")
-                  + (f"; {n_cat} catalogued" if opts.catalogue else "")
+                  + (f"; {n_cat} {'catalogued' if opts.apply else 'to catalogue'}" if opts.catalogue else "")
                   + (f"; {n_moved} catalogued item path(s) {'moved' if opts.apply else 'to move'} to sacdfs "
                      f"0.4.1 names" if n_moved else "")
                   + (f"; {n_stamped} catalogued item mtime(s) {'recorded' if opts.apply else 'to record'}"
@@ -560,7 +560,9 @@ class SacdPlugin(BeetsPlugin):
     def sacd_tags_export(self, lib, opts, args) -> None:
         """Write the sacdfs tags file of every SACD disc the library has albums for.
 
-        Albums are those whose items carry `sacd_iso` and `sacd_area` (sacd-import, sacd-migrate).
+        Albums are those whose items carry `sacd_iso`, `sacd_area` and `sacd_track`, which sacd-migrate
+        sets (on extracts it matches, and on the albums --catalogue adds); sacd-import doesn't.
+        An album with nothing to export (no genre, label, MusicBrainz IDs or cover) gets no file.
         The file is named by the disc's TOC key, worked out as sacdfs does. Per area, the genre,
         label and MusicBrainz IDs of the album and its tracks, and the album's cover, are written
         to `[<area>.album]` and `[<area>.track.N]`; every other field already in the file stays."""
@@ -599,6 +601,9 @@ class SacdPlugin(BeetsPlugin):
                 section = self._tag_section(items, tags_dir, key, area, opts.dry_run)
                 if section:
                     ours[area] = section
+            if not ours and not path.exists():
+                ui.print_(f"{shown}: nothing to export, no {key}.toml written")
+                continue
             data = _sacd_tags.dumps(_sacd_tags.merge(existing, ours)).encode()
             if opts.dry_run:
                 changed = not path.exists() or path.read_bytes() != data

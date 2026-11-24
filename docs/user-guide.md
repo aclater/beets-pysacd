@@ -6,15 +6,19 @@ How to import SACD images into beets, move a library from extracts to images ser
 [sacdfs](https://github.com/aclater/sacdfs), keep your tags, and what happens to DVD and Blu-ray
 images. Every option and setting is in [options and configuration](options.md).
 
+The commands use example folders: `~/isos` holds your SACD images (ISO), `~/dsf` the files
+extracted from them, `~/sacd` is where sacdfs is mounted and `~/sacd-tags` is sacdfs' tags
+directory. Use your own folders in their place.
+
 ## Importing SACD images
 
 ```sh
 beet sacd-import Album.iso              # one image
-beet sacd-import ~/rips/                # every .iso under a directory
+beet sacd-import ~/isos/                # every .iso under a directory
 beet sacd-import -a both -f flac Album.iso
 beet sacd-import --release 1a2a37a4-2ee5-3aa8-b1bf-4976dbb8007c Album.iso   # use this MusicBrainz release
 beet sacd-info Album.iso                # print the TOC; changes nothing
-beet sacd-info ~/rips/                  # ...of every image under a directory
+beet sacd-info ~/isos/                  # ...of every image under a directory
 ```
 
 Plain `beet import` also converts the SACD images it finds (an `.iso` given on
@@ -35,8 +39,8 @@ are extracts of an ISO and records where the ISO and sacdfs hold each track, kee
 MusicBrainz IDs and your other beets data:
 
 ```sh
-beet sacd-migrate ~/rips/                  # report which albums are extracts of which ISO area
-beet sacd-migrate --apply --source ~/rips --flatten ~/rips/    # record it
+beet sacd-migrate ~/isos/                  # report which albums are extracts of which ISO area
+beet sacd-migrate --apply --source ~/isos --flatten ~/isos/    # record it
 beet ls -f '$path $sacdfs_path' sacd_area:stereo
 ```
 
@@ -127,8 +131,8 @@ those files from beets, so the genres, MusicBrainz IDs and cover art you have in
 deleting the extracts:
 
 ```sh
-beet sacd-tags-export --tags ~/music/sacd-tags            # every SACD album
-beet sacd-tags-export --tags ~/music/sacd-tags -n genre:jazz   # a query; -n only reports
+beet sacd-tags-export --tags ~/sacd-tags                  # every SACD album
+beet sacd-tags-export --tags ~/sacd-tags -n genre:jazz    # a query; -n only reports
 ```
 
 It covers the albums whose items have `sacd_iso`, `sacd_area` and `sacd_track` (from
@@ -141,7 +145,8 @@ per track, the recording (`UFID`), release track and artist IDs. It leaves every
 an existing file alone, so your own edits stay, and rewrites the file atomically, only when
 something changed (comments in it are not kept). A beets value replaces the same field in the
 area's section; a field beets has no value for is not touched. A file that is not valid TOML is
-left as it is. sacdfs shows the change within a few seconds.
+left as it is. A disc with nothing to export (no genre, label, IDs or cover) gets no file. sacdfs
+shows the change within a few seconds.
 
 ## DVD-Audio, DVD-Video and Blu-ray images
 

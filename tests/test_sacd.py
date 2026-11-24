@@ -771,6 +771,7 @@ class TestCatalogue(Base):
         self.run_command("sacd-migrate", "--catalogue", "--mount", str(self.tmp_root / "mnt"), str(self.iso))
         out = capsys.readouterr().out
         assert "would catalogue as an album of 3 tracks" in out
+        assert "; 2 to catalogue." in out and "; 2 catalogued" not in out     # #86
         assert list(self.lib.albums()) == []
 
     def test_needs_a_mount(self):
@@ -780,9 +781,10 @@ class TestCatalogue(Base):
     def test_apply_adds_one_album_per_area_with_sacdfs_paths_and_is_idempotent(self, capsys):
         mnt = self.tmp_root / "mnt"
         before = sha(self.iso)
-        for _ in range(2):
+        for n in (2, 0):
             self.run_command("sacd-migrate", "--catalogue", "--apply", "--mount", str(mnt),
                              "--source", str(self.isodir), str(self.iso))
+            assert f"; {n} catalogued." in capsys.readouterr().out
         albums = {a.sacd_area: a for a in self.lib.albums()}
         assert set(albums) == {"stereo", "multichannel"}
         items = sorted(albums["stereo"].items(), key=lambda i: i.track)
