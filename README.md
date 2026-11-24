@@ -29,12 +29,14 @@ otherwise signed. With beets from a Linux distribution's package, see
 
 ## Quick start
 
-You need Python <!-- facts:python-min -->3.11<!-- /facts --> to 3.14 on Linux or macOS, and an SACD image. The commands use
+You need Python <!-- facts:python-min -->3.11<!-- /facts --> to 3.14 and an SACD image. The commands use
 `album.iso` in the current folder; type your image's name instead. They install beets with the
 plugin, so start here if you don't use beets yet; if you do, see [install](docs/install/README.md).
-On Windows, follow [install on Windows](docs/install/windows.md) instead.
+On Windows, get Python from the [python.org](https://www.python.org/downloads/windows/) installer
+and tick **Add python.exe to PATH** on its first screen; the Windows commands follow each step's
+Linux and macOS ones, and [install on Windows](docs/install/windows.md) has the details.
 
-1. Install beets and the plugin in a virtual environment of their own:
+1. Install beets and the plugin in a virtual environment of their own (Linux and macOS):
 
    <!-- docs-run: setup="dnf -y -q --setopt=install_weak_deps=False install python3 python3-pip git-core && git init -q /tmp/pysacd && git -C /tmp/pysacd fetch -q --depth 1 https://github.com/dsd-toolbox/pysacd a2a6c03a525e73a3566d1aa86bedc57a922cb961 && git -C /tmp/pysacd checkout -q FETCH_HEAD && python3 -c \"import sys; sys.path.insert(0, '/tmp/pysacd/tests'); import sacdgen as g; a = lambda c: g.AreaSpec(c, [bytes([105]) * 4704 * c] * 225, [75] * 3, dst=False, titles=['One', 'Two', 'Three']); g.build_iso('album.iso', [a(2), a(6)], info=g.DiscInfo(title='Docs run album', artist='Docs run artist'))\" && mkdir -p .local/bin && ln -s ../../beets-env/bin/beet .local/bin/beet" -->
    ```sh
@@ -43,7 +45,15 @@ On Windows, follow [install on Windows](docs/install/windows.md) instead.
    pip install beets beets-pysacd
    ```
 
-2. Turn the plugin on, with beets' MusicBrainz plugin, and keep the library in `~/Music`:
+   On Windows, in PowerShell:
+
+   <!-- docs-run: skip="Windows: PowerShell and the py launcher; the same pip install runs on Linux above" -->
+   ```powershell
+   py -m pip install beets beets-pysacd
+   ```
+
+2. Turn the plugin on, with beets' MusicBrainz plugin, and keep the library in `~/Music`. beets reads
+   `~/.config/beets/config.yaml` on Linux and macOS, and `%APPDATA%\beets\config.yaml` on Windows:
 
    <!-- docs-run: -->
    ```sh
@@ -52,6 +62,17 @@ On Windows, follow [install on Windows](docs/install/windows.md) instead.
    directory: ~/Music
    plugins: musicbrainz sacd
    EOF
+   ```
+
+   On Windows, in PowerShell, this creates the folder and the file:
+
+   <!-- docs-run: skip="Windows: PowerShell; on Linux the same file is made by the block above" -->
+   ```powershell
+   New-Item -ItemType Directory -Force "$env:APPDATA\beets"
+   Set-Content "$env:APPDATA\beets\config.yaml" @"
+   directory: ~/Music
+   plugins: musicbrainz sacd
+   "@
    ```
 
 3. Check that the plugin reads the disc:
@@ -73,6 +94,12 @@ On Windows, follow [install on Windows](docs/install/windows.md) instead.
    The plugin converts the stereo area to DSF and hands it to the beets importer, which shows the
    MusicBrainz release it found. Accept it, or pick another, as in any beets import. The tracks
    land in `~/Music`; `beet ls -a` lists the album.
+
+   If MusicBrainz has no release for the disc, the importer prints `No matching release found`
+   and shows its prompt without a match to accept. Choose `U` (use as-is) to import the disc with
+   the tags it carries, `E` to search MusicBrainz by hand, `I` to enter a release ID, or `S` to
+   skip it. Step 3 already showed that the plugin reads the disc; a missing match is about
+   MusicBrainz, not about the plugin.
 
 The [user guide](docs/user-guide.md) has the other commands, [options and
 configuration](docs/options.md) every option and setting, and [install](docs/install/README.md)

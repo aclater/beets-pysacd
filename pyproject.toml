@@ -33,6 +33,10 @@ dev = ["pytest==9.2.0", "ruff==0.17.3", "mypy==2.4.1", "coverage==7.17.2"]
 
 [project.urls]
 Homepage = "https://github.com/dsd-toolbox/beets-pysacd"
+Source = "https://github.com/dsd-toolbox/beets-pysacd"
+Issues = "https://github.com/dsd-toolbox/beets-pysacd/issues"
+Changelog = "https://github.com/dsd-toolbox/beets-pysacd/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/dsd-toolbox/beets-pysacd/blob/main/docs/README.md"
 
 [tool.setuptools]
 # beetsplug is a namespace package shared with beets and other plugins: no __init__.py

@@ -244,7 +244,7 @@ find github -name '*.whl' -o -name '*.tar.gz' | xargs -I FILE gh attestation ver
 ## 10. Fresh-eyes review for first releases
 
 For a new minor or major line (0.3.0, 1.0.0) and for a release that adds a component (a new command
-or a new kind of disc), a reviewer agent that did not write or review the changes, and gets none of
+or a new kind of disc), a reviewer who did not write or review the changes, and gets none of
 the author's notes, reads the release as a new user would. It gets the tag diff from the previous
 minor line, the README and `docs/`, and the changelog section, and checks:
 

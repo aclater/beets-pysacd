@@ -9,8 +9,7 @@ abstract: >-
   through beets' normal importer, so stereo and multichannel layers stay apart
   in the library.
 authors:
-  - alias: aclater
-    website: "https://github.com/aclater"
+  - name: "The beets-pysacd authors"
 version: 0.2.2
 date-released: "2026-11-15"
 repository-code: "https://github.com/dsd-toolbox/beets-pysacd"
