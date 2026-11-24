@@ -49,6 +49,9 @@ A release is a `v*` tag on a commit of `main` (or of a `release/*` branch, for a
 version), named `v` plus the version in `pyproject.toml`. The release workflow's first job checks
 both (`scripts/check_release_tag.py`) and builds and publishes nothing when it fails (#65).
 
+Before the tag, and on the published files after it, run the
+[release test plan](docs/release-test-plan.md) and copy its sign-off table into the release issue.
+
 When a version is released, update [RELEASES.md](https://github.com/aclater/dsd-toolbox/blob/main/RELEASES.md)
 in aclater/dsd-toolbox (the minor version's summary and release list).
 
