@@ -99,4 +99,4 @@ rename on the same filesystem; set `staging` to put it elsewhere.
 - [Design](design.md)
 - [Install](install/README.md)
 
-Part of the [DSD Toolbox](https://github.com/aclater/dsd-toolbox).
+Part of the [DSD Toolbox](https://github.com/dsd-toolbox/dsd-toolbox).

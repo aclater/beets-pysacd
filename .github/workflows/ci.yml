@@ -158,7 +158,7 @@ jobs:
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
-          repository: aclater/pysacd
+          repository: dsd-toolbox/pysacd
           ref: ${{ steps.pysacd.outputs.ref }}
           path: pysacd-src
           persist-credentials: false
@@ -247,14 +247,14 @@ jobs:
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
-          repository: aclater/pysacd
+          repository: dsd-toolbox/pysacd
           ref: ${{ steps.pysacd.outputs.ref }}
           path: pysacd-src
           persist-credentials: false
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
-          repository: aclater/sacdfs
+          repository: dsd-toolbox/sacdfs
           ref: main
           path: sacdfs-src
           persist-credentials: false

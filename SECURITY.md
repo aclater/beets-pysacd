@@ -7,12 +7,12 @@ branches: if you're on an older release, the fix is to upgrade.
 
 | Version | Supported |
 | --- | --- |
-| latest release ([releases](https://github.com/aclater/beets-pysacd/releases)) | yes |
+| latest release ([releases](https://github.com/dsd-toolbox/beets-pysacd/releases)) | yes |
 | `main` | yes |
 | anything older | no |
 
 A problem in pysacd itself (reading SACD images, extracting, its MusicBrainz client) belongs
-to [pysacd's security policy](https://github.com/aclater/pysacd/security/policy); if you're
+to [pysacd's security policy](https://github.com/dsd-toolbox/pysacd/security/policy); if you're
 not sure which project it is, report it here.
 
 ## Reporting a vulnerability
@@ -20,10 +20,10 @@ not sure which project it is, report it here.
 Please don't open a public issue, pull request or discussion for a vulnerability. Report it
 privately through GitHub's private vulnerability reporting:
 
-**<https://github.com/aclater/beets-pysacd/security/advisories/new>**
+**<https://github.com/dsd-toolbox/beets-pysacd/security/advisories/new>**
 
 (or the **Report a vulnerability** button on the repository's
-[Security tab](https://github.com/aclater/beets-pysacd/security)). Only the maintainer sees
+[Security tab](https://github.com/dsd-toolbox/beets-pysacd/security)). Only the maintainer sees
 the report.
 
 Please include:
@@ -72,7 +72,7 @@ Any of the following in the plugin's handling of those inputs is in scope:
 - one disc's files or tags ending up in another's album.
 
 How SACD images, PS3 network data and untrusted text are contained is pysacd's threat model,
-[docs/security.md](https://github.com/aclater/pysacd/blob/master/docs/security.md). The
+[docs/security.md](https://github.com/dsd-toolbox/pysacd/blob/master/docs/security.md). The
 plugin's own DVD and Blu-ray reader, `beetsplug/_sacd_discimage.py`, bounds every read and
 answers "unknown" for anything it can't parse.
 

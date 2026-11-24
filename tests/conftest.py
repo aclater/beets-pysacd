@@ -3,6 +3,7 @@ scripts/check_skips.py."""
 
 import json
 import os
+import sys
 from pathlib import Path
 
 _tests: set[str] = set()
@@ -34,3 +35,8 @@ def pytest_sessionfinish(session):
     path = os.environ.get("PYSACD_TEST_REPORT")
     if path:
         Path(path).write_text(json.dumps({"tests": len(_tests), "skips": _skips}, indent=1), encoding="utf-8")
+
+
+# scripts/check-private-names.sh runs only in CI's Linux privacy job. Its test is not collected on
+# the macOS and Windows legs, where a skip would have to be listed per job in expected-skips.json.
+collect_ignore = [] if sys.platform.startswith("linux") else ["test_check_private_names.py"]
