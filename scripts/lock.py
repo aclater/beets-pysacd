@@ -15,6 +15,8 @@ and locks/fuzz/requirements.txt, Atheris for the fuzz workflow.
 
 Releases younger than two weeks are left out (CLAUDE.md), except the owner's own pysacd, so
 the "pysacd release" legs test what users get, and security fixes listed in NOT_HELD_BACK.
+pysacd is always moved to its newest release (uv otherwise keeps the version already in a
+lock); rerun this at each pysacd release.
 Dependabot keeps these files current between runs (beets held at the floor in the oldest one);
 rerun this when a new release brings a new dependency, or after changing pyproject.toml.
 """
@@ -43,6 +45,8 @@ NOT_HELD_BACK = {
 # the fuzz workflow (fuzz/fuzz_discimage.py, #22): Atheris, whose wheels start at Python 3.12
 FUZZ = ["atheris"]
 FUZZ_PYTHON = "3.12"
+# moved to the newest release on every run, not kept at the version already in the lock
+ALWAYS_NEWEST = ["pysacd"]
 MIN_AGE = datetime.timedelta(days=14)
 
 
@@ -78,6 +82,7 @@ def main() -> int:
                    "--python-version", python, "--generate-hashes",
                    "--exclude-newer", cutoff,
                    *[f"--exclude-newer-package={p}={now.isoformat().replace('+00:00', 'Z')}" for p in NOT_HELD_BACK],
+                   *[f"--upgrade-package={p}" for p in ALWAYS_NEWEST],
                    "--custom-compile-command", "python3 -I scripts/lock.py",
                    *inputs, "-o", str(out)]
             if constraints:
