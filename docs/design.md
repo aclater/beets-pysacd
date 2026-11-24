@@ -61,7 +61,10 @@ For each SACD image, and each selected area of it:
      duplicate keys are album artist and album, which both areas of a disc
      (and a CD rip of the same release) share: without this, importing the
      multichannel area after the stereo one would be skipped as a duplicate.
-     Another copy of the same layer is still a duplicate;
+     With no medium to compare (an as-is import, or no match), an album of the
+     other area is still never one: it is known by its `sacd_area` or, while
+     that isn't set yet, by its channel count. Another copy of the same layer
+     is still a duplicate;
    - **moves the files** into the library (see [Files and staging](options.md#files-and-staging)).
 4. The album gets `sacd_iso_sha` and `sacd_area`; with `remove_iso`, the ISO is
    deleted once every area is imported in this run and verified. The staging directory is removed.
