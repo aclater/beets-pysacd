@@ -15,6 +15,7 @@ the plugin. Fedora's `/usr/bin/beet`, for example, runs `python3 -sP`, which lea
 
 Install beets and the plugin into one environment of their own:
 
+<!-- docs-run: packages=pipx expect="injected package beets-pysacd" -->
 ```sh
 pipx install beets
 pipx inject beets beets-pysacd
@@ -25,6 +26,7 @@ pipx inject beets beets-pysacd
 Or keep the packaged beets and add the directories pip installed the plugin into to its path,
 for example on Fedora 44 (Python 3.14):
 
+<!-- docs-run: group=packaged-beets image=fedora44 setup="dnf -y -q --setopt=install_weak_deps=False install beets python3-pip && pip install -q beets-pysacd" expect="plugins:.*sacd" -->
 ```sh
 PYTHONPATH=/usr/local/lib/python3.14/site-packages:/usr/local/lib64/python3.14/site-packages beet version
 ```

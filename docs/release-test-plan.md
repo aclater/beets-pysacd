@@ -45,6 +45,7 @@ current when the lock was last written (0.5.2 on 2026-11-23, when 0.5.5 was out)
 CI can mean an old one. Run the suite against PYSACD on the oldest and the latest beets, from the
 release commit:
 
+<!-- docs-run: skip="maintainer release step: PYSACD and VERSION are filled in at release time, and it starts a Podman container" -->
 ```sh
 git clone https://github.com/dsd-toolbox/beets-pysacd beets-pysacd-release
 git clone --depth 1 --branch vPYSACD https://github.com/dsd-toolbox/pysacd pysacd-PYSACD
@@ -53,6 +54,7 @@ podman run --rm -it --memory 4g --cpus 2 -v ./beets-pysacd-release:/src:ro,Z -v 
 
 Inside the container:
 
+<!-- docs-run: skip="runs inside the container the previous block starts; maintainer release step: PYSACD and VERSION are filled in at release time" -->
 ```sh
 dnf -y install git-core findutils python3.13 python3.13-devel gcc
 cp -a /src /beets-pysacd && cd /beets-pysacd
@@ -94,6 +96,7 @@ the files' count, format, size and checksum. It runs four modes: `beet import -q
 stereo area in a second run, which checks the duplicate handling in both orders. Use at least the
 [minimum set](#5-the-real-disc-corpus), with VERSION from the release commit and the same beets in both:
 
+<!-- docs-run: skip="needs the maintainer's own SACD images; PYSACD and PREVIOUS are filled in at release time" -->
 ```sh
 mkdir -p ~/release-check && cd ~/release-check
 git clone https://github.com/dsd-toolbox/beets-pysacd beets-pysacd-release
@@ -128,6 +131,7 @@ them in their repositories. On the release commit, with Atheris (libFuzzer) from
 |---|---|---|
 | `fuzz/fuzz_discimage.py` | Python exceptions (anything but `OSError` is a crash) | 30 min |
 
+<!-- docs-run: skip="30 minutes of fuzzing from a checkout of the release commit" -->
 ```sh
 pip install --require-hashes --only-binary :all: -r locks/fuzz/requirements.txt
 python fuzz/fuzz_discimage.py --seeds /tmp/fuzz-seeds
@@ -168,6 +172,7 @@ wheel built from the branch; this step runs it on what users download. MusicBrai
 from `tests/mbfixture.py`; [step 2](#2-identity-fixtures-and-real-discs) and the live test below
 cover the real service.
 
+<!-- docs-run: skip="maintainer release step: PYSACD and VERSION are filled in at release time, and it starts a Podman container" -->
 ```sh
 git clone --depth 1 --branch vVERSION https://github.com/dsd-toolbox/beets-pysacd beets-pysacd-VERSION
 git clone --depth 1 --branch vPYSACD https://github.com/dsd-toolbox/pysacd pysacd-PYSACD
@@ -183,6 +188,7 @@ runuser -u quickstart -- python3 -I /src/scripts/readme_quickstart.py run --whee
 *Expected:* "README Quick start: 4 steps ran as written, MusicBrainz from the fixture; 3 tracks
 imported into ~/Music". Then, live, from the same tag:
 
+<!-- docs-run: skip="runs from a checkout of the release tag; docs-run runs the same test in docs/development.md" -->
 ```sh
 PYSACD_LIVE_MB=1 python -m pytest tests/test_live_musicbrainz.py
 ```
@@ -192,25 +198,17 @@ PYSACD_LIVE_MB=1 python -m pytest tests/test_live_musicbrainz.py
 
 ## 7. Docs commands
 
-Every command block in README.md and `docs/` is run against the release, or listed in the release
-issue as not runnable with the reason. List them:
+Every command block in README.md and `docs/` either runs or says why it can't. The `docs-run`
+workflow runs the blocks marked to run in a fresh Fedora container that holds only the blocks, so
+they install the published release from PyPI, and lists every block it skips with the reason
+(a sacdfs mount, the maintainer's discs, a GitHub login, an interactive import, or a release step
+whose versions are filled in by hand). Run it from the Actions tab (Run workflow) once the release
+is on PyPI, and link the run in the sign-off.
 
-```sh
-grep -n -E '^ *```(sh|console|python|yaml)$' README.md docs/*.md docs/install/*.md
-```
-
-0.2.2 had 17 shell and Python blocks and 2 YAML. Run them in the Quick start's container on the
-generated `album.iso` (named `Album.iso` in the user guide). Not runnable, with why:
-
-- `docs/user-guide.md`, `sacd-migrate --verify` and `--catalogue --mount`: need a sacdfs mount and
-  `sacdfs verify`; run them with a sacdfs container build, as the `tags served by sacdfs main` job
-  does, for a release that changes `sacd-migrate`;
-- `docs/install/packages.md`, the `PYTHONPATH` line: needs beets from a distribution package
-  installed under `/usr/local`; run it in a container with that layout for a release that changes
-  packaging.
-
-*Validated:* 2026-11-23, every shell and Python block parsed (`bash -n`, Python `compile`) on
-`main` after 0.2.2; not yet run as a whole against a release.
+*Expected:* every block marked to run passes, and no block is unmarked. For a release that
+changes `sacd-migrate`, also run the user guide's `sacdfs verify`, `--catalogue --mount` and
+`--mount` commands by hand against a sacdfs container build, as the `tags served by sacdfs main`
+job does. *Validated:* VALIDATED-TBD
 
 ## 8. Performance
 
@@ -229,6 +227,7 @@ range from PREVIOUS's tag to the release commit (`git diff vPREVIOUS HEAD`): fil
 **After publishing.** The files on PyPI are the GitHub release's assets, and each carries a valid
 build provenance attestation:
 
+<!-- docs-run: skip="needs a GitHub login, and VERSION is filled in at release time" -->
 ```sh
 mkdir release-check && cd release-check
 gh release download vVERSION -R dsd-toolbox/beets-pysacd -D github
@@ -274,6 +273,19 @@ changelog section.
 | 9. Auditor `go` on the release commit | | |
 | 9. PyPI files match the GitHub assets, attestations verify | | |
 | 10. Fresh-eyes review (new lines and components only) | | |
+| After the release: `docs-audit` workflow run, checklist items fixed | | |
+
+<!-- docs-audit:begin -->
+## After the release: run the docs audit
+
+After the release: run the docs audit. Do it once the tag, the packages and the release notes are public, and before the release is announced.
+
+1. Run the `docs-audit` workflow from the Actions tab of the repository (Run workflow). It runs the docs lint, the link check with external URLs and the docs facts check, and fails if any of them does.
+2. Open the checklist it prints: every page that mentions a version, a command-line option or a platform, to compare with the release just published. Fix each mismatch in a docs-only change, or write down why it is right.
+3. Record the result in the release notes or the release checklist: the workflow run, and how many checklist items were fixed.
+
+Every project also runs this audit each month (the `docs-monthly` workflow in the DSD Toolbox repository), so a missed audit shows up within a month.
+<!-- docs-audit:end -->
 
 ## See also
 

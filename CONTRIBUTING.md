@@ -21,6 +21,7 @@ discs and library in general terms; you don't need to share your collection.
    while yours waits, merge it into your branch (no force-push) and let the checks run again.
 3. **Run the checks before you push:**
 
+   <!-- docs-run: skip="the same commands as the Tests block of docs/development.md, which docs-run runs" -->
    ```sh
    git clone https://github.com/dsd-toolbox/pysacd ../pysacd
    pip install -e '.[dev]'
@@ -29,7 +30,7 @@ discs and library in general terms; you don't need to share your collection.
    ```
 
    The tests find pysacd's test generator in `../pysacd/tests` (or `PYSACD_TESTS`). CI runs the
-   tests on Python 3.11 to 3.14 (and 3.15 as an early warning), against the oldest and newest
+   tests on Python <!-- facts:python-min -->3.11<!-- /facts --> to 3.14 (and 3.15 as an early warning), against the oldest and newest
    supported beets on Linux and the newest on macOS and Windows, with pysacd's release and master branch, plus
    CodeQL, semgrep and a privacy check (see [development](docs/development.md)). The test jobs also fail if
    a test starts skipping, stops skipping or changes its skip reason: list a legitimate new skip,

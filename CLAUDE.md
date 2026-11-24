@@ -58,6 +58,7 @@ catalogued, never converted. That handler is the plugin's own, not pysacd's.
 
 ## Checks before every PR
 
+<!-- docs-run: skip="agent checklist: the same checks as the Tests block of docs/development.md, which docs-run runs" -->
 ```bash
 ruff check .
 mypy beetsplug

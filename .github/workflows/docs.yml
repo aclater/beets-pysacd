@@ -1,0 +1,52 @@
+# The DSD Toolbox's shared docs checks (dsd-toolbox/dsd-toolbox, tools/docs), pinned to one commit:
+# docs-lint, docs-links, docs-touched and docs-facts. Settings are in .docs.toml. Pull requests and
+# pushes check links offline; the weekly run also fetches every external URL. The documented
+# commands run in docs-run.yml, the post-release audit in docs-audit.yml.
+
+name: docs
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "23 6 * * 1"  # weekly: external links rot and releases change facts without a change here
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions: {}
+
+jobs:
+  lint:
+    permissions:
+      contents: read
+    uses: dsd-toolbox/dsd-toolbox/.github/workflows/docs-lint.yml@b50a7cca297022561959ba9a2532c0673d532ada
+    with:
+      tools_ref: b50a7cca297022561959ba9a2532c0673d532ada
+
+  links:
+    permissions:
+      contents: read
+    uses: dsd-toolbox/dsd-toolbox/.github/workflows/docs-links.yml@b50a7cca297022561959ba9a2532c0673d532ada
+    with:
+      tools_ref: b50a7cca297022561959ba9a2532c0673d532ada
+      external: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+
+  touched:
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+    uses: dsd-toolbox/dsd-toolbox/.github/workflows/docs-touched.yml@b50a7cca297022561959ba9a2532c0673d532ada
+    with:
+      tools_ref: b50a7cca297022561959ba9a2532c0673d532ada
+
+  # Read-only: checks the facts regions against pyproject.toml and the public release data.
+  facts:
+    permissions:
+      contents: read
+    uses: dsd-toolbox/dsd-toolbox/.github/workflows/docs-facts.yml@b50a7cca297022561959ba9a2532c0673d532ada
+    with:
+      tools-ref: b50a7cca297022561959ba9a2532c0673d532ada

@@ -12,6 +12,7 @@ directory. Use your own folders in their place.
 
 ## Importing SACD images
 
+<!-- docs-run: setup="dnf -y -q --setopt=install_weak_deps=False install python3-pip git-core flac-libs && pip install -q beets-pysacd && mkdir -p isos .config/beets && git clone -q --depth 1 --branch v0.5.5 https://github.com/dsd-toolbox/pysacd /tmp/pysacd && python3 -c \"import sys; sys.path.insert(0, '/tmp/pysacd/tests'); import sacdgen as g; a = lambda c: g.AreaSpec(c, [bytes([105]) * 4704 * c] * 225, [75] * 3, dst=False, titles=['One', 'Two', 'Three']); g.build_iso('isos/Album.iso', [a(2), a(6)], info=g.DiscInfo(title='Docs run album', artist='Docs run artist'))\" && cp isos/Album.iso Album.iso && printf 'directory: ~/Music\\nplugins: musicbrainz sacd\\nimport:\\n  quiet: yes\\n  quiet_fallback: asis\\n' > .config/beets/config.yaml" -->
 ```sh
 beet sacd-import Album.iso              # one image
 beet sacd-import ~/isos/                # every .iso under a directory
@@ -38,6 +39,8 @@ files, the beets items for those extracts would dangle. `beet sacd-migrate` find
 are extracts of an ISO and records where the ISO and sacdfs hold each track, keeping their
 MusicBrainz IDs and your other beets data:
 
+<!-- docs-run: expect="01 - One.dsf" -->
+<!-- docs-lint: ignore placeholder -- $path and $sacdfs_path are beets format fields in single quotes, not shell variables -->
 ```sh
 beet sacd-migrate ~/isos/                  # report which albums are extracts of which ISO area
 beet sacd-migrate --apply --source ~/isos --flatten ~/isos/    # record it
@@ -62,6 +65,7 @@ row for each extract. Give it to the migration and `--apply` records an album on
 one of its items is `IDENTICAL` or `IDENTICAL-PAUSE` in it (matched by file path); any other
 status, or a missing row, holds the whole album back and says so:
 
+<!-- docs-run: skip="needs sacdfs and the extracted files it compares with the images" -->
 ```sh
 sacdfs verify -o report.tsv --map ~/dsf ~/isos ~/isos ~/dsf
 beet sacd-migrate --apply --verify report.tsv --source ~/isos ~/isos/
@@ -75,6 +79,7 @@ albums have `sacd_catalogued: 1`. They have no MusicBrainz match: run beets' own
 the mounted files for that. Without `--apply` the command only reports; a second run
 adds nothing. With sacdfs mounted at `~/sacd` from the images in `~/isos`:
 
+<!-- docs-run: skip="needs a sacdfs mount (FUSE) at ~/sacd" -->
 ```sh
 beet sacd-migrate --catalogue --mount ~/sacd --source ~/isos ~/isos/            # report
 beet sacd-migrate --catalogue --mount ~/sacd --source ~/isos --apply ~/isos/    # add the albums
@@ -106,6 +111,7 @@ by beets-pysacd 0.2.0 or 0.2.1 point at the old names, and once the mount is upg
    at `~/sacd` from the images in `~/isos`, this reports which catalogued items would move to the
    new names:
 
+   <!-- docs-run: skip="needs a sacdfs mount (FUSE) at ~/sacd" -->
    ```sh
    beet sacd-migrate --mount ~/sacd --source ~/isos ~/isos/
    ```
@@ -130,6 +136,7 @@ sacdfs 0.3.0 can serve your own tags over an image's: a **tags directory** (`--t
 those files from beets, so the genres, MusicBrainz IDs and cover art you have in beets survive
 deleting the extracts:
 
+<!-- docs-run: -->
 ```sh
 beet sacd-tags-export --tags ~/sacd-tags                  # every SACD album
 beet sacd-tags-export --tags ~/sacd-tags -n genre:jazz    # a query; -n only reports
