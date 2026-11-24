@@ -9,7 +9,7 @@ How to run the checks and tests locally, and what CI runs on every pull request 
 From a clone of beets-pysacd, with pysacd's source cloned next to it:
 
 ```sh
-git clone https://github.com/aclater/pysacd ../pysacd
+git clone https://github.com/dsd-toolbox/pysacd ../pysacd
 pip install -e '.[dev]'
 ruff check . && mypy beetsplug
 pytest -q
@@ -103,6 +103,6 @@ the "pysacd release" legs test what users install. For local work, `pip install 
 - [Contributing](../CONTRIBUTING.md): reporting bugs and proposing changes
 - [Security policy](../SECURITY.md): reporting a vulnerability privately
 - [Changelog](../CHANGELOG.md): what changed in each release
-- [Releases by major version](https://github.com/aclater/dsd-toolbox/blob/main/RELEASES.md), across the DSD Toolbox projects
+- [Releases by major version](https://github.com/dsd-toolbox/dsd-toolbox/blob/main/RELEASES.md), across the DSD Toolbox projects
 
-Part of the [DSD Toolbox](https://github.com/aclater/dsd-toolbox).
+Part of the [DSD Toolbox](https://github.com/dsd-toolbox/dsd-toolbox).

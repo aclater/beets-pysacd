@@ -77,4 +77,4 @@ Nothing here changes how beets treats your other files in the same import.
 - [Options and configuration](options.md)
 - [Development](development.md)
 
-Part of the [DSD Toolbox](https://github.com/aclater/dsd-toolbox).
+Part of the [DSD Toolbox](https://github.com/dsd-toolbox/dsd-toolbox).

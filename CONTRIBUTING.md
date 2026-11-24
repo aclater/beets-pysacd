@@ -4,14 +4,14 @@ Thanks for helping. Bug reports, logs and pull requests are all welcome.
 
 ## Reporting a bug
 
-Open an [issue](https://github.com/aclater/beets-pysacd/issues). Include your beets and
+Open an [issue](https://github.com/dsd-toolbox/beets-pysacd/issues). Include your beets and
 pysacd versions (`beet version`, `pip show pysacd`), the command you ran, the output of
 the same command with `beet -v`, what you expected and what happened. Describe your
 discs and library in general terms; you don't need to share your collection.
 
 **Security problems** go through a private report instead, never a public issue: see
 [SECURITY.md](SECURITY.md), which uses GitHub's
-[private vulnerability reporting](https://github.com/aclater/beets-pysacd/security/advisories/new).
+[private vulnerability reporting](https://github.com/dsd-toolbox/beets-pysacd/security/advisories/new).
 
 ## Changing code
 
@@ -22,7 +22,7 @@ discs and library in general terms; you don't need to share your collection.
 3. **Run the checks before you push:**
 
    ```sh
-   git clone https://github.com/aclater/pysacd ../pysacd
+   git clone https://github.com/dsd-toolbox/pysacd ../pysacd
    pip install -e '.[dev]'
    ruff check . && mypy beetsplug
    pytest -q
@@ -52,8 +52,8 @@ both (`scripts/check_release_tag.py`) and builds and publishes nothing when it f
 Before the tag, and on the published files after it, run the
 [release test plan](docs/release-test-plan.md) and copy its sign-off table into the release issue.
 
-When a version is released, update [RELEASES.md](https://github.com/aclater/dsd-toolbox/blob/main/RELEASES.md)
-in aclater/dsd-toolbox (the minor version's summary and release list).
+When a version is released, update [RELEASES.md](https://github.com/dsd-toolbox/dsd-toolbox/blob/main/RELEASES.md)
+in dsd-toolbox/dsd-toolbox (the minor version's summary and release list).
 
 ## Rules
 

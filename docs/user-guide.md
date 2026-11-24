@@ -3,7 +3,7 @@
 # User guide
 
 How to import SACD images into beets, move a library from extracts to images served by
-[sacdfs](https://github.com/aclater/sacdfs), keep your tags, and what happens to DVD and Blu-ray
+[sacdfs](https://github.com/dsd-toolbox/sacdfs), keep your tags, and what happens to DVD and Blu-ray
 images. Every option and setting is in [options and configuration](options.md).
 
 The commands use example folders: `~/isos` holds your SACD images (ISO), `~/dsf` the files
@@ -33,7 +33,7 @@ lists the multichannel albums.
 
 ## Moving a library from extracts to SACD images (sacdfs)
 
-If you serve your ISOs with [sacdfs](https://github.com/aclater/sacdfs) and delete the extracted
+If you serve your ISOs with [sacdfs](https://github.com/dsd-toolbox/sacdfs) and delete the extracted
 files, the beets items for those extracts would dangle. `beet sacd-migrate` finds the albums that
 are extracts of an ISO and records where the ISO and sacdfs hold each track, keeping their
 MusicBrainz IDs and your other beets data:
@@ -173,6 +173,6 @@ reads only directory structures, never the audio.
 - [Options and configuration](options.md)
 - [Design](design.md): hybrid SACDs and the import steps
 - [Install](install/README.md)
-- [sacdfs](https://github.com/aclater/sacdfs)
+- [sacdfs](https://github.com/dsd-toolbox/sacdfs)
 
-Part of the [DSD Toolbox](https://github.com/aclater/dsd-toolbox).
+Part of the [DSD Toolbox](https://github.com/dsd-toolbox/dsd-toolbox).

@@ -1,6 +1,6 @@
 # CodeQL configuration (see .github/workflows/codeql.yml).
 query-filters:
-  # ci.yml checks out a second repository, the owner's own aclater/pysacd, at
+  # ci.yml checks out a second repository, the owner's own dsd-toolbox/pysacd, at
   # master or at the release tag matching the installed pysacd (the ref is
   # validated against ^(master|vX.Y.Z)$ before use), only to read its test
   # generator. The jobs that do this have `contents: read`, no secrets and no
