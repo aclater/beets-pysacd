@@ -91,10 +91,7 @@ notepad "$env:APPDATA\beets\config.yaml"
 ```
 
 `beet config -e` is beets' own way to open the file, but on a stock Windows it shows the "Select an
-app to open this .yaml file" window, because no program is set for `.yaml` files. beets opens the file in
-the editor named by its `editor` option or by the `VISUAL` or `EDITOR` environment variable, and
-only without any of them in the program Windows opens `.yaml` files with. To use `beet config -e`,
-run `setx EDITOR notepad` once, then open a new PowerShell window.
+app to open this .yaml file" window, because no program is set for `.yaml` files.
 
 Type this into the file, then save it. It turns on the plugin, with beets' MusicBrainz plugin,
 keeps the library in the Music folder of your user folder, and converts the stereo area to DSF:
