@@ -43,6 +43,7 @@ Each [GitHub release](https://github.com/dsd-toolbox/beets-pysacd/releases) has 
 sdist, each with its build provenance attestation beside it as a `.intoto.jsonl` file. They are
 not otherwise signed.
 
+<!-- docs-lint: ignore-file old-owner -- releases up to 0.2.2 were signed before the move, so their attestations name aclater/beets-pysacd -->
 <!-- docs-lint: ignore old-owner -- releases up to 0.2.2 were signed as aclater/beets-pysacd and verify only under that name -->
 Releases up to 0.2.2 were built before the repository moved to the DSD Toolbox organisation, so
 their attestation names `aclater/beets-pysacd`. For the <!-- facts:release repo=dsd-toolbox/beets-pysacd fmt="{version}" -->0.2.2<!-- /facts --> wheel, checked offline against the attached bundle, with no sign-in:
