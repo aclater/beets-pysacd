@@ -4,10 +4,16 @@ Notable changes in each release of beets-pysacd. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [semantic versioning](https://semver.org/spec/v2.0.0.html); before 1.0, a minor version may change
 behaviour, and a patch version only adds or fixes. Releases are on
-[GitHub](https://github.com/aclater/beets-pysacd/releases) and
+[GitHub](https://github.com/dsd-toolbox/beets-pysacd/releases) and
 [PyPI](https://pypi.org/project/beets-pysacd/), with signed build provenance.
 
 ## [Unreleased]
+
+### Added
+- docs/install/windows.md: installing on Windows 11 step by step: python.org Python,
+  `py -m pip install beets beets-pysacd` or pipx, where beets' `config.yaml` is
+  (`%APPDATA%\beets`), turning the plugin on, a first import, and Windows paths. The README and
+  the docs index link it.
 
 ### Fixed
 - A disc's multichannel area is no longer skipped as a duplicate of its stereo area (or the other
@@ -21,6 +27,9 @@ behaviour, and a patch version only adds or fixes. Releases are on
 - The user guide's commands use one set of example folders, named at the top of the guide (#91).
 - CI's "pysacd release" legs test pysacd 0.5.5 (locked 0.5.2 before), and `scripts/lock.py` now
   moves pysacd to its newest release on every run instead of keeping the locked version (#90).
+- Documentation (the README's text and the icons included) and published measurement data are
+  now licensed CC BY 4.0; the code licence is unchanged (GPL-2.0-or-later).
+  A `CITATION.cff` describes how to cite beets-pysacd.
 
 ### Security
 - The private-names check (`scripts/check-private-names.sh`) now fails when it cannot run,
@@ -28,7 +37,7 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## [0.2.2] - 2026-11-15
 
-### Fixes
+### Fixed
 - `sacd-migrate --mount DIR` moves albums catalogued on a sacdfs 0.4.0 mount to the names
   sacdfs 0.4.1 shows (`NN.dsf` to `NN - Track NN.dsf` for a track with no title), so `beet update`
   no longer removes their items after the mount is upgraded (#57). Without `--apply` it only
@@ -53,7 +62,7 @@ behaviour, and a patch version only adds or fixes. Releases are on
   with DSF files from pysacd standing in for the mount, on the oldest and newest beets; CI checks
   on a real sacdfs main mount that a track's mtime stays the same across remounts.
 
-### Build and release
+### Changed
 - The release workflow refuses a `v*` tag that isn't `v` plus the package version, or whose commit
   isn't on `main` or a `release/*` branch, before anything is built or published (#65).
 - CI's Linux jobs run in Red Hat-derived containers: lint, the Linux test legs, fuzzing and the live
@@ -82,7 +91,7 @@ container): 122 passed, the 3 expected skips.
   fingerprint are imported together, beets imports one and skips the other as a duplicate, and the
   skipped one is kept. Upgrade to 0.2.1.
 
-### Other changes
+### Changed
 
 - `sacdfs_path` now follows sacdfs 0.4.1's file names, so it matches a mount for a disc whose tracks have
   no title (`NN - Track NN.dsf`; control characters and long titles are handled as sacdfs does) (#55).
@@ -113,9 +122,8 @@ container): 122 passed, the 3 expected skips.
 - CI's "pysacd release" legs test pysacd 0.3.0, which reads and decodes through
   scarletbook-rs. Disc fingerprints are unchanged from 0.2.2 (checked on the owner's
   library), so the plugin needs no change.
-- Releases carry their build provenance as `<file>.intoto.jsonl` assets, so a download
-  can be verified offline (`gh attestation verify <file> --repo aclater/beets-pysacd
-  --bundle <file>.intoto.jsonl`); 0.1.0 to 0.1.2 have them too (#20).
+<!-- docs-lint: ignore old-owner -- releases up to 0.2.2 were signed as aclater/beets-pysacd, the name they still verify with -->
+- Releases carry their build provenance as `<file>.intoto.jsonl` assets, so a download can be verified offline (`gh attestation verify <file> --repo aclater/beets-pysacd --bundle <file>.intoto.jsonl`); 0.1.0 to 0.1.2 have them too (#20).
 
 ## [0.1.2] - 2026-10-30
 
@@ -153,10 +161,10 @@ First release.
   import is verified.
 - Supports beets 2.12 and later, Python 3.11 to 3.14, on Linux, macOS and Windows.
 
-[Unreleased]: https://github.com/aclater/beets-pysacd/compare/v0.2.2...HEAD
-[0.2.2]: https://github.com/aclater/beets-pysacd/compare/v0.2.1...v0.2.2
-[0.2.1]: https://github.com/aclater/beets-pysacd/compare/v0.2.0...v0.2.1
-[0.2.0]: https://github.com/aclater/beets-pysacd/compare/v0.1.2...v0.2.0
-[0.1.2]: https://github.com/aclater/beets-pysacd/compare/v0.1.1...v0.1.2
-[0.1.1]: https://github.com/aclater/beets-pysacd/compare/v0.1.0...v0.1.1
-[0.1.0]: https://github.com/aclater/beets-pysacd/releases/tag/v0.1.0
+[Unreleased]: https://github.com/dsd-toolbox/beets-pysacd/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/dsd-toolbox/beets-pysacd/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/dsd-toolbox/beets-pysacd/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/dsd-toolbox/beets-pysacd/compare/v0.1.2...v0.2.0
+[0.1.2]: https://github.com/dsd-toolbox/beets-pysacd/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/dsd-toolbox/beets-pysacd/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/dsd-toolbox/beets-pysacd/releases/tag/v0.1.0

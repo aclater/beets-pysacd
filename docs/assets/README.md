@@ -2,7 +2,7 @@
 
 # Icon
 
-The beets-pysacd icon (a beet), © the beets-pysacd project, under the repository's licence, GPL-2.0-or-later. It is one of the DSD Toolbox icons: a silver disc on a navy rounded square, with the project's motif on an amber panel below it.
+The beets-pysacd icon (a beet), © the beets-pysacd project, under [CC BY 4.0](../../LICENSES/CC-BY-4.0.txt), like the rest of the documentation. It is one of the DSD Toolbox icons: a silver disc on a navy rounded square, with the project's motif on an amber panel below it.
 
 | File | Use |
 |---|---|

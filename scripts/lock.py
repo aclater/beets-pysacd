@@ -13,7 +13,7 @@ to 3.14 on Linux (plus the 3.15 CI leg), macOS and Windows (a universal resoluti
 
 and locks/fuzz/requirements.txt, Atheris for the fuzz workflow.
 
-Releases younger than two weeks are left out (CLAUDE.md), except the owner's own pysacd, so
+Releases younger than two weeks are left out (CLAUDE.md), except pysacd, this project's own dependency, so
 the "pysacd release" legs test what users get, and security fixes listed in NOT_HELD_BACK.
 pysacd is always moved to its newest release (uv otherwise keeps the version already in a
 lock); rerun this at each pysacd release.
@@ -36,7 +36,7 @@ ROOT = Path(__file__).resolve().parent.parent
 # setuptools: the build backend, since CI installs the plugin and pysacd's master branch with
 # --no-build-isolation; build and pyproject-hooks: the release workflow's build
 BUILD_TOOLS = ["setuptools>=77", "build", "pyproject-hooks"]
-# Not held back two weeks: the owner's own pysacd, and security fixes (with the minimum fixed
+# Not held back two weeks: pysacd, this project's own dependency, and security fixes (with the minimum fixed
 # version they need, as a constraint). Drop an entry once its fix is older than two weeks.
 NOT_HELD_BACK = {
     "pysacd": "",

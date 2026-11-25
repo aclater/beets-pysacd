@@ -1,0 +1,30 @@
+# Run the command blocks of README.md and docs/ that are marked to run, in a fresh Fedora container
+# that holds only the blocks, so they install the published release (dsd-toolbox/dsd-toolbox
+# tools/docs/docs_run.py, pinned to one commit). Every other block carries a skip marker with its
+# reason. On pull requests that change the docs, weekly (PyPI, beets and MusicBrainz change without
+# a change here) and from the Actions tab after a release.
+
+name: docs-run
+
+on:
+  pull_request:
+    paths: ["README.md", "docs/**", "CONTRIBUTING.md", "CLAUDE.md", ".docs.toml", ".github/workflows/docs-run.yml"]
+  schedule:
+    - cron: "41 6 * * 1"  # weekly
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions: {}
+
+jobs:
+  commands:
+    permissions:
+      contents: read
+    uses: dsd-toolbox/dsd-toolbox/.github/workflows/docs-run.yml@33e1b0308e4bb9890701d5e3bb857c9ce9fe110f
+    with:
+      tools-ref: 33e1b0308e4bb9890701d5e3bb857c9ce9fe110f
+      version-of: dsd-toolbox/beets-pysacd
+      fail_unmarked: true  # a new command block needs a run or skip marker
