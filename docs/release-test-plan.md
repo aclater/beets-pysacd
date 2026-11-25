@@ -239,7 +239,16 @@ find github -name '*.whl' -o -name '*.tar.gz' | xargs -I FILE gh attestation ver
 ```
 
 *Expected:* both files `OK`, the two counts equal (2), every verification passes. *Validated:*
-2026-11-23 on 0.2.2.
+2026-11-23 on 0.2.2 (signed under the old owner name; the commands above are for releases from
+0.2.3).
+
+**0.2.3, the first release from `dsd-toolbox`.** After publishing, verify that release's wheel and
+sdist with `--repo dsd-toolbox/beets-pysacd`, offline against each bundle and online after
+`gh auth login`, as in the block above, and run the wheel command in
+[Checking a download](install/README.md#checking-a-download). All of them must pass. Then remove the
+`docs-run` skip from that command and record the result in the sign-off. A failure here means the
+attestation names another repository, and the install page must say so before the release is
+announced.
 
 ## 10. Fresh-eyes review for first releases
 
@@ -272,6 +281,7 @@ changelog section.
 | 7. Docs commands: run, or listed with why | | |
 | 9. Auditor `go` on the release commit | | |
 | 9. PyPI files match the GitHub assets, attestations verify | | |
+| 9. 0.2.3 only: attestations verify with `--repo dsd-toolbox/beets-pysacd`, online and with the bundle | | |
 | 10. Fresh-eyes review (new lines and components only) | | |
 | After the release: `docs-audit` workflow run, checklist items fixed | | |
 
