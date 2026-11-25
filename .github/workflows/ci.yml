@@ -169,6 +169,8 @@ jobs:
         if: matrix.pysacd == 'master'
         shell: bash
         run: |
+          # pysacd 0.6.0 on builds its dsd2pcm library from source with the Rust release it pins
+          export PATH="$(python -I pysacd-src/tools/dsd2pcm.py toolchain --dest "$RUNNER_TEMP/rust" | tail -1):$PATH"
           # a literal *.whl path, which Scorecard recognises as a local wheel install
           pip wheel --no-deps --no-build-isolation -w pysacd-wheel ./pysacd-src
           pip install --no-deps --force-reinstall pysacd-wheel/*.whl
