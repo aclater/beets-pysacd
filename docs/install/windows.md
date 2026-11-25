@@ -5,11 +5,11 @@
 How to install beets and the plugin on Windows 11, turn the plugin on in beets' configuration,
 and import a first SACD image (ISO), step by step.
 
-**DRAFT.** The steps on this page have not yet been run on Windows 11 as written: installing
-Python from python.org, `py -m pip install beets beets-pysacd`, pipx, finding and editing
-`config.yaml` with `beet config -p` and Notepad, and `beet sacd-info` and `beet sacd-import`
-with Windows paths. CI runs the plugin's tests on Windows with the newest beets, and the Quick
-start runs on Linux. This note goes once a stock Windows 11 run of the page passes.
+**What was tested.** A stock Windows 11 Pro 25H2 (standard user account, long paths off) ran, on
+2026-11-25: installing Python from python.org, `py -m pip install beets beets-pysacd`
+(beets-pysacd 0.2.2, beets 2.14.1, pysacd 0.5.5), pipx, finding and editing `config.yaml` with
+`beet config -p` and Notepad, and `beet sacd-info` and `beet sacd-import` on a real disc image
+with Windows paths. A Music folder redirected to OneDrive was not tried.
 
 ## 1. Install Python
 
@@ -39,8 +39,8 @@ beet version
 ```
 
 *You should see* `beets version` and its number, your Python version and `plugins: musicbrainz`.
-The first beets command also creates the library database, and may print a few `Created database
-backup` lines; that happens once.
+The first beets command also creates the library database, and may print a number of `Created
+database backup` lines; that happens once.
 
 Or, to keep beets apart from your other Python packages, install it with
 [pipx](https://pipx.pypa.io/), with the plugin injected into beets' environment. Close and
@@ -82,9 +82,19 @@ Open the file in Notepad:
 notepad (beet config -p)
 ```
 
-If Notepad asks whether to create the file, choose **Yes**. `beet config -e` opens the same file in
-the program named by the `EDITOR` environment variable or, without one, in the program Windows
-opens `.yaml` files with.
+If Notepad asks whether to create the file, choose **Yes**. That works the same from a path you
+type yourself:
+
+<!-- docs-run: skip="Windows: Notepad and PowerShell" -->
+```powershell
+notepad "$env:APPDATA\beets\config.yaml"
+```
+
+`beet config -e` is beets' own way to open the file, but on a stock Windows it shows the "Select an
+app to open this .yaml file" window, because no program is set for `.yaml` files. beets opens the file in
+the editor named by its `editor` option or by the `VISUAL` or `EDITOR` environment variable, and
+only without any of them in the program Windows opens `.yaml` files with. To use `beet config -e`,
+run `setx EDITOR notepad` once, then open a new PowerShell window.
 
 Type this into the file, then save it. It turns on the plugin, with beets' MusicBrainz plugin,
 keeps the library in the Music folder of your user folder, and converts the stereo area to DSF:
@@ -135,8 +145,9 @@ in the Music folder of your user folder; `beet ls -a` lists the album. The
   pysacd writes Windows-safe names when it converts.
 - **Long paths:** Windows limits a path to 260 characters unless long paths are turned on, and
   they are off by default. The plugin converts in a staging folder inside the library folder,
-  and with pysacd 0.5.5 a track whose path there is longer than 260 characters fails with
-  `[WinError 3]`. Keep the library folder short, such as `C:/Music`; pysacd's
+  and with pysacd 0.5.5 a track whose path there is longer than 260 characters fails; 0.5.5 gave
+  `[WinError 206] The filename or extension is too long` from `pysacd convert`. pysacd 0.6.0 fixes this; until then keep the library folder short, such as
+  `C:/Music`. pysacd's
   [install page](https://github.com/dsd-toolbox/pysacd/blob/master/docs/install/README.md)
   has the details.
 
