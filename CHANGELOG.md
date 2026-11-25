@@ -9,6 +9,8 @@ behaviour, and a patch version only adds or fixes. Releases are on
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-11-25
+
 ### Added
 - docs/install/windows.md: installing on Windows 11 step by step: python.org Python,
   `py -m pip install beets beets-pysacd` or pipx, where beets' `config.yaml` is
@@ -24,6 +26,13 @@ behaviour, and a patch version only adds or fixes. Releases are on
   cover); it wrote one holding only the header comment (#86).
 
 ### Changed
+- CI and the hash locks test pysacd 0.6.0. The plugin needed no change for it. 0.6.0 converts PCM
+  with dsd2pcm 0.2 and its `precise` filter by default, so the FLAC bytes the plugin writes
+  differ from pysacd 0.5.5's (DSF output is unchanged); the plugin's own tests don't depend on them.
+  pysacd's new `pcm_filter` and `pcm_cutoff` settings are not passed through the plugin yet.
+- This is the first release built and published from the `dsd-toolbox` organisation, so its
+  build provenance verifies with `--repo dsd-toolbox/beets-pysacd`; releases up to 0.2.2 still
+  verify under their old owner name ([installing](docs/install/README.md#checking-a-download)).
 - The user guide's commands use one set of example folders, named at the top of the guide (#91).
 - CI's "pysacd release" legs test pysacd 0.5.5 (locked 0.5.2 before), and `scripts/lock.py` now
   moves pysacd to its newest release on every run instead of keeping the locked version (#90).
@@ -161,7 +170,8 @@ First release.
   import is verified.
 - Supports beets 2.12 and later, Python 3.11 to 3.14, on Linux, macOS and Windows.
 
-[Unreleased]: https://github.com/dsd-toolbox/beets-pysacd/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/dsd-toolbox/beets-pysacd/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/dsd-toolbox/beets-pysacd/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/dsd-toolbox/beets-pysacd/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/dsd-toolbox/beets-pysacd/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/dsd-toolbox/beets-pysacd/compare/v0.1.2...v0.2.0

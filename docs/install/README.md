@@ -44,16 +44,25 @@ sdist, each with its build provenance attestation beside it as a `.intoto.jsonl`
 not otherwise signed.
 
 <!-- docs-lint: ignore-file old-owner -- releases up to 0.2.2 were signed before the move, so their attestations name aclater/beets-pysacd -->
+Releases from 0.2.3 are built and signed from `dsd-toolbox/beets-pysacd`, so their attestation
+verifies with `--repo dsd-toolbox/beets-pysacd`. For the 0.2.3 wheel, checked offline against the
+attached bundle, with no sign-in:
+
+<!-- docs-run: skip="0.2.3 is the first release signed from dsd-toolbox: the release test plan runs this once it is published" -->
+```sh
+gh attestation verify beets_pysacd-0.2.3-py3-none-any.whl --repo dsd-toolbox/beets-pysacd --bundle beets_pysacd-0.2.3-py3-none-any.whl.intoto.jsonl
+```
+
+Online, after `gh auth login`, drop `--bundle` and the bundle file.
+
 <!-- docs-lint: ignore old-owner -- releases up to 0.2.2 were signed as aclater/beets-pysacd and verify only under that name -->
 Releases up to 0.2.2 were built before the repository moved to the DSD Toolbox organisation, so
-their attestation names `aclater/beets-pysacd`. For the <!-- facts:release repo=dsd-toolbox/beets-pysacd fmt="{version}" -->0.2.2<!-- /facts --> wheel, checked offline against the attached bundle, with no sign-in:
+their attestation names `aclater/beets-pysacd`. For the 0.2.2 wheel, checked offline against the attached bundle, with no sign-in:
 
 <!-- docs-run: -->
 <!-- docs-lint: ignore old-owner -- releases up to 0.2.2 were signed as aclater/beets-pysacd and verify only under that name -->
 ```sh
-# facts:release repo=dsd-toolbox/beets-pysacd fmt="gh attestation verify beets_pysacd-{version}-py3-none-any.whl --repo aclater/beets-pysacd --bundle beets_pysacd-{version}-py3-none-any.whl.intoto.jsonl"
 gh attestation verify beets_pysacd-0.2.2-py3-none-any.whl --repo aclater/beets-pysacd --bundle beets_pysacd-0.2.2-py3-none-any.whl.intoto.jsonl
-# /facts
 ```
 
 The command exits 0 when the wheel matches (piped, it prints nothing; in a terminal it may print a success line). Tested on the 0.2.2 wheel
@@ -71,10 +80,7 @@ The command exits 0 when the wheel matches (piped, it prints nothing; in a termi
 So for 0.2.2 and earlier use the bundle form above; the online form works only with `--owner`
 and `--signer-repo`, not with `--repo`.
 
-Releases from 0.2.3 are published and signed from `dsd-toolbox/beets-pysacd`, so they verify with
-`--repo dsd-toolbox/beets-pysacd`, with the bundle (as above, with the release's wheel and bundle
-names) or online after `gh auth login` and without `--bundle`. The
-[release test plan](../release-test-plan.md) checks both forms on each release.
+The [release test plan](../release-test-plan.md) checks both forms on each release.
 
 ## See also
 
